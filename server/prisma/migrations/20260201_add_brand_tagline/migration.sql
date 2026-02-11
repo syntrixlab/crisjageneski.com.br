@@ -1,6 +1,6 @@
 -- Add brandTagline field to SiteSettings
 ALTER TABLE "SiteSettings"
-  ADD COLUMN "brandTagline" VARCHAR(80);
+  ADD COLUMN IF NOT EXISTS "brandTagline" VARCHAR(80);
 
 UPDATE "SiteSettings"
   SET "brandTagline" = 'Psicologia Junguiana'

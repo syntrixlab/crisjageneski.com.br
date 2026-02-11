@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PostStatus {
+  draft
+  published
+}
+
+enum PageStatus {
+  draft
+  published
+}
+
+enum NavItemType {
+  INTERNAL_PAGE
+  EXTERNAL_URL
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NavItem {
+  id         String   @id @default(uuid())
+  label      String
+  type       NavItemType
+  pageKey    String?
+  url        String?
+  showInNavbar Boolean @default(false)
+  showInFooter Boolean @default(false)
+  isParent   Boolean  @default(false)
+  parentId   String?
+  orderNavbar Int      @default(0)
+  orderFooter Int?
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parent     NavItem? @relation("NavItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children   NavItem[] @relation("NavItemHierarchy")
+
+  @@index([showInNavbar, orderNavbar])
+  @@index([showInFooter, orderFooter])
+  @@index([parentId])
+  @@unique([parentId, orderNavbar])
+  @@unique([parentId, orderFooter])
+}
+
+model HomeSection {
+  id        String   @id @default(uuid())
+  type      String
+  title     String?
+  data      Json
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  isLocked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+  @@index([visible])
+}
+
+model Page {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  pageKey     String?  @unique
+  title       String
+  description String?
+  layout      Json
+  status      PageStatus @default(draft)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submissions FormSubmission[]
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  path      String
+  url       String
+  bucket    String
+  mimeType  String
+  size      Int
+  width     Int?
+  height    Int?
+  alt       String?
+  // Crop data fields
+  cropX     Float?
+  cropY     Float?
+  cropWidth Float?
+  cropHeight Float?
+  cropRatio String? // "16:9", "1:1", "4:3", "free"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]   @relation("PostCoverMedia")
+}
+
+model Post {
+  id           String     @id @default(uuid())
+  title        String
+  slug         String     @unique
+  excerpt      String
+  content      String
+  coverMediaId String?
+  coverMedia   Media?     @relation("PostCoverMedia", fields: [coverMediaId], references: [id])
+  status       PostStatus @default(draft)
+  tags         String[]   @default([])
+  isFeatured   Boolean    @default(false)
+  views        Int        @default(0)
+  publishedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([status])
+  @@index([publishedAt])
+  @@index([isFeatured, status])
+  @@index([status, views])
+}
+
+model SiteSettings {
+  id        String   @id @default("default")
+  siteName  String
+  cnpj      String?
+  crp       String?
+  contactEmail String?
+  logoUrl   String?
+  socials   Json     @default("[]")
+  whatsappEnabled Boolean @default(false)
+  whatsappLink   String?
+  whatsappMessage String?
+  whatsappPosition String? // "right" | "left"
+  hideScheduleCta Boolean @default(false)
+  brandTagline String? @db.VarChar(80)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FormSubmission {
+  id          String   @id @default(uuid())
+  pageId      String
+  formBlockId String
+  data        Json
+  summary     Json?
+  userAgent   String?
+  ip          String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([formBlockId])
+  @@index([createdAt])
+}

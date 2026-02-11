@@ -14,6 +14,12 @@ const app = express();
 // Desabilitar ETag para evitar 304 Not Modified
 app.disable('etag');
 
+// Necessario em ambientes atras de proxy (EasyPanel/NGINX/Traefik)
+// para IP correto em rate limit e logs.
+if (env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 app.use(
   cors({
     origin: '*',

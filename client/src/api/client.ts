@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-// Em producao (build), usa /api (relativo ao mesmo dominio).
-// Em desenvolvimento, usa VITE_API_URL do .env (fallback para /api).
-export const API_BASE = import.meta.env.PROD
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || '/api');
+const apiUrlFromEnv = import.meta.env.VITE_API_URL?.trim();
+
+// Permite configurar API absoluta em VPS/CDN quando necessario.
+// Sem configuracao, mantem /api relativo ao mesmo dominio.
+export const API_BASE = apiUrlFromEnv || '/api';
 export const API_ORIGIN = API_BASE.replace(/\/api$/, '');
 
 export const api = axios.create({

@@ -148,6 +148,7 @@ export function AdminLayout() {
   };
 
   const siteUrl =
+    import.meta.env.VITE_PUBLIC_URL ||
     import.meta.env.VITE_SITE_URL ||
     import.meta.env.VITE_PUBLIC_SITE_URL ||
     import.meta.env.VITE_APP_SITE_URL ||

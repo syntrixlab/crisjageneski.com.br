@@ -563,9 +563,10 @@
   color: var(--color-deep);
 }
 
-.hero-card p,
-.hero-card strong {
-  display: -webkit-box;
+.hero-card-medium p,
+.hero-card-medium strong,
+.hero-card-small p,
+.hero-card-small strong {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -573,11 +574,13 @@
   max-width: 100%;
 }
 
-.hero-card strong {
+.hero-card-medium strong,
+.hero-card-small strong {
   -webkit-line-clamp: 2;
 }
 
-.hero-card p {
+.hero-card-medium p,
+.hero-card-small p {
   -webkit-line-clamp: 3;
 }
 
@@ -768,7 +771,7 @@
   position: relative;
   display: flex;
   align-items: stretch;
-  background: linear-gradient(160deg, #fffdf8, var(--cta-bg));
+  background: linear-gradient(160deg, #f3efe7, var(--cta-bg));
   border-radius: calc(var(--radius-l) * 1.2);
   border: 1px solid rgba(84, 94, 69, 0.12);
   overflow: hidden;

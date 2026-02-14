@@ -283,7 +283,6 @@ button {
 .section-title {
   display: grid;
   gap: var(--space-3);
-  margin-bottom: var(--space-5);
   max-width: 780px;
 }
 
@@ -310,10 +309,12 @@ button {
   filter: blur(0.3px);
 }
 
-.section-title p {
+.section-title > p,
+.section-block .section-title > p {
   margin: 0;
   color: var(--color-forest);
-  font-size: 1.05rem;
+  font-size: 1.45rem;
+  line-height: 1.2;
 }
 
 .link {

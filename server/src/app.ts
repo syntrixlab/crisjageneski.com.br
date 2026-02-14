@@ -10,6 +10,8 @@ import { env } from './config/env';
 import { sendSuccess } from './utils/responses';
 
 const app = express();
+const supabaseOrigin = new URL(env.SUPABASE_URL).origin;
+const cspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
 
 // Desabilitar ETag para evitar 304 Not Modified
 app.disable('etag');
@@ -26,7 +28,16 @@ app.use(
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
   })
 );
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...cspDirectives,
+        'img-src': ["'self'", 'data:', 'blob:', supabaseOrigin]
+      }
+    }
+  })
+);
 app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));

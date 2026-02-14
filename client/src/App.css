@@ -753,8 +753,11 @@
   border: 1px solid rgba(84, 94, 69, 0.12);
 }
 
-.section-title p {
+.section-title > p,
+.section-block .section-title > p {
   white-space: pre-line;
+  font-size: 1.45rem;
+  line-height: 1.2;
 }
 
 .cta-block {

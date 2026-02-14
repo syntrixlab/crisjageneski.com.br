@@ -121,8 +121,6 @@ export function Footer({ settings }: { settings?: SiteSettings }) {
             {settings?.cnpj && <div className="muted">CNPJ: {formatCnpjDisplay(settings.cnpj)}</div>}
             {settings?.crp && <div className="muted">CRP: {settings.crp}</div>}
           </div>
-        </div>
-        <div className="footer-meta footer-socials">
           <div className="footer-social-list">
             {socials.map((link) => {
               const href = formatUrl(link);
@@ -150,6 +148,9 @@ export function Footer({ settings }: { settings?: SiteSettings }) {
               </a>
             </div>
           )}
+        </div>
+        <div className="footer-meta footer-socials">
+          
         </div>
       </div>
       <div className="container footer-bottom">

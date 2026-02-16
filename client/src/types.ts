@@ -85,7 +85,7 @@ export type CardBlockData = {
   subtitle?: string | null;
   items: CardItem[];
   layout: 'auto' | '2' | '3' | '4';
-  variant: 'feature' | 'simple' | 'borderless';
+  variant: 'feature' | 'simple' | 'borderless' | 'earthy';
 };
 
 export type FormField = {
@@ -480,8 +480,8 @@ export type PageSection = {
   columnsLayout?: 2 | 3; // preferred layout selector; falls back to columns
   cols: Array<{ id: string; blocks: PageBlock[] }>;
   settings?: {
-    background?: 'none' | 'soft' | 'dark';
-    backgroundStyle?: 'none' | 'soft' | 'dark';
+    background?: 'none' | 'soft' | 'dark' | 'earthy';
+    backgroundStyle?: 'none' | 'soft' | 'dark' | 'earthy';
     padding?: 'normal' | 'compact' | 'large';
     density?: 'compact' | 'normal' | 'large';
     height?: 'normal' | 'tall';

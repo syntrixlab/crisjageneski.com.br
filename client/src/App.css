@@ -2983,6 +2983,7 @@ figure[data-type="image"] {
   display: grid;
   gap: 1.5rem;
   grid-template-columns: 1fr;
+  align-items: stretch;
 }
 
 @media (min-width: 768px) {
@@ -3004,6 +3005,7 @@ figure[data-type="image"] {
   text-align: center;
   gap: 0.75rem;
   box-shadow: 0 10px 24px rgba(31, 45, 22, 0.06);
+  height: 100%;
 }
 
 .services-section .service-card__title {
@@ -3035,7 +3037,7 @@ figure[data-type="image"] {
 }
 
 .services-cta {
-  margin-top: 0.35rem;
+  margin-top: auto;
 }
 
 .article-card {
@@ -3761,6 +3763,17 @@ figure[data-type="image"] {
   color: var(--section-fg);
 }
 
+.page-section-editor[data-bg="earthy"] {
+  --section-bg: var(--color-terracotta);
+  --section-fg: #fbf1e4;
+  --section-border: rgba(31, 45, 22, 0.25);
+  --section-shadow: 0 14px 30px rgba(31, 45, 22, 0.16);
+
+  background: var(--section-bg);
+  border-color: var(--section-border);
+  color: var(--section-fg);
+}
+
 /* Variante "none" deve desabilitar container visual (manter estrutura) */
 .page-section-editor[data-bg="none"] {
   background: transparent;
@@ -3771,6 +3784,11 @@ figure[data-type="image"] {
 .page-section-editor[data-bg="dark"] .page-col-header strong,
 .page-section-editor[data-bg="dark"] .page-section-header strong {
   color: #f9f4ec;
+}
+
+.page-section-editor[data-bg="earthy"] .page-col-header strong,
+.page-section-editor[data-bg="earthy"] .page-section-header strong {
+  color: #fbf1e4;
 }
 
 .page-section-header {
@@ -3974,6 +3992,17 @@ figure[data-type="image"] {
   --section-surface-soft: rgba(255, 255, 255, 0.85);
 }
 
+/* Variante: Terroso (fundo quente com tons naturais) */
+.page-public-section.section-bg-earthy {
+  --section-bg: var(--color-terracotta);
+  --section-fg: #fbf1e4;
+  --section-border: rgba(31, 45, 22, 0.24);
+  --section-shadow: 0 14px 30px rgba(31, 45, 22, 0.16);
+  --section-surface: rgba(255, 253, 249, 0.82);
+  --section-surface-soft: rgba(255, 253, 249, 0.72);
+  color: var(--section-fg);
+}
+
 /* Variante: Escuro (fundo gradiente escuro + texto claro) */
 .page-public-section.section-bg-dark {
   --section-bg: radial-gradient(1200px 500px at 50% 30%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.00)),
@@ -4041,6 +4070,57 @@ figure[data-type="image"] {
 .page-public-section.section-bg-dark .btn-ghost:hover {
   border-color: rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.page-public-section.section-bg-earthy h1,
+.page-public-section.section-bg-earthy h2,
+.page-public-section.section-bg-earthy h3,
+.page-public-section.section-bg-earthy p,
+.page-public-section.section-bg-earthy label,
+.page-public-section.section-bg-earthy a,
+.page-public-section.section-bg-earthy .page-public-text {
+  color: var(--section-fg);
+}
+
+.page-public-section.section-bg-earthy a:hover {
+  color: #ffe7cc;
+}
+
+.page-public-section.section-bg-earthy .btn-primary {
+  background: #fbf1e4;
+  box-shadow: 0 10px 24px rgba(31, 45, 22, 0.2);
+  color: var(--color-terracotta);
+}
+
+.page-public-section.section-bg-earthy .btn-primary:hover {
+  background: #ffe7cc;
+  box-shadow: 0 12px 28px rgba(31, 45, 22, 0.24);
+  color: var(--color-terracotta);
+  transform: translateY(-2px);
+}
+
+.page-public-section.section-bg-earthy .btn-outline,
+.page-public-section.section-bg-earthy .btn-secondary {
+  border-color: rgba(31, 45, 22, 0.34);
+  color: var(--section-fg);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.page-public-section.section-bg-earthy .btn-outline:hover,
+.page-public-section.section-bg-earthy .btn-secondary:hover {
+  border-color: rgba(31, 45, 22, 0.5);
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.page-public-section.section-bg-earthy .btn-ghost {
+  border-color: rgba(31, 45, 22, 0.3);
+  color: var(--section-fg);
+  background: transparent;
+}
+
+.page-public-section.section-bg-earthy .btn-ghost:hover {
+  border-color: rgba(31, 45, 22, 0.46);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 /* ========== Section Padding Variants ========== */
@@ -4958,6 +5038,41 @@ figure.page-public-image figcaption {
   color: var(--color-terracotta);
 }
 
+/* Variant: Earthy */
+.cards-grid.cards-variant--earthy .card-item {
+  background: linear-gradient(160deg, rgba(255, 245, 232, 0.1), rgba(248, 230, 211, 0.04));
+  border: 1px solid rgba(244, 208, 174, 0.18);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  border-radius: 18px;
+  backdrop-filter: blur(2px);
+}
+
+.cards-grid.cards-variant--earthy .card-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+  border-color: rgba(244, 208, 174, 0.34);
+}
+
+.cards-grid.cards-variant--earthy .card-title {
+  color: #fbf1e4;
+}
+
+.cards-grid.cards-variant--earthy .card-text {
+  color: rgba(247, 235, 220, 0.9);
+}
+
+.cards-grid.cards-variant--earthy .card-icon {
+  color: #f0c89d;
+}
+
+.cards-grid.cards-variant--earthy .card-cta {
+  color: #f0c89d;
+}
+
+.cards-grid.cards-variant--earthy .card-cta:hover {
+  color: #ffe7cc;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .page-public-grid {
@@ -4999,7 +5114,12 @@ figure.page-public-image figcaption {
 
   .page-public-text .rich-content :is(h1, h2, h3) .rte-author {
     margin-top: 0.4rem;
-    margin-left: max(0px, calc(100% - 3ch));
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     font-size: 0.5em;
   }
 
@@ -5020,6 +5140,11 @@ figure.page-public-image figcaption {
   .cards-grid.cards-layout--3,
   .cards-grid.cards-layout--4 {
     grid-template-columns: 1fr;
+  }
+
+  .cards-grid.cards-variant--earthy {
+    padding: 0.875rem;
+    border-radius: 16px;
   }
   
   /* Ajustar bordas arredondadas em mobile */

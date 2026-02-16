@@ -165,7 +165,14 @@ export function PageRendererCore({ layout, className = '', enableFormSubmit = tr
 function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageSlug }: { section: PageSection; sectionIndex: number; enableFormSubmit?: boolean; pageSlug?: string }) {
   const settings = section.settings ?? {};
   const background = (settings.backgroundStyle as string) || (settings.background as string) || 'none';
-  const backgroundClass = background === 'soft' ? 'section-bg-soft' : background === 'dark' ? 'section-bg-dark' : 'section-bg-none';
+  const backgroundClass =
+    background === 'soft'
+      ? 'section-bg-soft'
+      : background === 'dark'
+        ? 'section-bg-dark'
+        : background === 'earthy'
+          ? 'section-bg-earthy'
+          : 'section-bg-none';
   
   const density = (settings.density as string) || (settings.padding as string) || 'normal';
   const paddingClass = `section-padding-${density}`;
@@ -182,7 +189,7 @@ function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageS
   const effectiveColumns = hasHero ? 1 : columnCount;
 
   // Determinar se deve aplicar section-container visual (soft ou dark, mas não hero)
-  const shouldApplyContainer = (background === 'soft' || background === 'dark') && !hasHero;
+  const shouldApplyContainer = (background === 'soft' || background === 'dark' || background === 'earthy') && !hasHero;
   const sectionContainerClass = shouldApplyContainer ? 'section-container' : '';
 
   // Organizar blocos em linhas usando blockGridHelpers (preserva ordem/semântica do builder)

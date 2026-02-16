@@ -711,7 +711,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
     setPage((prev) => ({ ...prev, layout: changeSectionColumns(prev.layout, sectionId, columns) }));
   };
 
-  const handleChangeSectionBackground = (sectionId: string, background: 'none' | 'soft' | 'dark') => {
+  const handleChangeSectionBackground = (sectionId: string, background: 'none' | 'soft' | 'dark' | 'earthy') => {
     setPage((prev) => ({
       ...prev,
       layout: {
@@ -1109,7 +1109,7 @@ function SectionEditor(_props: {
   sectionIndex: number;
   totalSections: number;
   onChangeSectionColumns: (columns: 1 | 2 | 3) => void;
-  onChangeSectionBackground: (background: 'none' | 'soft' | 'dark') => void;
+  onChangeSectionBackground: (background: 'none' | 'soft' | 'dark' | 'earthy') => void;
   onChangeSectionPadding: (padding: 'normal' | 'compact' | 'large') => void;
   onChangeSectionMaxWidth: (maxWidth: 'normal' | 'wide') => void;
   onChangeSectionHeight: (height: 'normal' | 'tall') => void;
@@ -1145,7 +1145,7 @@ function SectionEditor(_props: {
     onDuplicateBlock
   } = _props;
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark';
+  const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
   const padding = (section.settings?.density || section.settings?.padding || 'normal') as 'normal' | 'compact' | 'large';
   const maxWidth = (section.settings?.width || section.settings?.maxWidth || 'normal') as 'normal' | 'wide';
   const height = (section.settings?.height || 'normal') as 'normal' | 'tall';
@@ -1198,13 +1198,14 @@ function SectionEditor(_props: {
               {[
                 { value: 'none', label: 'Sem fundo' },
                 { value: 'soft', label: 'Suave' },
-                { value: 'dark', label: 'Escuro' }
+                { value: 'dark', label: 'Escuro' },
+                { value: 'earthy', label: 'Terroso' }
               ].map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   className={background === opt.value ? 'active' : ''}
-                  onClick={() => onChangeSectionBackground(opt.value as 'none' | 'soft' | 'dark')}
+                  onClick={() => onChangeSectionBackground(opt.value as 'none' | 'soft' | 'dark' | 'earthy')}
                   title={`Fundo: ${opt.label}`}
                 >
                   {opt.label}
@@ -2571,7 +2572,8 @@ function CardBlockForm(_props: { value: CardBlockData; onChange: (value: CardBlo
             {[
               { value: 'feature', label: 'Feature' },
               { value: 'simple', label: 'Simples' },
-              { value: 'borderless', label: 'Sem borda' }
+              { value: 'borderless', label: 'Sem borda' },
+              { value: 'earthy', label: 'Terroso' }
             ].map((opt) => (
               <button
                 key={opt.value}

@@ -142,7 +142,7 @@ const cardBlockSchema = baseBlockSchema.extend({
     subtitle: z.string().optional().nullable(),
     items: z.array(cardItemSchema).min(1).max(12),
     layout: z.enum(['auto', '2', '3', '4']).default('auto'),
-    variant: z.enum(['feature', 'simple', 'borderless']).default('feature')
+    variant: z.enum(['feature', 'simple', 'borderless', 'earthy']).default('feature')
   })
 });
 
@@ -448,8 +448,8 @@ const pageLayoutSchemaV1 = z.object({
 // V2 Layout Schema (sections-based)
 const sectionSettingsSchema = z
   .object({
-    background: z.enum(['none', 'soft', 'dark']).optional(),
-    backgroundStyle: z.enum(['none', 'soft', 'dark']).optional(),
+    background: z.enum(['none', 'soft', 'dark', 'earthy']).optional(),
+    backgroundStyle: z.enum(['none', 'soft', 'dark', 'earthy']).optional(),
     padding: z.enum(['normal', 'compact', 'large']).optional(),
     density: z.enum(['compact', 'normal', 'large']).optional(),
     height: z.enum(['normal', 'tall']).optional(),
@@ -535,7 +535,7 @@ export type CardBlockData = {
   subtitle?: string | null;
   items: CardItem[];
   layout: 'auto' | '2' | '3' | '4';
-  variant: 'feature' | 'simple' | 'borderless';
+  variant: 'feature' | 'simple' | 'borderless' | 'earthy';
 };
 
 export type FormField = {
@@ -847,8 +847,8 @@ export type PageSection = {
   cols: Array<{ id: string; blocks: PageBlock[] }>;
   kind?: string;
   settings?: {
-    background?: 'none' | 'soft' | 'dark';
-    backgroundStyle?: 'none' | 'soft' | 'dark';
+    background?: 'none' | 'soft' | 'dark' | 'earthy';
+    backgroundStyle?: 'none' | 'soft' | 'dark' | 'earthy';
     padding?: 'normal' | 'compact' | 'large';
     density?: 'normal' | 'compact' | 'large';
     maxWidth?: 'normal' | 'wide';

@@ -120,34 +120,35 @@ export function Footer({ settings }: { settings?: SiteSettings }) {
             <strong className="footer-title">{siteName}</strong>
             {settings?.cnpj && <div className="muted">CNPJ: {formatCnpjDisplay(settings.cnpj)}</div>}
             {settings?.crp && <div className="muted">CRP: {settings.crp}</div>}
-          </div>
-          <div className="footer-social-list">
-            {socials.map((link) => {
-              const href = formatUrl(link);
-              const isExternal = /^https?:/i.test(href);
-              return (
-                <a
-                  key={link.id}
-                  href={href}
-                  target={isExternal ? '_blank' : undefined}
-                  rel={isExternal ? 'noreferrer' : undefined}
-                  className="social-chip"
-                  aria-label={link.label || link.platform}
-                >
-                  <FontAwesomeIcon icon={socialIconMap[link.platform]} />
-                </a>
-              );
-            })}
-            {socials.length === 0 && <span className="muted">Nenhuma rede configurada</span>}
-          </div>
-          {settings?.contactEmail && (
-            <div className="footer-email">
-              <FontAwesomeIcon icon={faEnvelope} />
-              <a href={`mailto:${settings.contactEmail}`} className="footer-link">
-                {settings.contactEmail}
-              </a>
+            <div className="footer-social-list">
+              {socials.map((link) => {
+                const href = formatUrl(link);
+                const isExternal = /^https?:/i.test(href);
+                return (
+                  <a
+                    key={link.id}
+                    href={href}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noreferrer' : undefined}
+                    className="social-chip"
+                    aria-label={link.label || link.platform}
+                  >
+                    <FontAwesomeIcon icon={socialIconMap[link.platform]} />
+                  </a>
+                );
+              })}
+              {socials.length === 0 && <span className="muted">Nenhuma rede configurada</span>}
             </div>
-          )}
+            {settings?.contactEmail && (
+              <div className="footer-email">
+                <FontAwesomeIcon icon={faEnvelope} />
+                <a href={`mailto:${settings.contactEmail}`} className="footer-link">
+                  {settings.contactEmail}
+                </a>
+              </div>
+            )}
+          </div>
+          
         </div>
         <div className="footer-meta footer-socials">
           

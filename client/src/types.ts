@@ -252,6 +252,16 @@ export type CtaBlockData = {
   imageAlt?: string | null;
 };
 
+export type MediaTextBlockData = {
+  contentHtml: string;
+  imageId?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imageSide?: 'left' | 'right';
+  imageWidth?: 25 | 50 | 75 | 100;
+  imageHeight?: 25 | 50 | 75 | 100;
+};
+
 export type ContactInfoBlockData = {
   titleHtml: string;
   descriptionHtml?: string;
@@ -438,6 +448,17 @@ export type PageBlock =
       colSpan?: number;
       rowIndex?: number;
       data: CtaBlockData;
+      isLocked?: boolean;
+      visible?: boolean;
+      createdAt?: string;
+      updatedAt?: string;
+    }
+  | {
+      id: string;
+      type: 'media-text';
+      colSpan?: number;
+      rowIndex?: number;
+      data: MediaTextBlockData;
       isLocked?: boolean;
       visible?: boolean;
       createdAt?: string;

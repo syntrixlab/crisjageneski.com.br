@@ -29,6 +29,7 @@ import type {
   CardItem,
   CardBlockData,
   CtaBlockData,
+  MediaTextBlockData,
   FormBlockData,
   ImageBlockData,
   HeroMediaMode,
@@ -78,7 +79,7 @@ type BlockDraft = {
   id?: string;
   type: PageBlock['type'];
   colSpan?: number;
-  data: TextBlockData | ImageBlockData | ButtonBlockData | CardBlockData | FormBlockData | HeroBlockData | ServicesBlockData | import('../types').PillsBlockData | import('../types').SpanBlockData | import('../types').ButtonGroupBlockData | import('../types').SocialLinksBlockData | import('../types').WhatsAppCtaBlockData | import('../types').ContactInfoBlockData | import('../types').RecentPostsBlockData;
+  data: TextBlockData | ImageBlockData | ButtonBlockData | CardBlockData | FormBlockData | HeroBlockData | ServicesBlockData | import('../types').PillsBlockData | import('../types').SpanBlockData | import('../types').ButtonGroupBlockData | import('../types').SocialLinksBlockData | import('../types').WhatsAppCtaBlockData | import('../types').ContactInfoBlockData | import('../types').RecentPostsBlockData | MediaTextBlockData;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -151,6 +152,15 @@ const defaultCtaData: import('../types').CtaBlockData = {
   imageId: null,
   imageUrl: null,
   imageAlt: ''
+};
+const defaultMediaTextData: MediaTextBlockData = {
+  contentHtml: '<p>Texto ao lado da imagem.</p>',
+  imageId: null,
+  imageUrl: '',
+  imageAlt: '',
+  imageSide: 'left',
+  imageWidth: 50,
+  imageHeight: 75
 };
 const defaultCardData: CardBlockData = {
   title: 'Nossos Serviços',
@@ -1449,6 +1459,7 @@ function BlockCard(_props: {
     image: 'Imagem',
     button: 'Botão',
     cards: 'Cards',
+    'media-text': 'Imagem + Texto',
     form: 'Formulário',
     hero: 'Hero',
     pills: 'Pills',
@@ -1588,6 +1599,7 @@ function BlockEditorModal(_props: {
         type === 'social-links' ? defaultSocialLinksData :
         type === 'whatsapp-cta' ? defaultWhatsAppCtaData :
         type === 'cta' ? defaultCtaData :
+        type === 'media-text' ? defaultMediaTextData :
         type === 'services' ? defaultServicesData :
         type === 'contact-info' ? defaultContactInfoData :
         defaultHeroData; // hero é o fallback
@@ -1736,6 +1748,18 @@ function BlockEditorModal(_props: {
       }
       // V2 heroes are always valid (validated at block level)
     }
+    if (draft.type === 'media-text') {
+      const data = draft.data as MediaTextBlockData;
+      const plain = (data.contentHtml || '').replace(/<[^>]+>/g, '').trim();
+      if (!data.imageUrl?.trim()) {
+        setError('Selecione uma imagem para o bloco imagem + texto.');
+        return;
+      }
+      if (!plain) {
+        setError('Adicione texto no bloco imagem + texto.');
+        return;
+      }
+    }
     setError(null);
     const clampedDraft = {
       ...draft,
@@ -1769,6 +1793,10 @@ function BlockEditorModal(_props: {
           <button type="button" className="block-type-card" onClick={() => handleSelectType('cta')}>
             <strong>CTA</strong>
             <p className="muted small">Título, texto e botão com imagem opcional.</p>
+          </button>
+          <button type="button" className="block-type-card" onClick={() => handleSelectType('media-text')}>
+            <strong>Imagem + Texto</strong>
+            <p className="muted small">Imagem lateral com texto na lateral.</p>
           </button>
           <button type="button" className="block-type-card" onClick={() => handleSelectType('cards')}>
             <strong>Cards</strong>
@@ -1858,6 +1886,14 @@ function BlockEditorModal(_props: {
         <CtaBlockForm
           value={draft.data as CtaBlockData}
           onChange={(data) => setDraft((prev) => (prev ? { ...prev, data } : { type: 'cta', data }))}
+        />
+      )}
+
+      {selectedType === 'media-text' && draft && (
+        <MediaTextBlockForm
+          value={draft.data as MediaTextBlockData}
+          onChange={(data) => setDraft((prev) => (prev ? { ...prev, data } : { type: 'media-text', data }))}
+          onUploadingChange={setUploading}
         />
       )}
 
@@ -2305,6 +2341,135 @@ function CtaBlockForm(_props: { value: CtaBlockData; onChange: (value: CtaBlockD
             }
             placeholder="https://..."
           />
+        </div>
+
+        <div className="editor-field">
+          <label>Alt da imagem</label>
+          <input value={value.imageAlt ?? ''} onChange={(e) => onChange({ ...value, imageAlt: e.target.value })} />
+        </div>
+      </div>
+
+      <ImagePickerModal
+        open={imagePickerOpen}
+        onClose={() => setImagePickerOpen(false)}
+        onSelect={(img) => handleSelectImage({ mediaId: img.mediaId, src: img.src, alt: img.alt })}
+        currentMediaId={value.imageId ?? undefined}
+      />
+    </div>
+  );
+}
+
+function MediaTextBlockForm(_props: {
+  value: MediaTextBlockData;
+  onChange: (value: MediaTextBlockData) => void;
+  onUploadingChange?: (uploading: boolean) => void;
+}) {
+  const { value, onChange, onUploadingChange } = _props;
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const side = value.imageSide === 'right' ? 'right' : 'left';
+  const imageWidth = ([25, 50, 75, 100] as const).includes((value.imageWidth as any) ?? 50)
+    ? (value.imageWidth as 25 | 50 | 75 | 100)
+    : 50;
+  const imageHeight = ([25, 50, 75, 100] as const).includes((value.imageHeight as any) ?? 75)
+    ? (value.imageHeight as 25 | 50 | 75 | 100)
+    : 75;
+
+  const handleSelectImage = (image: { mediaId: string; src: string; alt: string }) => {
+    onChange({
+      ...value,
+      imageId: image.mediaId,
+      imageUrl: image.src,
+      imageAlt: image.alt || value.imageAlt || ''
+    });
+  };
+
+  return (
+    <div className="page-block-form">
+      <div className="page-block-form-grid">
+        <div className="editor-field">
+          <label>Texto</label>
+          <RichTextEditor
+            value={value.contentHtml || ''}
+            onChange={(contentHtml) => onChange({ ...value, contentHtml })}
+            onUploadingChange={onUploadingChange}
+          />
+        </div>
+
+        <div className="editor-field">
+          <label>Lado da imagem</label>
+          <div className="page-columns-toggle compact">
+            <button
+              type="button"
+              className={side === 'left' ? 'active' : ''}
+              onClick={() => onChange({ ...value, imageSide: 'left' })}
+            >
+              Esquerda
+            </button>
+            <button
+              type="button"
+              className={side === 'right' ? 'active' : ''}
+              onClick={() => onChange({ ...value, imageSide: 'right' })}
+            >
+              Direita
+            </button>
+          </div>
+        </div>
+
+        <div className="editor-field">
+          <label>Largura da imagem</label>
+          <div className="page-columns-toggle compact">
+            {[25, 50, 75, 100].map((opt) => (
+              <button
+                key={`media-width-${opt}`}
+                type="button"
+                className={imageWidth === opt ? 'active' : ''}
+                onClick={() => onChange({ ...value, imageWidth: opt as 25 | 50 | 75 | 100 })}
+              >
+                {opt}%
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="editor-field">
+          <label>Altura da imagem</label>
+          <div className="page-columns-toggle compact">
+            {[25, 50, 75, 100].map((opt) => (
+              <button
+                key={`media-height-${opt}`}
+                type="button"
+                className={imageHeight === opt ? 'active' : ''}
+                onClick={() => onChange({ ...value, imageHeight: opt as 25 | 50 | 75 | 100 })}
+              >
+                {opt}%
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="editor-field">
+          <label>Imagem</label>
+          {value.imageUrl ? (
+            <div className="image-selected-preview">
+              <img src={value.imageUrl} alt={value.imageAlt || ''} />
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setImagePickerOpen(true)}>
+                  Trocar imagem
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => onChange({ ...value, imageId: null, imageUrl: '', imageAlt: '' })}
+                >
+                  Remover
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className="btn btn-outline" onClick={() => setImagePickerOpen(true)}>
+              <FontAwesomeIcon icon={faCamera} /> Selecionar imagem
+            </button>
+          )}
         </div>
 
         <div className="editor-field">
@@ -2981,6 +3146,7 @@ function BlockListEditor({ blocks, onChange, allowedTypes, emptyMessage = 'Nenhu
                  block.type === 'image' ? 'Imagem' : 
                  block.type === 'button' ? 'Botão' : 
                  block.type === 'cta' ? 'CTA' :
+                 block.type === 'media-text' ? 'Imagem + Texto' :
                  block.type === 'pills' ? 'Pills' : 
                  block.type === 'span' ? 'Elemento' :
                  block.type === 'buttonGroup' ? 'Grupo de Botões' :
@@ -3061,6 +3227,7 @@ function NestedBlockEditorModal({ state, onClose, onSave, allowedTypes }: Nested
         type === 'image' ? defaultImageData : 
         type === 'button' ? defaultButtonData : 
         type === 'cta' ? defaultCtaData :
+        type === 'media-text' ? defaultMediaTextData :
         type === 'cards' ? defaultCardData : 
         type === 'pills' ? defaultPillsData :
         type === 'span' ? defaultSpanData :
@@ -3079,7 +3246,7 @@ function NestedBlockEditorModal({ state, onClose, onSave, allowedTypes }: Nested
     onSave(draft);
   };
 
-  const availableTypes = allowedTypes || ['text', 'image', 'button', 'cta', 'cards', 'pills', 'span', 'buttonGroup', 'social-links', 'whatsapp-cta'];
+  const availableTypes = allowedTypes || ['text', 'image', 'button', 'cta', 'media-text', 'cards', 'pills', 'span', 'buttonGroup', 'social-links', 'whatsapp-cta'];
 
   return (
     <Modal
@@ -3113,6 +3280,12 @@ function NestedBlockEditorModal({ state, onClose, onSave, allowedTypes }: Nested
             <button type="button" className="block-type-card" onClick={() => handleSelectType('cta')}>
               <strong>CTA</strong>
               <p className="muted small">Título, texto e botão com imagem.</p>
+            </button>
+          )}
+          {availableTypes.includes('media-text') && (
+            <button type="button" className="block-type-card" onClick={() => handleSelectType('media-text')}>
+              <strong>Imagem + Texto</strong>
+              <p className="muted small">Imagem lateral com texto na lateral.</p>
             </button>
           )}
           {availableTypes.includes('cards') && (
@@ -3181,6 +3354,14 @@ function NestedBlockEditorModal({ state, onClose, onSave, allowedTypes }: Nested
         <CtaBlockForm
           value={draft.data as CtaBlockData}
           onChange={(data) => setDraft((prev) => (prev ? { ...prev, data } : { type: 'cta', data }))}
+        />
+      )}
+
+      {selectedType === 'media-text' && draft && (
+        <MediaTextBlockForm
+          value={draft.data as MediaTextBlockData}
+          onChange={(data) => setDraft((prev) => (prev ? { ...prev, data } : { type: 'media-text', data }))}
+          onUploadingChange={() => {}}
         />
       )}
 

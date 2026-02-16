@@ -735,6 +735,71 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
     handleInput();
   };
 
+  const appendWithSeparator = (block: HTMLElement, node: Node) => {
+    const lastNode = block.lastChild;
+    if (lastNode && lastNode.nodeType === Node.TEXT_NODE) {
+      const text = lastNode.textContent ?? '';
+      if (text && !/\s$/.test(text)) {
+        block.appendChild(document.createTextNode(' '));
+      }
+    } else if (lastNode instanceof HTMLElement && lastNode.tagName !== 'BR') {
+      block.appendChild(document.createTextNode(' '));
+    }
+    block.appendChild(node);
+  };
+
+  const escapeHtml = (text: string) =>
+    text
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+
+  const insertQuoteAuthor = () => {
+    const rawAuthor = window.prompt('Nome do autor da frase');
+    if (!rawAuthor) return;
+    const author = rawAuthor.trim();
+    if (!author) return;
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const block = closestAlignableBlock(sel.getRangeAt(0).startContainer);
+
+    if (block && /^H[1-3]$/.test(block.tagName)) {
+      const existing = Array.from(block.children).find((child) => child.classList.contains('rte-author'));
+      const authorNode = document.createElement('span');
+      authorNode.className = 'rte-author';
+      authorNode.setAttribute('data-type', 'quote-author');
+      authorNode.textContent = author;
+      if (existing) {
+        block.replaceChild(authorNode, existing);
+      } else {
+        block.appendChild(authorNode);
+      }
+      handleInput();
+      return;
+    }
+
+    if (block && ['P', 'BLOCKQUOTE', 'LI'].includes(block.tagName)) {
+      const authorNode = document.createElement('strong');
+      authorNode.className = 'rte-author-inline';
+      authorNode.setAttribute('data-type', 'quote-author-inline');
+      authorNode.textContent = author;
+      appendWithSeparator(block, authorNode);
+      handleInput();
+      return;
+    }
+
+    const safeAuthor = escapeHtml(author);
+    document.execCommand(
+      'insertHTML',
+      false,
+      `<strong class="rte-author-inline" data-type="quote-author-inline">${safeAuthor}</strong>`
+    );
+    handleInput();
+  };
+
   const toolbarGroups: {
     key: string;
     label: ReactNode;
@@ -796,6 +861,14 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
         label: <FontAwesomeIcon icon={faLink} />,
         title: 'Inserir link',
         action: openLinkModal
+      }
+    ],
+    [
+      {
+        key: 'author',
+        label: <span className="rte-heading-icon">Au</span>,
+        title: 'Inserir autor da frase',
+        action: insertQuoteAuthor
       }
     ],
     [

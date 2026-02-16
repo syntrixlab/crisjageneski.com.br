@@ -1490,6 +1490,22 @@ figure[data-type="image"] {
   text-align: justify;
 }
 
+.rte-editor :is(h1, h2, h3) .rte-author {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin-top: 0.5rem;
+  margin-left: max(0px, calc(100% - 3ch));
+  font-size: 0.46em;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.rte-editor :is(p, blockquote, li) .rte-author-inline {
+  font-weight: 700;
+}
+
 .rte-link-popover {
   position: fixed;
   background: #fffdf9;
@@ -3920,7 +3936,7 @@ figure[data-type="image"] {
 
 /* ========== SECTION WRAPPER - BASE ========== */
 .page-public-section {
-  padding: clamp(2rem, 4vw, 3.5rem) 0;
+  padding: clamp(1.25rem, 2.6vw, 2.25rem) 0;
   position: relative;
   
   /* Variáveis padrão (sem fundo) */
@@ -3933,11 +3949,11 @@ figure[data-type="image"] {
 }
 
 .page-public-section:first-child {
-  padding-top: clamp(1rem, 3vw, 2rem);
+  padding-top: clamp(0.85rem, 2vw, 1.5rem);
 }
 
 .page-public-section:last-child {
-  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  padding-bottom: clamp(1.25rem, 3vw, 2.75rem);
 }
 
 /* ========== SECTION BACKGROUND VARIANTS ========== */
@@ -4263,13 +4279,13 @@ figure[data-type="image"] {
   font-weight: 700;
   line-height: 1.3;
   margin-top: 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
   letter-spacing: -0.02em;
 }
 
 .page-public-text .rich-content h1 {
   font-size: clamp(2rem, 4vw, 2.75rem);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .page-public-text .rich-content h2 {
@@ -4281,7 +4297,7 @@ figure[data-type="image"] {
 }
 
 .page-public-text .rich-content p {
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.8rem 0;
   line-height: 1.8;
 }
 
@@ -4306,6 +4322,22 @@ figure[data-type="image"] {
   opacity: 0.95;
 }
 
+.page-public-text .rich-content :is(h1, h2, h3) .rte-author {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin-top: 0.5rem;
+  margin-left: max(0px, calc(100% - 3ch));
+  font-size: 0.42em;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.page-public-text .rich-content :is(p, blockquote, li) .rte-author-inline {
+  font-weight: 700;
+}
+
 .page-public-text .rich-content a {
   color: var(--color-terracotta);
   text-decoration: underline;
@@ -4322,6 +4354,78 @@ figure[data-type="image"] {
 
 .page-public-text .rich-content a:hover {
   text-decoration-color: var(--color-terracotta);
+}
+
+/* Media + Text block */
+.page-media-text {
+  --media-text-image-width: 50%;
+  --media-text-image-height: 340px;
+  position: relative;
+}
+
+.page-media-text-image {
+  margin: 0;
+  width: var(--media-text-image-width);
+  max-width: min(520px, 100%);
+  height: auto;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+
+.page-media-text--right .page-media-text-image {
+  float: right;
+  margin: 0 0 clamp(0.75rem, 2vw, 1.25rem) clamp(1rem, 2.5vw, 2rem);
+}
+
+.page-media-text--left .page-media-text-image {
+  float: left;
+  margin: 0 clamp(1rem, 2.5vw, 2rem) clamp(0.75rem, 2vw, 1.25rem) 0;
+}
+
+.page-media-text-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: initial;
+  border-radius: var(--radius-l);
+}
+
+.page-media-text-placeholder {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-forest);
+  font-size: 0.9rem;
+}
+
+.page-media-text-content {
+  min-width: 0;
+}
+
+.page-media-text-content .rich-content > *:first-child {
+  margin-top: 0;
+}
+
+.page-media-text-content .rich-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.page-media-text::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+@media (max-width: 900px) {
+  .page-media-text-image {
+    float: none !important;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 1rem 0 !important;
+  }
 }
 
 /* Rich text images (articles) */
@@ -4858,7 +4962,7 @@ figure.page-public-image figcaption {
 @media (max-width: 900px) {
   .page-public-grid {
     grid-template-columns: 1fr !important;
-    gap: clamp(1.5rem, 3vw, 2rem) !important;
+    gap: clamp(0.75rem, 2vw, 1rem) !important;
   }
 
   .page-public-image.rte-image--size-25,
@@ -4875,7 +4979,28 @@ figure.page-public-image figcaption {
 
 @media (max-width: 640px) {
   .page-public-section {
-    padding: clamp(1.5rem, 3vw, 2rem) 0;
+    padding: clamp(0.75rem, 2vw, 1rem) 0;
+  }
+
+  .page-public-section:first-child {
+    padding-top: clamp(0.5rem, 1.5vw, 0.75rem);
+  }
+
+  .page-public-section:last-child {
+    padding-bottom: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  .page-public-section.section-padding-compact,
+  .page-public-section.section-padding-normal,
+  .page-public-section.section-padding-large {
+    padding-top: clamp(0.5rem, 1.5vw, 0.75rem);
+    padding-bottom: clamp(0.5rem, 1.5vw, 0.75rem);
+  }
+
+  .page-public-text .rich-content :is(h1, h2, h3) .rte-author {
+    margin-top: 0.4rem;
+    margin-left: max(0px, calc(100% - 3ch));
+    font-size: 0.5em;
   }
 
   .page-public-col {

@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type CSSProperties } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { PageBlock, PageLayout, PageLayoutV2, PageSection, FormBlockData, Article, SiteSettings, SocialLink, ImageBlockData, HeroImageHeight, HeroBlockDataV2, ServicesBlockData, CtaBlockData } from '../types';
+import type { PageBlock, PageLayout, PageLayoutV2, PageSection, FormBlockData, Article, SiteSettings, SocialLink, ImageBlockData, HeroImageHeight, HeroBlockDataV2, ServicesBlockData, CtaBlockData, MediaTextBlockData } from '../types';
 import type { PaginatedResponse } from '../api/queries';
 import { RichText } from './RichText';
 import { ArticleCard } from './ArticleCard';
@@ -365,6 +365,45 @@ export function PageBlockView({ block, enableFormSubmit = true, pageSlug }: { bl
               <img src={imageUrl} alt={imageAlt} loading="lazy" />
             </div>
           )}
+        </div>
+      );
+    }
+    case 'media-text': {
+      const data = block.data as MediaTextBlockData;
+      const side = data.imageSide === 'right' ? 'right' : 'left';
+      const rawWidth = (data as any).imageWidth ?? (data as any).imageWidthPct ?? 50;
+      const rawHeight = (data as any).imageHeight ?? 75;
+      const widthPreset: 25 | 50 | 75 | 100 = [25, 50, 75, 100].includes(Number(rawWidth) as any)
+        ? (Number(rawWidth) as 25 | 50 | 75 | 100)
+        : 50;
+      const heightPreset: 25 | 50 | 75 | 100 = [25, 50, 75, 100].includes(Number(rawHeight) as any)
+        ? (Number(rawHeight) as 25 | 50 | 75 | 100)
+        : 75;
+      const imageHeightMap: Record<25 | 50 | 75 | 100, string> = {
+        25: '180px',
+        50: '260px',
+        75: '340px',
+        100: '420px'
+      };
+
+      return (
+        <div
+          className={`page-media-text page-media-text--${side}`.trim()}
+          style={{
+            ['--media-text-image-width' as any]: `${widthPreset}%`,
+            ['--media-text-image-height' as any]: imageHeightMap[heightPreset]
+          }}
+        >
+          <figure className="page-media-text-image">
+            {data.imageUrl ? (
+              <img src={data.imageUrl} alt={data.imageAlt ?? ''} loading="lazy" />
+            ) : (
+              <div className="page-media-text-placeholder">Sem imagem</div>
+            )}
+          </figure>
+          <div className="page-media-text-content">
+            <RichText html={data.contentHtml || ''} />
+          </div>
         </div>
       );
     }

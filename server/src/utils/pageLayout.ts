@@ -295,6 +295,21 @@ const ctaBlockSchema = baseBlockSchema.extend({
   })
 });
 
+const mediaTextBlockSchema = baseBlockSchema.extend({
+  type: z.literal('media-text'),
+  data: z.object({
+    contentHtml: z.string().default(''),
+    imageId: z.string().optional().nullable(),
+    imageUrl: z.string().optional().nullable(),
+    imageAlt: z.string().optional().nullable(),
+    imageSide: z.enum(['left', 'right']).optional(),
+    imageWidth: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]).optional(),
+    imageHeight: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]).optional(),
+    // Legacy support
+    imageWidthPct: z.number().optional()
+  })
+});
+
 const heroCardSchema = z.object({
   title: z.string().optional().nullable(),
   text: z.string().optional().nullable(),
@@ -410,6 +425,7 @@ export const pageBlockSchema = z.discriminatedUnion('type', [
   contactInfoBlockSchema,
   servicesBlockSchema,
   ctaBlockSchema,
+  mediaTextBlockSchema,
   cardBlockSchema,
   formBlockSchema,
   heroBlockSchema
@@ -637,6 +653,16 @@ export type CtaBlockData = {
   imageAlt?: string | null;
 };
 
+export type MediaTextBlockData = {
+  contentHtml: string;
+  imageId?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  imageSide?: 'left' | 'right';
+  imageWidth?: 25 | 50 | 75 | 100;
+  imageHeight?: 25 | 50 | 75 | 100;
+};
+
 export type PageBlock =
   | {
       id: string;
@@ -791,6 +817,17 @@ export type PageBlock =
       createdAt: string;
       updatedAt: string;
       data: CtaBlockData;
+      isLocked?: boolean;
+      visible?: boolean;
+    }
+  | {
+      id: string;
+      type: 'media-text';
+      rowIndex?: number;
+      colSpan?: number;
+      createdAt: string;
+      updatedAt: string;
+      data: MediaTextBlockData;
       isLocked?: boolean;
       visible?: boolean;
     };
@@ -1475,6 +1512,36 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
           imageId: base.data.imageId ?? null,
           imageUrl: imageUrl || null,
           imageAlt: base.data.imageAlt?.toString() || ''
+        }
+      };
+    }
+    case 'media-text': {
+      const imageUrlRaw = base.data.imageUrl ? base.data.imageUrl.toString().trim() : '';
+      const imageUrl = imageUrlRaw ? normalizeInternalHref(imageUrlRaw) || '' : '';
+      const legacyWidth = Number(base.data.imageWidthPct ?? 50);
+      const normalizePreset = (value: unknown, fallback: 25 | 50 | 75 | 100): 25 | 50 | 75 | 100 => {
+        const num = Number(value);
+        if (num === 25 || num === 50 || num === 75 || num === 100) return num as 25 | 50 | 75 | 100;
+        // Legacy migration
+        if (num <= 30) return 25;
+        if (num <= 60) return 50;
+        if (num <= 85) return 75;
+        if (num > 85) return 100;
+        return fallback;
+      };
+      const imageWidth = normalizePreset((base.data as any).imageWidth ?? legacyWidth, 50);
+      const imageHeight = normalizePreset((base.data as any).imageHeight, 75);
+      return {
+        ...common,
+        type: 'media-text',
+        data: {
+          contentHtml: sanitizeContent(base.data.contentHtml || ''),
+          imageId: base.data.imageId ?? null,
+          imageUrl: imageUrl || null,
+          imageAlt: base.data.imageAlt?.toString() || '',
+          imageSide: base.data.imageSide === 'right' ? 'right' : 'left',
+          imageWidth,
+          imageHeight
         }
       };
     }

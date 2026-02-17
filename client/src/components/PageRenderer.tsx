@@ -379,26 +379,22 @@ export function PageBlockView({ block, enableFormSubmit = true, pageSlug }: { bl
       const data = block.data as MediaTextBlockData;
       const side = data.imageSide === 'right' ? 'right' : 'left';
       const rawWidth = (data as any).imageWidth ?? (data as any).imageWidthPct ?? 50;
-      const rawHeight = (data as any).imageHeight ?? 75;
+      const rawCustomWidthPct = Number((data as any).customImageWidthPct);
+      const rawCustomWidth = Number((data as any).customImageWidthPx);
       const widthPreset: 25 | 50 | 75 | 100 = [25, 50, 75, 100].includes(Number(rawWidth) as any)
         ? (Number(rawWidth) as 25 | 50 | 75 | 100)
         : 50;
-      const heightPreset: 25 | 50 | 75 | 100 = [25, 50, 75, 100].includes(Number(rawHeight) as any)
-        ? (Number(rawHeight) as 25 | 50 | 75 | 100)
-        : 75;
-      const imageHeightMap: Record<25 | 50 | 75 | 100, string> = {
-        25: '180px',
-        50: '260px',
-        75: '340px',
-        100: '420px'
-      };
+      const customWidthPct =
+        Number.isFinite(rawCustomWidthPct) && rawCustomWidthPct > 0 ? Math.max(1, Math.min(Math.round(rawCustomWidthPct), 100)) : null;
+      const customWidthPx =
+        Number.isFinite(rawCustomWidth) && rawCustomWidth > 0 ? Math.max(120, Math.min(Math.round(rawCustomWidth), 2000)) : null;
+      const resolvedImageWidth = customWidthPct ? `${customWidthPct}%` : customWidthPx ? `${customWidthPx}px` : `${widthPreset}%`;
 
       return (
         <div
           className={`page-media-text page-media-text--${side}`.trim()}
           style={{
-            ['--media-text-image-width' as any]: `${widthPreset}%`,
-            ['--media-text-image-height' as any]: imageHeightMap[heightPreset]
+            ['--media-text-image-width' as any]: resolvedImageWidth
           }}
         >
           <figure className="page-media-text-image">

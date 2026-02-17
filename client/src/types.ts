@@ -260,6 +260,10 @@ export type MediaTextBlockData = {
   imageSide?: 'left' | 'right';
   imageWidth?: 25 | 50 | 75 | 100;
   imageHeight?: 25 | 50 | 75 | 100;
+  customImageWidthPct?: number | null;
+  customImageHeightPct?: number | null;
+  customImageWidthPx?: number | null;
+  customImageHeightPx?: number | null;
 };
 
 export type ContactInfoBlockData = {

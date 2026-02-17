@@ -2368,12 +2368,19 @@ function MediaTextBlockForm(_props: {
   const { value, onChange, onUploadingChange } = _props;
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const side = value.imageSide === 'right' ? 'right' : 'left';
-  const imageWidth = ([25, 50, 75, 100] as const).includes((value.imageWidth as any) ?? 50)
+  const hasCustomImageWidth =
+    typeof value.customImageWidthPct === 'number' &&
+    Number.isFinite(value.customImageWidthPct) &&
+    value.customImageWidthPct > 0;
+  const imageWidth = ([25, 50, 75, 100] as const).includes(value.imageWidth as any)
     ? (value.imageWidth as 25 | 50 | 75 | 100)
-    : 50;
-  const imageHeight = ([25, 50, 75, 100] as const).includes((value.imageHeight as any) ?? 75)
-    ? (value.imageHeight as 25 | 50 | 75 | 100)
-    : 75;
+    : null;
+  const customImageWidthPct =
+    typeof value.customImageWidthPct === 'number' &&
+    Number.isFinite(value.customImageWidthPct) &&
+    value.customImageWidthPct > 0
+      ? Math.round(value.customImageWidthPct)
+      : '';
 
   const handleSelectImage = (image: { mediaId: string; src: string; alt: string }) => {
     onChange({
@@ -2423,7 +2430,7 @@ function MediaTextBlockForm(_props: {
               <button
                 key={`media-width-${opt}`}
                 type="button"
-                className={imageWidth === opt ? 'active' : ''}
+                className={!hasCustomImageWidth && imageWidth === opt ? 'active' : ''}
                 onClick={() => onChange({ ...value, imageWidth: opt as 25 | 50 | 75 | 100 })}
               >
                 {opt}%
@@ -2433,19 +2440,22 @@ function MediaTextBlockForm(_props: {
         </div>
 
         <div className="editor-field">
-          <label>Altura da imagem</label>
-          <div className="page-columns-toggle compact">
-            {[25, 50, 75, 100].map((opt) => (
-              <button
-                key={`media-height-${opt}`}
-                type="button"
-                className={imageHeight === opt ? 'active' : ''}
-                onClick={() => onChange({ ...value, imageHeight: opt as 25 | 50 | 75 | 100 })}
-              >
-                {opt}%
-              </button>
-            ))}
-          </div>
+          <label>Largura personalizada (%)</label>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            step={1}
+            value={customImageWidthPct}
+            placeholder="Ex.: 42"
+            onChange={(e) => {
+              const next = Number(e.target.value);
+              onChange({
+                ...value,
+                customImageWidthPct: Number.isFinite(next) && next > 0 ? Math.max(1, Math.min(Math.round(next), 100)) : null
+              });
+            }}
+          />
         </div>
 
         <div className="editor-field">

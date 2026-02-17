@@ -305,8 +305,12 @@ const mediaTextBlockSchema = baseBlockSchema.extend({
     imageSide: z.enum(['left', 'right']).optional(),
     imageWidth: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]).optional(),
     imageHeight: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]).optional(),
+    customImageWidthPct: z.number().int().min(1).max(100).optional().nullable(),
     // Legacy support
-    imageWidthPct: z.number().optional()
+    imageWidthPct: z.number().optional(),
+    customImageWidthPx: z.number().optional().nullable(),
+    customImageHeightPct: z.number().optional().nullable(),
+    customImageHeightPx: z.number().optional().nullable()
   })
 });
 
@@ -661,6 +665,7 @@ export type MediaTextBlockData = {
   imageSide?: 'left' | 'right';
   imageWidth?: 25 | 50 | 75 | 100;
   imageHeight?: 25 | 50 | 75 | 100;
+  customImageWidthPct?: number | null;
 };
 
 export type PageBlock =
@@ -1531,6 +1536,11 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
       };
       const imageWidth = normalizePreset((base.data as any).imageWidth ?? legacyWidth, 50);
       const imageHeight = normalizePreset((base.data as any).imageHeight, 75);
+      const customImageWidthPctRaw = Number((base.data as any).customImageWidthPct);
+      const customImageWidthPct =
+        Number.isFinite(customImageWidthPctRaw) && customImageWidthPctRaw > 0
+          ? Math.max(1, Math.min(Math.round(customImageWidthPctRaw), 100))
+          : null;
       return {
         ...common,
         type: 'media-text',
@@ -1541,7 +1551,8 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
           imageAlt: base.data.imageAlt?.toString() || '',
           imageSide: base.data.imageSide === 'right' ? 'right' : 'left',
           imageWidth,
-          imageHeight
+          imageHeight,
+          customImageWidthPct
         }
       };
     }

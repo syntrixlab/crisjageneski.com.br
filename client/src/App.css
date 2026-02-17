@@ -6257,6 +6257,15 @@ figure.page-public-image figcaption {
 .hero-body--stacked {
   display: block;
   padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 5vw, 3rem);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-body--stacked.hero-overlay-bg::before {
+  opacity: 0.12;
+  background-position: 82% top;
+  background-size: cover;
+  z-index: 1;
 }
 
 .hero-content {
@@ -6313,6 +6322,37 @@ figure.page-public-image figcaption {
 .hero-media--stacked {
   border-radius: 0;
   transform: none !important;
+  position: relative;
+}
+
+/* Suaviza a transição entre a imagem superior e o conteúdo inferior do hero stacked */
+.hero-media--stacked::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(42px, 7vw, 72px);
+  background: linear-gradient(to bottom, rgba(243, 238, 229, 0), var(--section-surface));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero-body--stacked::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: clamp(36px, 6vw, 60px);
+  background: linear-gradient(to bottom, var(--section-surface), rgba(243, 238, 229, 0));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero-body--stacked > * {
+  position: relative;
+  z-index: 3;
 }
 
 /* Garantir que a imagem do Hero stacked NUNCA tenha transform */

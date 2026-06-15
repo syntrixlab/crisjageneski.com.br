@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import placeholderSrc from '../assets/image-placeholder.svg';
 import type {
   HeroBlockDataV1,
   HeroBlockDataV2,
@@ -244,7 +245,7 @@ export function migrateHeroV1ToV2(heroV1: HeroBlockDataV1): HeroBlockDataV2 {
       type: 'image',
       colSpan: 1,
       data: {
-        src: 'https://via.placeholder.com/600x400?text=Adicione+uma+imagem',
+        src: placeholderSrc,
         alt: 'Placeholder',
         size: 100,
         align: 'center',
@@ -318,7 +319,7 @@ function normalizeHeroV2(data: HeroBlockDataV2): HeroBlockDataV2 {
         type: 'image',
         colSpan: 1,
         data: {
-          src: 'https://via.placeholder.com/600x400',
+          src: placeholderSrc,
           alt: 'Placeholder',
           size: 100,
           heightPct: 100
@@ -432,7 +433,7 @@ export function createDefaultHeroV2(): PageBlock {
           type: 'image',
           colSpan: 1,
           data: {
-            src: 'https://via.placeholder.com/600x400?text=Adicione+uma+imagem',
+            src: placeholderSrc,
             alt: 'Hero image',
             size: 100,
             align: 'center',

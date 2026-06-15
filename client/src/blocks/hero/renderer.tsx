@@ -41,6 +41,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
 
     const renderHeroImage = (childBlock: PageBlock, variant: 'split' | 'stacked') => {
       if (childBlock.type !== 'image') {
+        // span necessário para o key do React; display:contents evita quebra de layout — substituição de PageBlockView sem importar registry
         return (
           <span key={childBlock.id} style={{ display: 'contents' }}>
             {renderChild?.(childBlock)}
@@ -95,6 +96,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
           )}
           <div className="hero-body hero-body--stacked hero-overlay-bg">
             <div className="hero-content hero-content--stacked">
+              {/* span necessário para o key do React; display:contents evita quebra de layout — substituição de PageBlockView sem importar registry */}
               {(heroV2.left ?? []).map((childBlock) => (
                 <span key={childBlock.id} style={{ display: 'contents' }}>
                   {renderChild?.(childBlock)}
@@ -110,6 +112,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
       <div className="hero hero--v2 hero-card hero--split">
         <div className="hero-body hero-body--split">
           <div className="hero-content hero-content--split hero-overlay-bg">
+            {/* span necessário para o key do React; display:contents evita quebra de layout — substituição de PageBlockView sem importar registry */}
             {(heroV2.left ?? []).map((childBlock) => (
               <span key={childBlock.id} style={{ display: 'contents' }}>
                 {renderChild?.(childBlock)}
@@ -147,6 +150,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
     'Cada sessão é um espaço seguro para você compreender suas emoções, criar novas rotas e caminhar com leveza.';
 
   const renderSingleImage = () => {
+    // V1 hero: sem schema tipado, dado bruto de páginas legadas
     const image = (dataV1.singleImage as any) || {};
     const url = typeof image.url === 'string' ? image.url : '';
     const alt = typeof image.alt === 'string' ? image.alt : '';
@@ -161,6 +165,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
   };
 
   const renderFourCards = () => {
+    // V1 hero: sem schema tipado, dado bruto de páginas legadas
     const fc = (dataV1.fourCards as any) || {};
     const medium = fc.medium || {
       title: fallbackQuote,
@@ -206,6 +211,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
   };
 
   const renderCardsOnly = () => {
+    // V1 hero: sem schema tipado, dado bruto de páginas legadas
     const fc = (dataV1.fourCards as any) || {};
     const medium = fc.medium || { title: fallbackQuote, text: 'Cristiane Jageneski' };
     const small = Array.from({ length: 3 }).map((_, idx) => {

@@ -26,7 +26,7 @@ export type PageForm = {
 
 const emptyLayout: PageLayoutV2 = { version: 2, sections: [] };
 
-export const emptyPage: PageForm = {
+const emptyPage: PageForm = {
   title: '',
   slug: '',
   pageKey: null,
@@ -118,9 +118,9 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
       });
       navigate(`/admin/pages/${data.id}/edit`, { replace: true });
     },
-    onError: (err: any) => {
-      const message = err?.response?.data?.error?.message || 'Falha ao salvar página.';
-      setFormError(message);
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      setFormError(msg ?? 'Falha ao salvar página.');
     }
   });
 
@@ -138,9 +138,9 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
         setDraftAlert('Esta página voltou para rascunho. Publique novamente para atualizar no site.');
       }
     },
-    onError: (err: any) => {
-      const message = err?.response?.data?.error?.message || 'Falha ao atualizar página.';
-      setFormError(message);
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      setFormError(msg ?? 'Falha ao atualizar página.');
     }
   });
 

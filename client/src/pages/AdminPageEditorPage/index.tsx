@@ -33,6 +33,7 @@ import { useSectionManager } from './hooks/useSectionManager';
 import { useBlockManager, type BlockDraft, type BlockModalState, type MoveModalState, type DeleteModalState } from './hooks/useBlockManager';
 import { PageEditorToolbar } from './components/PageEditorToolbar';
 import { BlockCard } from './components/BlockCard';
+import { MoveBlockModal } from './components/MoveBlockModal';
 
 const plainTextLength = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().length;
 
@@ -799,44 +800,6 @@ function AddBlockButton(_props: { onClick: () => void; style?: React.CSSProperti
     <button type="button" className="page-add-block" onClick={onClick} style={style}>
       {label || '+ Adicionar bloco'}
     </button>
-  );
-}
-
-function MoveBlockModal(_props: {
-  state: MoveModalState | null;
-  section?: PageSection;
-  onClose: () => void;
-  onConfirm: (targetColumn: number) => void;
-}) {
-  const { state, section, onClose, onConfirm } = _props;
-  const [target, setTarget] = useState(0);
-
-  useEffect(() => {
-    if (state) setTarget(state.columnIndex);
-  }, [state?.columnIndex]);
-
-  const columns = section?.columns ?? 1;
-  const columnsLayout = section?.settings?.columnsLayout ?? section?.columnsLayout ?? columns ?? 1;
-  const colCount = Math.max(1, Math.min(columnsLayout, 3));
-
-  return (
-    <Modal isOpen={!!state?.open} onClose={onClose} title="Mover bloco para coluna" description="Selecione a coluna de destino.">
-      <div className="page-columns-toggle">
-        {Array.from({ length: colCount }).map((_, idx) => (
-          <button key={idx} type="button" className={target === idx ? 'active' : ''} onClick={() => setTarget(idx)}>
-            Coluna {idx + 1}
-          </button>
-        ))}
-      </div>
-      <div className="admin-modal-footer">
-        <button className="btn btn-outline" type="button" onClick={onClose}>
-          Cancelar
-        </button>
-        <button className="btn btn-primary" type="button" onClick={() => onConfirm(target)}>
-          Mover
-        </button>
-      </div>
-    </Modal>
   );
 }
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { ArticleStatusBadge, ConfirmModal, IconButton, Modal } from '../components/AdminUI';
 import { SeoHead } from '../components/SeoHead';
@@ -9,14 +8,6 @@ import { usePageValidation } from '../hooks/usePageValidation';
 import { ValidationErrorsModal, ValidationInput, CharCounter } from '../components/ValidationComponents';
 import { blockRegistry } from '@/blocks/registry';
 import type { BlockType } from '../types';
-import {
-  createPage,
-  fetchAdminPage,
-  publishPage,
-  unpublishPage,
-  updatePage,
-  fetchAdminHomePage
-} from '../api/queries';
 import type {
   ButtonBlockData,
   CardBlockData,
@@ -27,15 +18,11 @@ import type {
   HeroMediaMode,
   HeroBlockData,
   ServicesBlockData,
-  Page,
   PageBlock,
-  PageLayoutV2,
   PageSection,
-  PageStatus,
   TextBlockData
 } from '../types';
 import {
-  ensureLayoutV2,
   createSection,
   addSection,
   removeSection,
@@ -52,19 +39,9 @@ import {
   resolveSideTargetColumnIndex,
   getBlockRowIndex
 } from '../utils/pageLayoutHelpers';
-import { ensureHeroInSection, isHeroV1 } from '../utils/heroMigration';
+import { isHeroV1 } from '../utils/heroMigration';
 import { sectionPresets, createSectionFromPreset } from '../utils/sectionPresets';
-
-type PageForm = {
-  id?: string;
-  title: string;
-  slug: string;
-  pageKey?: string | null;
-  description?: string | null;
-  layout: PageLayoutV2;
-  status: PageStatus;
-  publishedAt?: string | null;
-};
+import { usePageEditor, slugify, type PageForm } from './hooks/usePageEditor';
 
 type BlockDraft = {
   id?: string;
@@ -99,25 +76,6 @@ type DeleteModalState = {
   columnIndex: number;
   block?: PageBlock;
 };
-
-const emptyLayout: PageLayoutV2 = { version: 2, sections: [] };
-
-const emptyPage: PageForm = {
-  title: '',
-  slug: '',
-  pageKey: null,
-  description: '',
-  layout: emptyLayout,
-  status: 'draft'
-};
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
 
 const plainTextLength = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().length;
 
@@ -400,31 +358,17 @@ function PageEditorActions(_props: {
 
 export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const { id } = useParams<{ id: string }>();
-  const isHomePage = pageKey === 'home';
-  const isNew = !isHomePage && (!id || id === 'new');
-  const navigate = useNavigate();
-  const qc = useQueryClient();
-
   const {
-    data: existingPage,
-    isLoading: isLoadingPage,
-    isError: isPageError,
-    refetch: refetchPage
-  } = useQuery<Page>({
-    queryKey: isHomePage ? ['admin', 'page', 'home'] : ['admin', 'page', id],
-    queryFn: () => (isHomePage ? fetchAdminHomePage() : fetchAdminPage(id || '')),
-    enabled: isHomePage ? true : !isNew && !!id
-  });
+    page, setPage, viewMode, setViewMode, formError, draftAlert,
+    busyMutations, isNew, isHomePage, isLoadingPage, isPageError,
+    refetchPage, saveDraft, publish, handleMoveToDraft
+  } = usePageEditor(id, pageKey);
 
-  const [page, setPage] = useState<PageForm>(emptyPage);
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [blockModal, setBlockModal] = useState<BlockModalState | null>(null);
   const [moveModal, setMoveModal] = useState<MoveModalState | null>(null);
   const [deleteModal, setDeleteModal] = useState<DeleteModalState | null>(null);
   const [presetModal, setPresetModal] = useState<boolean>(false);
   const [hasUploading, setHasUploading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [draftAlert, setDraftAlert] = useState<string | null>(null);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   // Validation hook
@@ -436,174 +380,26 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   } = usePageValidation(page);
 
   useEffect(() => {
-    if (existingPage) {
-      const normalizedLayout = ensureLayoutV2(existingPage.layout);
-
-      // For Home page, ensure Hero exists in first section
-      let finalLayout = normalizedLayout;
-      if (isHomePage && normalizedLayout.sections.length > 0) {
-        const firstSection = normalizedLayout.sections[0];
-        const hasHero = firstSection.cols?.some(col => 
-          col.blocks?.some(block => block.type === 'hero')
-        );
-        
-        if (!hasHero) {
-          const sectionWithHero = ensureHeroInSection(firstSection);
-          finalLayout = {
-            ...normalizedLayout,
-            sections: [sectionWithHero, ...normalizedLayout.sections.slice(1)]
-          };
-        }
-      }
-      
-      setPage({
-        id: existingPage.id,
-        title: existingPage.title,
-        slug: isHomePage ? 'home' : existingPage.slug,
-        pageKey: existingPage.pageKey ?? (isHomePage ? 'home' : null),
-        description: existingPage.description ?? '',
-        layout: finalLayout,
-        status: isHomePage ? 'published' : existingPage.status ?? 'draft',
-        publishedAt: existingPage.publishedAt ?? null
-      });
-    }
-  }, [existingPage?.id, isHomePage]);
-
-  useEffect(() => {
     if (!blockModal) {
       setHasUploading(false);
     }
   }, [blockModal]);
 
-  const createMutation = useMutation({
-    mutationFn: (payload: PageForm) => createPage(payload),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setPage({
-        id: data.id,
-        title: data.title,
-        slug: data.slug,
-        description: data.description ?? '',
-        layout: ensureLayoutV2(data.layout),
-        status: data.status ?? 'draft',
-        publishedAt: data.publishedAt ?? null
-      });
-      navigate(`/admin/pages/${data.id}/edit`, { replace: true });
-    },
-    onError: (err: any) => {
-      const message = err?.response?.data?.error?.message || 'Falha ao salvar página.';
-      setFormError(message);
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: PageForm }) => updatePage(id, payload),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setPage((prev) => ({
-        ...prev,
-        ...data.page,
-        layout: ensureLayoutV2(data.page.layout),
-        status: data.page.status ?? 'draft'
-      }));
-      if (data.changedToDraft) {
-        setDraftAlert('Esta página voltou para rascunho. Publique novamente para atualizar no site.');
-      }
-    },
-    onError: (err: any) => {
-      const message = err?.response?.data?.error?.message || 'Falha ao atualizar página.';
-      setFormError(message);
-    }
-  });
-
-  const publishMutation = useMutation({
-    mutationFn: publishPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      qc.invalidateQueries({ queryKey: ['page', data.slug] });
-      setPage((prev) => ({
-        ...prev,
-        ...data,
-        layout: ensureLayoutV2(data.layout),
-        status: data.status ?? 'published'
-      }));
-      setDraftAlert(null);
-    }
-  });
-
-  const unpublishMutation = useMutation({
-    mutationFn: unpublishPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setPage((prev) => ({
-        ...prev,
-        ...data,
-        layout: ensureLayoutV2(data.layout),
-        status: 'draft'
-      }));
-    }
-  });
-
-  const busy =
-    createMutation.isPending || updateMutation.isPending || publishMutation.isPending || unpublishMutation.isPending || hasUploading;
-
-  const validatePage = (current: PageForm) => {
-    if (!current.title.trim() || current.title.trim().length < 3) return 'Informe um titulo com ao menos 3 caracteres.';
-    if (!isHomePage && (!current.slug.trim() || current.slug.trim().length < 2)) return 'Informe um slug para a pagina.';
-    return null;
-  };
-
-  const saveDraft = async () => {
-    const error = validatePage(page);
-    if (error) {
-      setFormError(error);
-      return null;
-    }
-    setFormError(null);
-    const payload: PageForm = {
-      ...page,
-      slug: isHomePage ? 'home' : slugify(page.slug),
-      pageKey: isHomePage ? 'home' : page.pageKey ?? null,
-      status: isHomePage ? 'published' : 'draft',
-      layout: ensureLayoutV2(page.layout)
-    };
-    
-    if (isHomePage) {
-      if (!page.id) {
-        setFormError('Home não carregada. Tente novamente.');
-        return null;
-      }
-      const updated = await updateMutation.mutateAsync({ id: page.id, payload });
-      return updated.page;
-    }
-    if (isNew || !page.id) {
-      const created = await createMutation.mutateAsync(payload);
-      return created;
-    }
-    const updated = await updateMutation.mutateAsync({ id: page.id, payload });
-    return updated.page;
-  };
+  const busy = busyMutations || hasUploading;
 
   const handlePublish = async () => {
     if (isHomePage) {
       await saveDraft();
       return;
     }
-    // Executar validação antes de publicar
     const errors = validateForPublication();
     if (errors.length > 0) {
       setShowValidationErrors(true);
       return;
     }
-    
     const saved = await saveDraft();
     if (!saved?.id) return;
-    await publishMutation.mutateAsync(saved.id);
-  };
-
-  const handleMoveToDraft = () => {
-    if (!page.id || isHomePage) return;
-    unpublishMutation.mutate(page.id);
+    await publish(saved.id);
   };
 
   // Section handlers

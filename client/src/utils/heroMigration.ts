@@ -301,9 +301,6 @@ function normalizeHeroV2(data: HeroBlockDataV2): HeroBlockDataV2 {
   const normalized = { ...data };
   normalized.layoutVariant = normalizeHeroLayoutVariant(normalized.layoutVariant);
   
-  console.log('[normalizeHeroV2] Input rightVariant:', data.rightVariant);
-  console.log('[normalizeHeroV2] Input right blocks:', data.right.map(b => b.type));
-  
   // Preserve rightVariant - NEVER reset it
   // Only ensure minimal structure if completely empty
   
@@ -352,9 +349,6 @@ function normalizeHeroV2(data: HeroBlockDataV2): HeroBlockDataV2 {
     const heightPct = firstImage?.type === 'image' ? (firstImage.data as ImageBlockData).heightPct : undefined;
     normalized.imageHeight = mapHeightPctToImageHeight(heightPct ?? null) ?? 'lg';
   }
-  
-  console.log('[normalizeHeroV2] Output rightVariant:', normalized.rightVariant);
-  console.log('[normalizeHeroV2] Output right blocks:', normalized.right.map(b => b.type));
   
   return normalized;
 }

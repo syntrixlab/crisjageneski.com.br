@@ -3,6 +3,7 @@ import type React from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ConfirmModal, Modal } from './AdminUI';
 import {
   faBold,
   faItalic,
@@ -79,6 +80,8 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
     baseAlign: string;
   }>({ open: false, src: '', alt: '', size: '100', align: 'center', baseAlt: '', baseSize: '100', baseAlign: 'center' });
   const imageAltInputRef = useRef<HTMLInputElement | null>(null);
+  const [confirmRemoveImage, setConfirmRemoveImage] = useState(false);
+  const [authorModal, setAuthorModal] = useState<{ open: boolean; value: string }>({ open: false, value: '' });
 
   useEffect(() => {
     if (!ref.current) return;
@@ -541,13 +544,18 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
     setEditImageModal((prev) => ({ ...prev, open: false }));
   };
 
-  const removeImage = () => {
-    if (!activeFigure || !ref.current) return;
-    if (!window.confirm('Remover esta imagem?')) return;
-    activeFigure.remove();
+  const requestRemoveImage = () => {
+    if (!activeFigure) return;
     setImagePopover({ open: false, rect: null, target: null });
+    setConfirmRemoveImage(true);
+  };
+
+  const executeRemoveImage = () => {
+    if (!activeFigure || !ref.current) return;
+    activeFigure.remove();
     highlightFigure(null);
     handleInput();
+    setConfirmRemoveImage(false);
   };
 
   const handleEditLink = () => {
@@ -756,14 +764,20 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
 
-  const insertQuoteAuthor = () => {
-    const rawAuthor = window.prompt('Nome do autor da frase');
-    if (!rawAuthor) return;
-    const author = rawAuthor.trim();
+  const requestInsertQuoteAuthor = () => {
+    captureSelection();
+    setAuthorModal({ open: true, value: '' });
+  };
+
+  const applyQuoteAuthor = () => {
+    const author = authorModal.value.trim();
     if (!author) return;
 
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
+    if (!sel || sel.rangeCount === 0) {
+      setAuthorModal({ open: false, value: '' });
+      return;
+    }
     const block = closestAlignableBlock(sel.getRangeAt(0).startContainer);
 
     if (block && /^H[1-3]$/.test(block.tagName)) {
@@ -778,6 +792,7 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
         block.appendChild(authorNode);
       }
       handleInput();
+      setAuthorModal({ open: false, value: '' });
       return;
     }
 
@@ -788,16 +803,19 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
       authorNode.textContent = author;
       appendWithSeparator(block, authorNode);
       handleInput();
+      setAuthorModal({ open: false, value: '' });
       return;
     }
 
     const safeAuthor = escapeHtml(author);
+    restoreSelection();
     document.execCommand(
       'insertHTML',
       false,
       `<strong class="rte-author-inline" data-type="quote-author-inline">${safeAuthor}</strong>`
     );
     handleInput();
+    setAuthorModal({ open: false, value: '' });
   };
 
   const toolbarGroups: {
@@ -868,7 +886,7 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
         key: 'author',
         label: <span className="rte-heading-icon">Au</span>,
         title: 'Inserir autor da frase',
-        action: insertQuoteAuthor
+        action: requestInsertQuoteAuthor
       }
     ],
     [
@@ -965,7 +983,7 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
               className="rte-popover-btn tone-danger"
               aria-label="Remover imagem"
               title="Remover imagem"
-              onClick={removeImage}
+              onClick={requestRemoveImage}
             >
               <FontAwesomeIcon icon={faTrash} />
             </button>
@@ -1243,6 +1261,61 @@ export function RichTextEditor({ value, onChange, onUploadingChange }: Props) {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmRemoveImage}
+        title="Remover imagem"
+        description="Tem certeza que deseja remover esta imagem do editor?"
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onConfirm={executeRemoveImage}
+        onClose={() => setConfirmRemoveImage(false)}
+      />
+
+      <Modal
+        isOpen={authorModal.open}
+        title="Inserir autor"
+        description="O nome será inserido como atribuição após o texto selecionado."
+        onClose={() => setAuthorModal({ open: false, value: '' })}
+        width={400}
+        footer={
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button
+              className="btn btn-ghost"
+              type="button"
+              onClick={() => setAuthorModal({ open: false, value: '' })}
+            >
+              Cancelar
+            </button>
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={applyQuoteAuthor}
+              disabled={!authorModal.value.trim()}
+            >
+              Inserir
+            </button>
+          </div>
+        }
+      >
+        <input
+          className="rte-input"
+          style={{ width: '100%' }}
+          placeholder="Ex: Carl Jung"
+          value={authorModal.value}
+          autoFocus
+          onChange={(e) => setAuthorModal((prev) => ({ ...prev, value: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              applyQuoteAuthor();
+            }
+            if (e.key === 'Escape') {
+              setAuthorModal({ open: false, value: '' });
+            }
+          }}
+        />
+      </Modal>
     </div>
   );
 }

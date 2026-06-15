@@ -1,0 +1,231 @@
+import { useEffect, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  addBlockToSection,
+  removeBlockFromSection,
+  updateBlockInSection,
+  moveBlockInColumn,
+  moveBlockToColumn,
+  duplicateBlock,
+  canAddSideAtIndex,
+  resolveSideTargetColumnIndex
+} from '@/utils/pageLayoutHelpers';
+import type { PageBlock, PageSection } from '@/types';
+import type { PageForm } from './usePageEditor';
+
+export type BlockDraft = {
+  id?: string;
+  type: PageBlock['type'];
+  colSpan?: number;
+  data: PageBlock['data'];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type BlockModalState = {
+  open: boolean;
+  mode: 'add' | 'edit';
+  sectionId: string;
+  columnIndex: number;
+  insertIndex: number;
+  block?: PageBlock;
+  placement?: 'insert' | 'side';
+};
+
+export type MoveModalState = {
+  open: boolean;
+  sectionId: string;
+  columnIndex: number;
+  blockIndex: number;
+  block?: PageBlock;
+};
+
+export type DeleteModalState = {
+  open: boolean;
+  sectionId: string;
+  columnIndex: number;
+  block?: PageBlock;
+};
+
+export function useBlockManager(
+  setPage: Dispatch<SetStateAction<PageForm>>,
+  sections: PageSection[]
+) {
+  const [blockModal, setBlockModal] = useState<BlockModalState | null>(null);
+  const [moveModal, setMoveModal] = useState<MoveModalState | null>(null);
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState | null>(null);
+  const [hasUploading, setHasUploading] = useState(false);
+
+  useEffect(() => {
+    if (!blockModal) setHasUploading(false);
+  }, [blockModal]);
+
+  const handleOpenAddBlock = (sectionId: string, columnIndex: number, insertIndex: number) => {
+    setBlockModal({ open: true, mode: 'add', sectionId, columnIndex, insertIndex, placement: 'insert' });
+  };
+
+  const handleOpenEditBlock = (
+    sectionId: string,
+    columnIndex: number,
+    block: PageBlock,
+    blockIndex: number
+  ) => {
+    setBlockModal({ open: true, mode: 'edit', sectionId, columnIndex, insertIndex: blockIndex, block });
+  };
+
+  const handleSaveBlock = (draft: BlockDraft) => {
+    if (!blockModal) return;
+    const now = new Date().toISOString();
+    const section = sections.find((s) => s.id === blockModal.sectionId);
+    const maxSpan = Math.max(
+      1,
+      Math.min(
+        (section?.settings?.columnsLayout as number) ||
+          section?.columnsLayout ||
+          section?.columns ||
+          2,
+        3
+      )
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const colSpan = Math.max(1, Math.min((draft as any).colSpan ?? (blockModal.block?.colSpan ?? 1), maxSpan));
+    const block: PageBlock = {
+      id: draft.id ?? uuidv4(),
+      type: draft.type,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: draft.data as any,
+      colSpan,
+      rowIndex: blockModal.mode === 'edit' ? blockModal.block?.rowIndex : undefined,
+      createdAt: draft.createdAt ?? now,
+      updatedAt: now
+    };
+    setPage((prev) => {
+      let newLayout = prev.layout;
+      if (blockModal.mode === 'add') {
+        const placement = blockModal.placement === 'side' ? 'place' : 'insert';
+        newLayout = addBlockToSection(
+          newLayout,
+          blockModal.sectionId,
+          blockModal.columnIndex,
+          block,
+          blockModal.insertIndex,
+          placement
+        );
+      } else {
+        newLayout = updateBlockInSection(
+          newLayout,
+          blockModal.sectionId,
+          blockModal.columnIndex,
+          blockModal.block!.id,
+          block
+        );
+      }
+      return { ...prev, layout: newLayout };
+    });
+    setBlockModal(null);
+  };
+
+  const handleMoveBlock = (
+    sectionId: string,
+    columnIndex: number,
+    blockId: string,
+    direction: 'up' | 'down'
+  ) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: moveBlockInColumn(prev.layout, sectionId, columnIndex, blockId, direction)
+    }));
+  };
+
+  const handleOpenMoveModal = (
+    sectionId: string,
+    columnIndex: number,
+    blockIndex: number,
+    block: PageBlock
+  ) => {
+    setMoveModal({ open: true, sectionId, columnIndex, blockIndex, block });
+  };
+
+  const handleConfirmMoveColumn = (targetColumn: number) => {
+    if (!moveModal) return;
+    setPage((prev) => ({
+      ...prev,
+      layout: moveBlockToColumn(
+        prev.layout,
+        moveModal.sectionId,
+        moveModal.columnIndex,
+        targetColumn,
+        moveModal.block!.id
+      )
+    }));
+    setMoveModal(null);
+  };
+
+  const handleDeleteBlock = (sectionId: string, columnIndex: number, blockId: string) => {
+    const section = sections.find((s) => s.id === sectionId);
+    const targetBlock = section?.cols?.[columnIndex]?.blocks.find((b) => b.id === blockId);
+    if (targetBlock?.type === 'hero') {
+      setDeleteModal(null);
+      return;
+    }
+    setPage((prev) => ({
+      ...prev,
+      layout: removeBlockFromSection(prev.layout, sectionId, columnIndex, blockId)
+    }));
+    setDeleteModal(null);
+  };
+
+  const handleAddBlockSide = (sectionId: string, fromColumnIndex: number, rowIndex: number) => {
+    const section = sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const targetColumnIndex = resolveSideTargetColumnIndex({
+      columns: section.cols,
+      fromColumnIndex,
+      direction: 'right'
+    });
+    if (targetColumnIndex === null) return;
+    const canAddSide = canAddSideAtIndex({
+      columns: section.cols,
+      fromColumnIndex,
+      fromIndex: rowIndex,
+      direction: 'right'
+    });
+    if (!canAddSide) return;
+    setBlockModal({
+      open: true,
+      mode: 'add',
+      sectionId,
+      columnIndex: targetColumnIndex,
+      insertIndex: rowIndex,
+      placement: 'side'
+    });
+  };
+
+  const handleDuplicateBlock = (sectionId: string, columnIndex: number, blockId: string) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: duplicateBlock(prev.layout, sectionId, columnIndex, blockId)
+    }));
+  };
+
+  return {
+    blockModal,
+    setBlockModal,
+    moveModal,
+    setMoveModal,
+    deleteModal,
+    setDeleteModal,
+    hasUploading,
+    setHasUploading,
+    handleOpenAddBlock,
+    handleOpenEditBlock,
+    handleSaveBlock,
+    handleMoveBlock,
+    handleOpenMoveModal,
+    handleConfirmMoveColumn,
+    handleDeleteBlock,
+    handleAddBlockSide,
+    handleDuplicateBlock
+  };
+}

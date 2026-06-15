@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { ArticleStatusBadge, ConfirmModal, IconButton, Modal } from '../components/AdminUI';
@@ -23,54 +23,14 @@ import type {
   TextBlockData
 } from '../types';
 import {
-  addBlockToSection,
-  removeBlockFromSection,
-  updateBlockInSection,
-  moveBlockInColumn,
-  moveBlockToColumn,
-  duplicateBlock,
   canAddSideAtIndex,
-  resolveSideTargetColumnIndex,
   getBlockRowIndex
 } from '../utils/pageLayoutHelpers';
 import { isHeroV1 } from '../utils/heroMigration';
 import { sectionPresets } from '../utils/sectionPresets';
 import { usePageEditor, slugify, type PageForm } from './hooks/usePageEditor';
 import { useSectionManager } from './hooks/useSectionManager';
-
-type BlockDraft = {
-  id?: string;
-  type: PageBlock['type'];
-  colSpan?: number;
-  data: TextBlockData | ImageBlockData | ButtonBlockData | CardBlockData | FormBlockData | HeroBlockData | ServicesBlockData | import('../types').PillsBlockData | import('../types').SpanBlockData | import('../types').ButtonGroupBlockData | import('../types').SocialLinksBlockData | import('../types').WhatsAppCtaBlockData | import('../types').ContactInfoBlockData | import('../types').RecentPostsBlockData | MediaTextBlockData;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-type BlockModalState = {
-  open: boolean;
-  mode: 'add' | 'edit';
-  sectionId: string;
-  columnIndex: number;
-  insertIndex: number;
-  block?: PageBlock;
-  placement?: 'insert' | 'side';
-};
-
-type MoveModalState = {
-  open: boolean;
-  sectionId: string;
-  columnIndex: number;
-  blockIndex: number;
-  block?: PageBlock;
-};
-
-type DeleteModalState = {
-  open: boolean;
-  sectionId: string;
-  columnIndex: number;
-  block?: PageBlock;
-};
+import { useBlockManager, type BlockDraft, type BlockModalState, type MoveModalState, type DeleteModalState } from './hooks/useBlockManager';
 
 const plainTextLength = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().length;
 
@@ -360,11 +320,8 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   } = usePageEditor(id, pageKey);
 
   const sections = useSectionManager(setPage, page.layout.sections);
+  const blocks = useBlockManager(setPage, page.layout.sections);
 
-  const [blockModal, setBlockModal] = useState<BlockModalState | null>(null);
-  const [moveModal, setMoveModal] = useState<MoveModalState | null>(null);
-  const [deleteModal, setDeleteModal] = useState<DeleteModalState | null>(null);
-  const [hasUploading, setHasUploading] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   // Validation hook
@@ -375,13 +332,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
     validateForPublication
   } = usePageValidation(page);
 
-  useEffect(() => {
-    if (!blockModal) {
-      setHasUploading(false);
-    }
-  }, [blockModal]);
-
-  const busy = busyMutations || hasUploading;
+  const busy = busyMutations || blocks.hasUploading;
 
   const handlePublish = async () => {
     if (isHomePage) {
@@ -396,129 +347,6 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
     const saved = await saveDraft();
     if (!saved?.id) return;
     await publish(saved.id);
-  };
-
-  // Block handlers
-  const handleOpenAddBlock = (sectionId: string, columnIndex: number, insertIndex: number) => {
-    setBlockModal({ open: true, mode: 'add', sectionId, columnIndex, insertIndex, placement: 'insert' });
-  };
-
-  const handleOpenEditBlock = (sectionId: string, columnIndex: number, block: PageBlock, blockIndex: number) => {
-    setBlockModal({ open: true, mode: 'edit', sectionId, columnIndex, insertIndex: blockIndex, block });
-  };
-
-  const handleSaveBlock = (draft: BlockDraft) => {
-    if (!blockModal) return;
-    const now = new Date().toISOString();
-    const section = page.layout.sections.find((s) => s.id === blockModal.sectionId);
-    const maxSpan = Math.max(
-      1,
-      Math.min(
-        (section?.settings?.columnsLayout as number) ||
-          section?.columnsLayout ||
-          section?.columns ||
-          2,
-        3
-      )
-    );
-    const colSpan = Math.max(1, Math.min((draft as any).colSpan ?? (blockModal.block?.colSpan ?? 1), maxSpan));
-    const block: PageBlock = {
-      id: draft.id ?? uuidv4(),
-      type: draft.type,
-      data: draft.data as any,
-      colSpan,
-      rowIndex: blockModal.mode === 'edit' ? blockModal.block?.rowIndex : undefined,
-      createdAt: draft.createdAt ?? now,
-      updatedAt: now
-    };
-
-    setPage((prev) => {
-      let newLayout = prev.layout;
-      if (blockModal.mode === 'add') {
-        const placement = blockModal.placement === 'side' ? 'place' : 'insert';
-        newLayout = addBlockToSection(
-          newLayout,
-          blockModal.sectionId,
-          blockModal.columnIndex,
-          block,
-          blockModal.insertIndex,
-          placement
-        );
-      } else {
-        newLayout = updateBlockInSection(newLayout, blockModal.sectionId, blockModal.columnIndex, blockModal.block!.id, block);
-      }
-      return { ...prev, layout: newLayout };
-    });
-    setBlockModal(null);
-  };
-
-  const handleMoveBlock = (sectionId: string, columnIndex: number, blockId: string, direction: 'up' | 'down') => {
-    setPage((prev) => ({
-      ...prev,
-      layout: moveBlockInColumn(prev.layout, sectionId, columnIndex, blockId, direction)
-    }));
-  };
-
-  const handleOpenMoveModal = (sectionId: string, columnIndex: number, blockIndex: number, block: PageBlock) => {
-    setMoveModal({ open: true, sectionId, columnIndex, blockIndex, block });
-  };
-
-  const handleConfirmMoveColumn = (targetColumn: number) => {
-    if (!moveModal) return;
-    setPage((prev) => ({
-      ...prev,
-      layout: moveBlockToColumn(prev.layout, moveModal.sectionId, moveModal.columnIndex, targetColumn, moveModal.block!.id)
-    }));
-    setMoveModal(null);
-  };
-
-  const handleDeleteBlock = (sectionId: string, columnIndex: number, blockId: string) => {
-    const section = page.layout.sections.find((s) => s.id === sectionId);
-    const targetBlock = section?.cols?.[columnIndex]?.blocks.find((b) => b.id === blockId);
-    if (targetBlock?.type === 'hero') {
-      setDeleteModal(null);
-      return;
-    }
-    setPage((prev) => ({
-      ...prev,
-      layout: removeBlockFromSection(prev.layout, sectionId, columnIndex, blockId)
-    }));
-    setDeleteModal(null);
-  };
-
-  const handleAddBlockSide = (sectionId: string, fromColumnIndex: number, rowIndex: number) => {
-    const section = page.layout.sections.find((s) => s.id === sectionId);
-    if (!section) return;
-    const targetColumnIndex = resolveSideTargetColumnIndex({
-      columns: section.cols,
-      fromColumnIndex,
-      direction: 'right'
-    });
-    if (targetColumnIndex === null) return;
-
-    const canAddSide = canAddSideAtIndex({
-      columns: section.cols,
-      fromColumnIndex,
-      fromIndex: rowIndex,
-      direction: 'right'
-    });
-    if (!canAddSide) return;
-
-    setBlockModal({
-      open: true,
-      mode: 'add',
-      sectionId,
-      columnIndex: targetColumnIndex,
-      insertIndex: rowIndex,
-      placement: 'side'
-    });
-  };
-
-  const handleDuplicateBlock = (sectionId: string, columnIndex: number, blockId: string) => {
-    setPage((prev) => ({
-      ...prev,
-      layout: duplicateBlock(prev.layout, sectionId, columnIndex, blockId)
-    }));
   };
 
   if (isHomePage && isLoadingPage) {
@@ -564,7 +392,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         busy={busy}
         draftAlert={draftAlert}
         formError={formError}
-        hasUploading={hasUploading}
+        hasUploading={blocks.hasUploading}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSaveDraft={() => saveDraft()}
@@ -611,13 +439,13 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       onMoveSection={(dir) => sections.handleMoveSection(section.id, dir)}
                       onRemoveSection={() => sections.handleRemoveSection(section.id)}
                       onDuplicateSection={() => sections.handleDuplicateSection(section.id)}
-                      onAddBlock={(colIndex, insertIndex) => handleOpenAddBlock(section.id, colIndex, insertIndex)}
-                      onAddBlockSide={(colIndex, rowIndex) => handleAddBlockSide(section.id, colIndex, rowIndex)}
-                      onEditBlock={(colIndex, block, blockIndex) => handleOpenEditBlock(section.id, colIndex, block, blockIndex)}
-                      onMoveBlock={(colIndex, blockId, dir) => handleMoveBlock(section.id, colIndex, blockId, dir)}
-                      onMoveBlockColumn={(colIndex, blockIndex, block) => handleOpenMoveModal(section.id, colIndex, blockIndex, block)}
-                      onDeleteBlock={(colIndex, block) => setDeleteModal({ open: true, sectionId: section.id, columnIndex: colIndex, block })}
-                      onDuplicateBlock={(colIndex, blockId) => handleDuplicateBlock(section.id, colIndex, blockId)}
+                      onAddBlock={(colIndex, insertIndex) => blocks.handleOpenAddBlock(section.id, colIndex, insertIndex)}
+                      onAddBlockSide={(colIndex, rowIndex) => blocks.handleAddBlockSide(section.id, colIndex, rowIndex)}
+                      onEditBlock={(colIndex, block, blockIndex) => blocks.handleOpenEditBlock(section.id, colIndex, block, blockIndex)}
+                      onMoveBlock={(colIndex, blockId, dir) => blocks.handleMoveBlock(section.id, colIndex, blockId, dir)}
+                      onMoveBlockColumn={(colIndex, blockIndex, block) => blocks.handleOpenMoveModal(section.id, colIndex, blockIndex, block)}
+                      onDeleteBlock={(colIndex, block) => blocks.setDeleteModal({ open: true, sectionId: section.id, columnIndex: colIndex, block })}
+                      onDuplicateBlock={(colIndex, blockId) => blocks.handleDuplicateBlock(section.id, colIndex, blockId)}
                     />
                   ))}
                   <div style={{ marginTop: '1.5rem' }}>
@@ -684,18 +512,18 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
       </div>
 
       <BlockEditorModal
-        state={blockModal}
-        onClose={() => setBlockModal(null)}
-        onSave={handleSaveBlock}
-        onUploadingChange={setHasUploading}
+        state={blocks.blockModal}
+        onClose={() => blocks.setBlockModal(null)}
+        onSave={blocks.handleSaveBlock}
+        onUploadingChange={blocks.setHasUploading}
         columnCount={
-          blockModal
+          blocks.blockModal
             ? Math.max(
                 1,
                 Math.min(
-                  (page.layout.sections.find((s) => s.id === blockModal.sectionId)?.settings?.columnsLayout as number) ||
-                    page.layout.sections.find((s) => s.id === blockModal.sectionId)?.columnsLayout ||
-                    page.layout.sections.find((s) => s.id === blockModal.sectionId)?.columns ||
+                  (page.layout.sections.find((s) => s.id === blocks.blockModal.sectionId)?.settings?.columnsLayout as number) ||
+                    page.layout.sections.find((s) => s.id === blocks.blockModal.sectionId)?.columnsLayout ||
+                    page.layout.sections.find((s) => s.id === blocks.blockModal.sectionId)?.columns ||
                     2,
                   3
                 )
@@ -713,18 +541,18 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
       />
 
       <MoveBlockModal
-        state={moveModal}
-        section={moveModal ? page.layout.sections.find((s) => s.id === moveModal.sectionId) : undefined}
-        onClose={() => setMoveModal(null)}
-        onConfirm={handleConfirmMoveColumn}
+        state={blocks.moveModal}
+        section={blocks.moveModal ? page.layout.sections.find((s) => s.id === blocks.moveModal.sectionId) : undefined}
+        onClose={() => blocks.setMoveModal(null)}
+        onConfirm={blocks.handleConfirmMoveColumn}
       />
 
       <ConfirmModal
-        isOpen={!!deleteModal?.block}
-        onClose={() => setDeleteModal(null)}
+        isOpen={!!blocks.deleteModal?.block}
+        onClose={() => blocks.setDeleteModal(null)}
         title="Remover bloco"
         description="Tem certeza que deseja remover este bloco?"
-        onConfirm={() => deleteModal?.block && handleDeleteBlock(deleteModal.sectionId, deleteModal.columnIndex, deleteModal.block.id)}
+        onConfirm={() => blocks.deleteModal?.block && blocks.handleDeleteBlock(blocks.deleteModal.sectionId, blocks.deleteModal.columnIndex, blocks.deleteModal.block.id)}
         confirmLabel="Remover"
       />
 

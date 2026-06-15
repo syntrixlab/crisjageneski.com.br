@@ -1,9 +1,8 @@
-import type { ContactInfoBlockData } from '../types';
-import { RichTextEditor } from './RichTextEditor';
+import { RichTextEditor } from '@/components/RichTextEditor';
+import type { ContactInfoBlockData } from '@/types';
+import type { BlockFormProps } from '../_shared/types';
 
-export function ContactInfoBlockForm(_props: { value: ContactInfoBlockData; onChange: (value: ContactInfoBlockData) => void }) {
-  const { value, onChange } = _props;
-
+export function ContactInfoForm({ value, onChange }: BlockFormProps<ContactInfoBlockData>) {
   return (
     <div className="page-block-form">
       <div className="page-block-form-grid">
@@ -61,7 +60,7 @@ export function ContactInfoBlockForm(_props: { value: ContactInfoBlockData; onCh
       </div>
 
       <div className="editor-help" style={{ marginTop: '1rem' }}>
-        <p><strong>💡 Dica:</strong> O número do WhatsApp e as redes sociais são configurados em <strong>Configurações → Informações do Site</strong>.</p>
+        <p><strong>Dica:</strong> O número do WhatsApp e as redes sociais são configurados em <strong>Configurações → Informações do Site</strong>.</p>
       </div>
     </div>
   );

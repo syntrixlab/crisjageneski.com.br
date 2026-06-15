@@ -1,11 +1,8 @@
-import type { RecentPostsBlockData } from '../types';
-import { LinkPicker } from './LinkPicker';
+import type { RecentPostsBlockData } from '@/types';
+import type { BlockFormProps } from '@/blocks/_shared/types';
+import { LinkPicker } from '@/components/LinkPicker';
 
-export function RecentPostsBlockForm(_props: { 
-  value: RecentPostsBlockData; 
-  onChange: (value: RecentPostsBlockData) => void 
-}) {
-  const { value, onChange } = _props;
+export function RecentPostsForm({ value, onChange }: BlockFormProps<RecentPostsBlockData>) {
   const title = value.title ?? 'Conteúdos recentes';
   const subtitle = value.subtitle ?? 'Leituras curtas para acompanhar você entre as sessões.';
   const ctaLabel = value.ctaLabel ?? 'Ver todos os artigos';

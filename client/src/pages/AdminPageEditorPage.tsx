@@ -11,9 +11,9 @@ import type { CropRatio } from '../components/FlexibleImageCropModal';
 import { usePageValidation } from '../hooks/usePageValidation';
 import { ValidationErrorsModal, ValidationInput, CharCounter } from '../components/ValidationComponents';
 import { LinkPicker, type LinkPickerValue } from '../components/LinkPicker';
-import { RecentPostsBlockForm } from '../components/RecentPostsBlockForm';
-import { ServicesBlockForm } from '../components/ServicesBlockForm';
-import { ContactInfoBlockForm } from '../components/ContactInfoBlockForm';
+import { RecentPostsForm as RecentPostsBlockForm } from '@/blocks/recent-posts/Form';
+import { ServicesForm as ServicesBlockForm } from '@/blocks/services/Form';
+import { ContactInfoForm as ContactInfoBlockForm } from '@/blocks/contact-info/Form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera } from '@fortawesome/free-solid-svg-icons';
 import {

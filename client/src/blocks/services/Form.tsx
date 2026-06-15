@@ -1,6 +1,7 @@
-﻿import { v4 as uuidv4 } from 'uuid';
-import type { ServicesBlockData } from '../types';
-import { LinkPicker, type LinkPickerValue } from './LinkPicker';
+import { v4 as uuidv4 } from 'uuid';
+import type { ServicesBlockData } from '@/types';
+import type { BlockFormProps } from '@/blocks/_shared/types';
+import { LinkPicker, type LinkPickerValue } from '@/components/LinkPicker';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp, faArrowDown, faTrash } from '@fortawesome/free-solid-svg-icons';
 
@@ -19,7 +20,7 @@ const normalizeLinkValue = (item: { href: string; linkMode?: 'page' | 'manual'; 
       slug: item.slug
     };
   }
-  
+
   // Fallback para itens antigos sem linkMode
   if (!item.href || item.href.trim() === '') {
     return { mode: 'manual', href: '' };
@@ -27,9 +28,7 @@ const normalizeLinkValue = (item: { href: string; linkMode?: 'page' | 'manual'; 
   return { mode: 'manual', href: item.href.trim() };
 };
 
-export function ServicesBlockForm(_props: { value: ServicesBlockData; onChange: (value: ServicesBlockData) => void }) {
-  const { value, onChange } = _props;
-
+export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockData>) {
   const items = value.items ?? [];
 
   const handleAddItem = () => {
@@ -152,7 +151,7 @@ export function ServicesBlockForm(_props: { value: ServicesBlockData; onChange: 
                     <LinkPicker
                       label="Link / slug"
                       value={normalizeLinkValue(item)}
-                      onChange={(linkValue) => handleUpdateItem(item.id, { 
+                      onChange={(linkValue) => handleUpdateItem(item.id, {
                         href: linkValue.href,
                         linkMode: linkValue.mode,
                         pageId: linkValue.pageId,

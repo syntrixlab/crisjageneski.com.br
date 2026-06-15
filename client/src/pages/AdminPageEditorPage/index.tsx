@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { ArticleStatusBadge, ConfirmModal, IconButton, Modal } from '../components/AdminUI';
+import { ConfirmModal, IconButton, Modal } from '../components/AdminUI';
 import { SeoHead } from '../components/SeoHead';
 import { PageBlockView, PageRendererCore } from '../components/PageRenderer';
 import { usePageValidation } from '../hooks/usePageValidation';
@@ -31,6 +31,7 @@ import { sectionPresets } from '../utils/sectionPresets';
 import { usePageEditor, slugify, type PageForm } from './hooks/usePageEditor';
 import { useSectionManager } from './hooks/useSectionManager';
 import { useBlockManager, type BlockDraft, type BlockModalState, type MoveModalState, type DeleteModalState } from './hooks/useBlockManager';
+import { PageEditorToolbar } from './components/PageEditorToolbar';
 
 const plainTextLength = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().length;
 
@@ -217,100 +218,6 @@ const toBlockDraft = (block?: PageBlock): BlockDraft | null =>
       }
     : null;
 
-function PageEditorActions(_props: {
-  page: PageForm;
-  isNew: boolean;
-  busy: boolean;
-  draftAlert: string | null;
-  formError: string | null;
-  hasUploading: boolean;
-  viewMode: 'edit' | 'preview';
-  isHomePage?: boolean;
-  backTo?: string;
-  previewHref?: string;
-  onViewModeChange: (mode: 'edit' | 'preview') => void;
-  onSaveDraft: () => void;
-  onPublish: () => void;
-  onMoveToDraft: () => void;
-}) {
-  const {
-    page,
-    isNew,
-    busy,
-    draftAlert,
-    formError,
-    hasUploading,
-    viewMode,
-    isHomePage,
-    backTo,
-    previewHref,
-    onViewModeChange,
-    onSaveDraft,
-    onPublish,
-    onMoveToDraft
-  } = _props;
-  const status = page.status ?? 'draft';
-  const previewUrl = previewHref ?? (page.slug ? `/p/${page.slug}` : '/');
-  const backTarget = backTo ?? '/admin/pages';
-  return (
-    <div className="editor-topbar compact">
-      <div className="editor-topbar-left">
-        <Link to={backTarget} className="btn btn-ghost">
-          Voltar
-        </Link>
-        <ArticleStatusBadge status={status} />
-        
-        {/* Toggle Edição/Preview */}
-        <div className="view-mode-toggle">
-          <button
-            type="button"
-            className={`view-mode-btn ${viewMode === 'edit' ? 'active' : ''}`}
-            onClick={() => onViewModeChange('edit')}
-          >
-            Edição
-          </button>
-          <button
-            type="button"
-            className={`view-mode-btn ${viewMode === 'preview' ? 'active' : ''}`}
-            onClick={() => onViewModeChange('preview')}
-          >
-            Preview
-          </button>
-        </div>
-        
-        {draftAlert && <span className="muted small">{draftAlert}</span>}
-        {formError && <span className="muted small tone-danger">{formError}</span>}
-        {hasUploading && <span className="muted small">Finalize uploads antes de salvar.</span>}
-      </div>
-      <div className="editor-topbar-actions">
-        <button className="btn btn-outline" type="button" onClick={onSaveDraft} disabled={busy}>
-          {isHomePage ? 'Salvar home' : 'Salvar rascunho'}
-        </button>
-        {!isHomePage &&
-          (status === 'draft' ? (
-            <button className="btn btn-primary" type="button" onClick={onPublish} disabled={busy || isNew}>
-              Publicar
-            </button>
-          ) : (
-            <button className="btn btn-outline" type="button" onClick={onMoveToDraft} disabled={busy}>
-              Mover para rascunho
-            </button>
-          ))}
-        {(!isHomePage && status === 'published') || isHomePage ? (
-          <button
-            className="btn btn-outline"
-            type="button"
-            onClick={() => window.open(previewUrl, '_blank')}
-            disabled={!previewUrl}
-          >
-            {isHomePage ? 'Ver site' : 'Visualizar'}
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const { id } = useParams<{ id: string }>();
   const {
@@ -386,7 +293,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   return (
     <div className="admin-page editor-page">
       <SeoHead title={isNew ? 'Nova página' : `Editar: ${page.title}`} />
-      <PageEditorActions
+      <PageEditorToolbar
         page={page}
         isNew={isNew || !page.id}
         busy={busy}
@@ -394,6 +301,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         formError={formError}
         hasUploading={blocks.hasUploading}
         viewMode={viewMode}
+        isHomePage={isHomePage}
         onViewModeChange={setViewMode}
         onSaveDraft={() => saveDraft()}
         onPublish={handlePublish}

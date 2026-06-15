@@ -23,25 +23,20 @@ import type {
   TextBlockData
 } from '../types';
 import {
-  createSection,
-  addSection,
-  removeSection,
-  moveSection,
-  changeSectionColumns,
   addBlockToSection,
   removeBlockFromSection,
   updateBlockInSection,
   moveBlockInColumn,
   moveBlockToColumn,
-  duplicateSection,
   duplicateBlock,
   canAddSideAtIndex,
   resolveSideTargetColumnIndex,
   getBlockRowIndex
 } from '../utils/pageLayoutHelpers';
 import { isHeroV1 } from '../utils/heroMigration';
-import { sectionPresets, createSectionFromPreset } from '../utils/sectionPresets';
+import { sectionPresets } from '../utils/sectionPresets';
 import { usePageEditor, slugify, type PageForm } from './hooks/usePageEditor';
+import { useSectionManager } from './hooks/useSectionManager';
 
 type BlockDraft = {
   id?: string;
@@ -364,10 +359,11 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
     refetchPage, saveDraft, publish, handleMoveToDraft
   } = usePageEditor(id, pageKey);
 
+  const sections = useSectionManager(setPage, page.layout.sections);
+
   const [blockModal, setBlockModal] = useState<BlockModalState | null>(null);
   const [moveModal, setMoveModal] = useState<MoveModalState | null>(null);
   const [deleteModal, setDeleteModal] = useState<DeleteModalState | null>(null);
-  const [presetModal, setPresetModal] = useState<boolean>(false);
   const [hasUploading, setHasUploading] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
 
@@ -400,112 +396,6 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
     const saved = await saveDraft();
     if (!saved?.id) return;
     await publish(saved.id);
-  };
-
-  // Section handlers
-  const handleAddSection = () => {
-    setPresetModal(true);
-  };
-
-  const handleSelectPreset = (presetId: string) => {
-    const newSection = createSectionFromPreset(presetId);
-    if (newSection) {
-      // Validar: não permitir adicionar Hero se já existir uma
-      if (newSection.kind === 'hero' && page.layout.sections.some((s) => s.kind === 'hero')) {
-        alert('Já existe uma seção Hero na página. Apenas uma seção Hero é permitida.');
-        setPresetModal(false);
-        return;
-      }
-      setPage((prev) => ({ ...prev, layout: addSection(prev.layout, newSection) }));
-    }
-    setPresetModal(false);
-  };
-
-  const handleAddBlankSection = () => {
-    const newSection = createSection(2);
-    setPage((prev) => ({ ...prev, layout: addSection(prev.layout, newSection) }));
-    setPresetModal(false);
-  };
-
-  const handleRemoveSection = (sectionId: string) => {
-    // Não permitir remover seção Hero
-    const section = page.layout.sections.find(s => s.id === sectionId);
-    if (section?.kind === 'hero') {
-      return;
-    }
-    setPage((prev) => ({ ...prev, layout: removeSection(prev.layout, sectionId) }));
-  };
-
-  const handleDuplicateSection = (sectionId: string) => {
-    // Não permitir duplicar seção Hero
-    const section = page.layout.sections.find(s => s.id === sectionId);
-    if (section?.kind === 'hero') {
-      return;
-    }
-    setPage((prev) => ({ ...prev, layout: duplicateSection(prev.layout, sectionId) }));
-  };
-
-  const handleMoveSection = (sectionId: string, direction: 'up' | 'down') => {
-    // Não permitir mover seção Hero
-    const section = page.layout.sections.find(s => s.id === sectionId);
-    if (section?.kind === 'hero') {
-      return;
-    }
-    setPage((prev) => ({ ...prev, layout: moveSection(prev.layout, sectionId, direction) }));
-  };
-
-  const handleChangeSectionColumns = (sectionId: string, columns: 1 | 2 | 3) => {
-    setPage((prev) => ({ ...prev, layout: changeSectionColumns(prev.layout, sectionId, columns) }));
-  };
-
-  const handleChangeSectionBackground = (sectionId: string, background: 'none' | 'soft' | 'dark' | 'earthy') => {
-    setPage((prev) => ({
-      ...prev,
-      layout: {
-        ...prev.layout,
-        sections: prev.layout.sections.map((s) =>
-          s.id === sectionId
-            ? { ...s, settings: { ...s.settings, background, backgroundStyle: background } }
-            : s
-        )
-      }
-    }));
-  };
-
-  const handleChangeSectionPadding = (sectionId: string, padding: 'normal' | 'compact' | 'large') => {
-    setPage((prev) => ({
-      ...prev,
-      layout: {
-        ...prev.layout,
-        sections: prev.layout.sections.map((s) =>
-          s.id === sectionId ? { ...s, settings: { ...s.settings, padding, density: padding } } : s
-        )
-      }
-    }));
-  };
-
-  const handleChangeSectionMaxWidth = (sectionId: string, maxWidth: 'normal' | 'wide') => {
-    setPage((prev) => ({
-      ...prev,
-      layout: {
-        ...prev.layout,
-        sections: prev.layout.sections.map((s) =>
-          s.id === sectionId ? { ...s, settings: { ...s.settings, maxWidth, width: maxWidth } } : s
-        )
-      }
-    }));
-  };
-
-  const handleChangeSectionHeight = (sectionId: string, height: 'normal' | 'tall') => {
-    setPage((prev) => ({
-      ...prev,
-      layout: {
-        ...prev.layout,
-        sections: prev.layout.sections.map((s) =>
-          s.id === sectionId ? { ...s, settings: { ...s.settings, height } } : s
-        )
-      }
-    }));
   };
 
   // Block handlers
@@ -713,14 +603,14 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       section={section}
                       sectionIndex={sectionIndex}
                       totalSections={page.layout.sections.length}
-                      onChangeSectionColumns={(cols) => handleChangeSectionColumns(section.id, cols)}
-                      onChangeSectionBackground={(bg) => handleChangeSectionBackground(section.id, bg)}
-                      onChangeSectionPadding={(pad) => handleChangeSectionPadding(section.id, pad)}
-                      onChangeSectionMaxWidth={(mw) => handleChangeSectionMaxWidth(section.id, mw)}
-                      onChangeSectionHeight={(h) => handleChangeSectionHeight(section.id, h)}
-                      onMoveSection={(dir) => handleMoveSection(section.id, dir)}
-                      onRemoveSection={() => handleRemoveSection(section.id)}
-                      onDuplicateSection={() => handleDuplicateSection(section.id)}
+                      onChangeSectionColumns={(cols) => sections.handleChangeSectionColumns(section.id, cols)}
+                      onChangeSectionBackground={(bg) => sections.handleChangeSectionBackground(section.id, bg)}
+                      onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(section.id, pad)}
+                      onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(section.id, mw)}
+                      onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(section.id, h)}
+                      onMoveSection={(dir) => sections.handleMoveSection(section.id, dir)}
+                      onRemoveSection={() => sections.handleRemoveSection(section.id)}
+                      onDuplicateSection={() => sections.handleDuplicateSection(section.id)}
                       onAddBlock={(colIndex, insertIndex) => handleOpenAddBlock(section.id, colIndex, insertIndex)}
                       onAddBlockSide={(colIndex, rowIndex) => handleAddBlockSide(section.id, colIndex, rowIndex)}
                       onEditBlock={(colIndex, block, blockIndex) => handleOpenEditBlock(section.id, colIndex, block, blockIndex)}
@@ -731,7 +621,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                     />
                   ))}
                   <div style={{ marginTop: '1.5rem' }}>
-                    <button className="btn btn-outline" type="button" onClick={handleAddSection}>
+                    <button className="btn btn-outline" type="button" onClick={sections.handleAddSection}>
                       + Adicionar seção
                     </button>
                   </div>
@@ -815,10 +705,10 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
       />
 
       <SectionPresetModal
-        open={presetModal}
-        onClose={() => setPresetModal(false)}
-        onSelectPreset={handleSelectPreset}
-        onAddBlank={handleAddBlankSection}
+        open={sections.presetModal}
+        onClose={() => sections.setPresetModal(false)}
+        onSelectPreset={sections.handleSelectPreset}
+        onAddBlank={sections.handleAddBlankSection}
         sections={page.layout.sections}
       />
 

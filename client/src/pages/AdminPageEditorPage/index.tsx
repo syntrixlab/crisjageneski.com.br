@@ -1,39 +1,32 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ConfirmModal } from '../components/AdminUI';
-import { SeoHead } from '../components/SeoHead';
-import { PageRendererCore } from '../components/PageRenderer';
-import { usePageValidation } from '../hooks/usePageValidation';
-import { ValidationErrorsModal, ValidationInput, CharCounter } from '../components/ValidationComponents';
+import { ConfirmModal } from '@/components/AdminUI';
+import { SeoHead } from '@/components/SeoHead';
+import { PageRendererCore } from '@/components/PageRenderer';
+import { usePageValidation } from '@/hooks/usePageValidation';
+import { ValidationErrorsModal, ValidationInput, CharCounter } from '@/components/ValidationComponents';
 import { usePageEditor, slugify } from './hooks/usePageEditor';
 import { useSectionManager } from './hooks/useSectionManager';
 import { useBlockManager } from './hooks/useBlockManager';
 import { PageEditorToolbar } from './components/PageEditorToolbar';
-import { MoveBlockModal } from './components/MoveBlockModal';
+import { SectionEditor } from './components/SectionEditor';
 import { BlockEditorModal } from './components/BlockEditorModal';
 import { SectionPresetModal } from './components/SectionPresetModal';
-import { SectionEditor } from './components/SectionEditor';
+import { MoveBlockModal } from './components/MoveBlockModal';
 
 export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const { id } = useParams<{ id: string }>();
+  const editor = usePageEditor(id, pageKey);
   const {
     page, setPage, viewMode, setViewMode, formError, draftAlert,
     busyMutations, isNew, isHomePage, isLoadingPage, isPageError,
     refetchPage, saveDraft, publish, handleMoveToDraft
-  } = usePageEditor(id, pageKey);
+  } = editor;
 
   const sections = useSectionManager(setPage, page.layout.sections);
   const blocks = useBlockManager(setPage, page.layout.sections);
-
+  const { errors: validationErrors, fieldStates, markFieldTouched, validateForPublication } = usePageValidation(page);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
-
-  // Validation hook
-  const {
-    errors: validationErrors,
-    fieldStates,
-    markFieldTouched,
-    validateForPublication
-  } = usePageValidation(page);
 
   const busy = busyMutations || blocks.hasUploading;
 
@@ -85,6 +78,19 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
       </div>
     );
   }
+
+  const columnCount = blocks.blockModal
+    ? Math.max(
+        1,
+        Math.min(
+          (page.layout.sections.find((s) => s.id === blocks.blockModal!.sectionId)?.settings?.columnsLayout as number) ||
+            page.layout.sections.find((s) => s.id === blocks.blockModal!.sectionId)?.columnsLayout ||
+            page.layout.sections.find((s) => s.id === blocks.blockModal!.sectionId)?.columns ||
+            2,
+          3
+        )
+      )
+    : 2;
 
   return (
     <div className="admin-page editor-page">
@@ -220,20 +226,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         onClose={() => blocks.setBlockModal(null)}
         onSave={blocks.handleSaveBlock}
         onUploadingChange={blocks.setHasUploading}
-        columnCount={
-          blocks.blockModal
-            ? Math.max(
-                1,
-                Math.min(
-                  (page.layout.sections.find((s) => s.id === blocks.blockModal.sectionId)?.settings?.columnsLayout as number) ||
-                    page.layout.sections.find((s) => s.id === blocks.blockModal.sectionId)?.columnsLayout ||
-                    page.layout.sections.find((s) => s.id === blocks.blockModal.sectionId)?.columns ||
-                    2,
-                  3
-                )
-              )
-            : 2
-        }
+        columnCount={columnCount}
       />
 
       <SectionPresetModal
@@ -246,7 +239,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
 
       <MoveBlockModal
         state={blocks.moveModal}
-        section={blocks.moveModal ? page.layout.sections.find((s) => s.id === blocks.moveModal.sectionId) : undefined}
+        section={blocks.moveModal ? page.layout.sections.find((s) => s.id === blocks.moveModal!.sectionId) : undefined}
         onClose={() => blocks.setMoveModal(null)}
         onConfirm={blocks.handleConfirmMoveColumn}
       />
@@ -256,7 +249,14 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         onClose={() => blocks.setDeleteModal(null)}
         title="Remover bloco"
         description="Tem certeza que deseja remover este bloco?"
-        onConfirm={() => blocks.deleteModal?.block && blocks.handleDeleteBlock(blocks.deleteModal.sectionId, blocks.deleteModal.columnIndex, blocks.deleteModal.block.id)}
+        onConfirm={() =>
+          blocks.deleteModal?.block &&
+          blocks.handleDeleteBlock(
+            blocks.deleteModal.sectionId,
+            blocks.deleteModal.columnIndex,
+            blocks.deleteModal.block.id
+          )
+        }
         confirmLabel="Remover"
       />
 
@@ -264,12 +264,8 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         isOpen={showValidationErrors}
         onClose={() => setShowValidationErrors(false)}
         errors={validationErrors}
-        onGoToError={() => {
-          setShowValidationErrors(false);
-        }}
+        onGoToError={() => setShowValidationErrors(false)}
       />
     </div>
   );
 }
-
-

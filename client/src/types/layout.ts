@@ -1,0 +1,57 @@
+import type { PageBlock } from './blocks';
+
+export type PageStatus = 'draft' | 'published';
+
+export type HomeSection = {
+  id: string;
+  type: string;
+  title?: string | null;
+  data: Record<string, unknown>;
+  order: number;
+  visible: boolean;
+  isLocked?: boolean;
+};
+
+export type PageLayoutV1 = {
+  version: 1;
+  columns: 1 | 2 | 3;
+  cols: Array<{ id?: string; blocks: PageBlock[] }>;
+};
+
+export type PageSection = {
+  id: string;
+  kind?: 'normal' | 'hero';
+  columns: 1 | 2 | 3;
+  columnsLayout?: 2 | 3;
+  cols: Array<{ id: string; blocks: PageBlock[] }>;
+  settings?: {
+    background?: 'none' | 'soft' | 'dark' | 'earthy';
+    backgroundStyle?: 'none' | 'soft' | 'dark' | 'earthy';
+    padding?: 'normal' | 'compact' | 'large';
+    density?: 'compact' | 'normal' | 'large';
+    height?: 'normal' | 'tall';
+    maxWidth?: 'normal' | 'wide';
+    width?: 'normal' | 'wide';
+    columnsLayout?: 2 | 3;
+  };
+};
+
+export type PageLayoutV2 = {
+  version: 2;
+  sections: PageSection[];
+};
+
+export type PageLayout = PageLayoutV1 | PageLayoutV2;
+
+export type Page = {
+  id: string;
+  slug: string;
+  pageKey?: string | null;
+  title: string;
+  description?: string | null;
+  layout: PageLayout;
+  status: PageStatus;
+  publishedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};

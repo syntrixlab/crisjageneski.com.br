@@ -19,9 +19,6 @@ export function AdminPagesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Page | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
-  // [DEBUG] Log de estado da query
-  console.log('[AdminPagesPage] Query state:', { isLoading, error, isError, pagesCount: pages?.length, pages });
-
   const publishMutation = useMutation({
     mutationFn: publishPage,
     onSuccess: (data) => {
@@ -53,12 +50,7 @@ export function AdminPagesPage() {
       setShowTemplateModal(false);
       navigate(`/admin/pages/${data.id}/edit`);
     },
-    onError: (error: any) => {
-      console.error('Create page error:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Full error object:', error);
-    }
+    onError: () => {}
   });
 
   const getSortTime = (page: Page) => {
@@ -68,11 +60,7 @@ export function AdminPagesPage() {
   };
 
   const filteredPages = useMemo(() => {
-    console.log('[FRONTEND] Pages recebidas:', pages);
-    const filtered = (pages ?? []).filter((p) => p.pageKey !== 'home' && p.slug !== 'home');
-    console.log('[FRONTEND] Pages após filtro (removendo home):', filtered);
-    console.log('[FRONTEND] Pages filtradas:', filtered.map(p => ({ id: p.id, title: p.title, slug: p.slug, pageKey: p.pageKey })));
-    return filtered;
+    return (pages ?? []).filter((p) => p.pageKey !== 'home' && p.slug !== 'home');
   }, [pages]);
   const sortedPages = useMemo(() => [...filteredPages].sort((a, b) => getSortTime(b) - getSortTime(a)), [filteredPages]);
 
@@ -85,7 +73,6 @@ export function AdminPagesPage() {
 
   const handleTemplateSelect = (templateId: string) => {
     const pageData = generatePageDataFromTemplate(templateId);
-    console.log('Creating page with data:', pageData);
     createMutation.mutate(pageData);
   };
 

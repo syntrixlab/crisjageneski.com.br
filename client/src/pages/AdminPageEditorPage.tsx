@@ -446,36 +446,8 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
 
   useEffect(() => {
     if (existingPage) {
-      console.log('[LOAD DEBUG] Raw existing page layout:', existingPage.layout);
-      
-      // [DEBUG C] Log Hero ANTES de normalizar no client
-      const rawLayout = existingPage.layout as any;
-      const rawHeroSection = rawLayout?.sections?.find((s: any) => s.kind === 'hero' || s.cols?.some((c: any) => c.blocks?.some((b: any) => b.type === 'hero')));
-      if (rawHeroSection) {
-        const rawHeroBlock = rawHeroSection.cols?.flatMap((c: any) => c.blocks || []).find((b: any) => b.type === 'hero');
-        if (rawHeroBlock) {
-          console.log('[CLIENT C1] Hero vindo do GET (RAW):');
-          console.log('  - version:', rawHeroBlock.data?.version);
-          console.log('  - rightVariant:', rawHeroBlock.data?.rightVariant);
-          console.log('  - right blocks:', rawHeroBlock.data?.right?.map((b: any) => b.type));
-        }
-      }
-      
       const normalizedLayout = ensureLayoutV2(existingPage.layout);
-      console.log('[LOAD DEBUG] After ensureLayoutV2:', normalizedLayout);
-      
-      // [DEBUG C2] Log Hero AP\u00d3S normalizar no client
-      const normHeroSection = normalizedLayout.sections?.find((s: any) => s.kind === 'hero' || s.cols?.some((c: any) => c.blocks?.some((b: any) => b.type === 'hero')));
-      if (normHeroSection) {
-        const normHeroBlock = normHeroSection.cols?.flatMap((c: any) => c.blocks || []).find((b: any) => b.type === 'hero');
-        if (normHeroBlock) {
-          console.log('[CLIENT C2] Hero AP\u00d3S ensureLayoutV2:');
-          console.log('  - version:', normHeroBlock.data?.version);
-          console.log('  - rightVariant:', normHeroBlock.data?.rightVariant);
-          console.log('  - right blocks:', normHeroBlock.data?.right?.map((b: any) => b.type));
-        }
-      }
-      
+
       // For Home page, ensure Hero exists in first section
       let finalLayout = normalizedLayout;
       if (isHomePage && normalizedLayout.sections.length > 0) {
@@ -604,18 +576,6 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
       status: isHomePage ? 'published' : 'draft',
       layout: ensureLayoutV2(page.layout)
     };
-    
-    // [DEBUG A] Log Hero ANTES do PUT
-    const heroSection = payload.layout.sections?.find(s => s.kind === 'hero' || s.cols?.some(c => c.blocks?.some(b => b.type === 'hero')));
-    const heroBlock = heroSection?.cols?.flatMap(c => c.blocks || []).find(b => b.type === 'hero');
-    if (heroBlock && heroBlock.type === 'hero') {
-      const heroData = heroBlock.data as any;
-      console.log('[CLIENT A] Hero no payload ANTES do PUT:');
-      console.log('  - version:', heroData.version);
-      console.log('  - rightVariant:', heroData.rightVariant);
-      console.log('  - right blocks:', heroData.right?.map((b: any) => b.type));
-      console.log('  - Full Hero data:', JSON.stringify(heroData, null, 2));
-    }
     
     if (isHomePage) {
       if (!page.id) {
@@ -1095,8 +1055,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         isOpen={showValidationErrors}
         onClose={() => setShowValidationErrors(false)}
         errors={validationErrors}
-        onGoToError={(error) => {
-          console.log('Go to error:', error);
+        onGoToError={() => {
           setShowValidationErrors(false);
         }}
       />

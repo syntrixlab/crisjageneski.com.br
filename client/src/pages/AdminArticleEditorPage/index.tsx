@@ -1,41 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SeoHead } from '../components/SeoHead';
-import { ArticleStatusBadge, ConfirmModal, Switch } from '../components/AdminUI';
-import {
-  createArticle,
-  fetchAdminArticles,
-  publishArticle,
-  unpublishArticle,
-  updateArticle,
-  uploadMedia
-} from '../api/queries';
-import type { Article, Media } from '../types';
-import { RichTextEditor } from '../components/RichTextEditor';
-import { ImagePickerModal } from '../components/ImagePickerModal';
-import type { CropRatio } from '../components/FlexibleImageCropModal';
-import { COVER_ASPECT, COVER_HEIGHT, COVER_MAX_FILE_SIZE_MB, COVER_WIDTH } from '../constants';
-import { ImageCropModal } from '../components/ImageCropModal';
-import type { CropMetadata } from '../utils/cropImageToBlob';
+import { Link, useParams } from 'react-router-dom';
+import { SeoHead } from '@/components/SeoHead';
+import { ArticleStatusBadge, ConfirmModal, Switch } from '@/components/AdminUI';
+import { uploadMedia } from '@/api/queries';
+import type { Media } from '@/types';
+import { RichTextEditor } from '@/components/RichTextEditor';
+import { ImagePickerModal } from '@/components/ImagePickerModal';
+import type { CropRatio } from '@/components/FlexibleImageCropModal';
+import { COVER_ASPECT, COVER_HEIGHT, COVER_MAX_FILE_SIZE_MB, COVER_WIDTH } from '@/constants';
+import { ImageCropModal } from '@/components/ImageCropModal';
+import type { CropMetadata } from '@/utils/cropImageToBlob';
+import { useArticleEditor, type ArticleForm } from './hooks/useArticleEditor';
 
 type CropTask = {
   src: string;
   file: File;
-};
-
-type ArticleForm = Partial<Article>;
-
-const emptyArticle: ArticleForm = {
-  title: '',
-  slug: '',
-  excerpt: '',
-  content: '',
-  status: 'draft',
-  tags: [],
-  isFeatured: false
 };
 
 type ArticleEditorActionsProps = {
@@ -104,51 +85,55 @@ function ArticleEditorActions({
 
 export function AdminArticleEditorPage() {
   const { id } = useParams<{ id: string }>();
-  const isNew = !id || id === 'new';
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  const { data: articles } = useQuery<Article[]>({ queryKey: ['admin', 'posts'], queryFn: fetchAdminArticles });
-  const current = useMemo(() => articles?.find((a) => a.id === id), [articles, id]);
-  const [article, setArticle] = useState<ArticleForm>(current || emptyArticle);
+  const {
+    article,
+    setArticle,
+    isNew,
+    tagsText,
+    setTagsText,
+    tagLimitWarning,
+    formError,
+    draftAlert,
+    publishTarget,
+    setPublishTarget,
+    unpublishTarget,
+    setUnpublishTarget,
+    hasUploadingBlocks,
+    setHasUploadingBlocks,
+    busy,
+    isPublishing,
+    isUnpublishing,
+    normalizeTags,
+    formatTagsText,
+    handleSaveDraft,
+    handlePublish,
+    handleRequestPublish,
+    handleMoveToDraft
+  } = useArticleEditor(id);
+
   const [cropTask, setCropTask] = useState<CropTask | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverMeta, setCoverMeta] = useState<CropMetadata | null>(null);
   const [coverError, setCoverError] = useState<string | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  const [draftAlert, setDraftAlert] = useState<string | null>(null);
-  const [publishTarget, setPublishTarget] = useState<ArticleForm | null>(null);
-  const [unpublishTarget, setUnpublishTarget] = useState<ArticleForm | null>(null);
-  const [hasUploadingBlocks, setHasUploadingBlocks] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [tagsText, setTagsText] = useState('');
   const [showRemoveCoverConfirm, setShowRemoveCoverConfirm] = useState(false);
-  const [tagLimitWarning, setTagLimitWarning] = useState<string | null>(null);
 
   useEffect(() => {
-    if (current) {
-      setArticle({
-        ...current,
-        isFeatured: current.isFeatured ?? false
-      });
-      setCoverPreview(current.coverImageUrl ?? current.coverMedia?.url ?? null);
-      setTagsText(current.tags?.join(', ') ?? '');
-    }
-  }, [current?.id]);
+    setCoverPreview(article.coverImageUrl ?? article.coverMedia?.url ?? null);
+  }, [article.id]);
 
-  const handleSelectCoverImage = (image: { 
-    mediaId: string; 
-    src: string; 
-    alt: string; 
-    cropData?: { x: number; y: number; width: number; height: number; ratio: string } 
+  const handleSelectCoverImage = (image: {
+    mediaId: string;
+    src: string;
+    alt: string;
+    cropData?: { x: number; y: number; width: number; height: number; ratio: string }
   }) => {
-    // Para capa do artigo, usar diretamente os dados com crop
-    setArticle(prev => ({
+    setArticle((prev) => ({
       ...prev,
       coverMediaId: image.mediaId,
       coverImageUrl: image.src,
       coverAlt: image.alt,
-      // Salvar crop data no coverCrop
       coverCrop: image.cropData ? {
         x: image.cropData.x,
         y: image.cropData.y,
@@ -193,177 +178,11 @@ export function AdminArticleEditorPage() {
     }
   };
 
-  const createMutation = useMutation({
-    mutationFn: (payload: Partial<Article>) => createArticle(payload),
-    onError: (err: any) => {
-      const message = err?.response?.data?.error?.message || 'Falha ao salvar o artigo.';
-      setFormError(message);
-    },
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      navigate(`/admin/articles/${data.id}/edit`, { replace: true });
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<Article> }) => updateArticle(id, payload),
-    onError: (err: any) => {
-      const message = err?.response?.data?.error?.message || 'Falha ao atualizar o artigo.';
-      setFormError(message);
-    },
-    onSuccess: (data) => {
-      const wasFeatured = !!article.isFeatured;
-      const alerts: string[] = [];
-      if (data.changedToDraft) {
-        alerts.push('Este artigo voltou para rascunho. Publique novamente para atualizar no site.');
-      }
-      // Atualizar estado local com os dados retornados da API
-      if (data.post) {
-        setArticle(data.post);
-        if (wasFeatured && !data.post.isFeatured) {
-          alerts.push('Posts em destaque precisam estar publicados.');
-        }
-      }
-      
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      
-      if (alerts.length) {
-        setDraftAlert(alerts.join(' '));
-      }
-    }
-  });
-
-  const publishMutation = useMutation({
-    mutationFn: publishArticle,
-    onSuccess: (updatedArticle) => {
-      // Atualizar estado local imediatamente com dados da API
-      setArticle(updatedArticle);
-      // Invalidar caches para manter consistencia
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      setPublishTarget(null);
-    }
-  });
-
-  const unpublishMutation = useMutation({
-    mutationFn: unpublishArticle,
-    onSuccess: (updatedArticle) => {
-      // Atualizar estado local imediatamente com dados da API
-      setArticle(updatedArticle);
-      // Invalidar caches para manter consistencia
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      setUnpublishTarget(null);
-    }
-  });
-
-  const busy = createMutation.isPending || updateMutation.isPending || publishMutation.isPending || unpublishMutation.isPending || coverUploading || hasUploadingBlocks;
-
-  const normalizeTags = (input: string) => {
-    const seen = new Set<string>();
-    let list = input
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
-      .filter((tag) => {
-        const key = tag.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    if (list.length > 10) {
-      list = list.slice(0, 10);
-      setTagLimitWarning('Maximo de 10 tags; extras foram ignoradas.');
-    } else {
-      setTagLimitWarning(null);
-    }
-    return list;
-  };
-
-  const formatTagsText = (input: string) => normalizeTags(input).join(', ');
-
-  const logContentForDebug = (action: string, content?: string | null) => {
-    if (!content) return;
-    console.log(`[ArticleEditor] ${action} content:`, content);
-    const hasImageMeta = /rte-image--(size|align)|data-size|data-align/.test(content);
-    console.log(`[ArticleEditor] ${action} contains image metadata?`, hasImageMeta);
-  };
-
-  useEffect(() => {
-    if (current?.content) {
-      logContentForDebug('loaded-from-api', current.content);
-    }
-  }, [current?.id, current?.content]);
-
-  const validate = () => {
-    const trimmedTitle = (article.title ?? '').trim();
-    const trimmedSlug = (article.slug ?? '').trim();
-    const trimmedExcerpt = (article.excerpt ?? '').trim();
-    const trimmedContent = (article.content ?? '').trim();
-    if (trimmedTitle.length < 3) return 'Informe um titulo com ao menos 3 caracteres.';
-    if (trimmedSlug.length < 3) return 'Informe um slug com ao menos 3 caracteres.';
-    if (trimmedExcerpt.length < 10) return 'Resumo precisa de ao menos 10 caracteres.';
-    if (trimmedContent.length < 10) return 'Conteudo precisa de ao menos 10 caracteres.';
-    return null;
-  };
-
-  const handleSaveDraft = () => {
-    if (hasUploadingBlocks) {
-      setDraftAlert('Finalize os uploads de imagem antes de salvar.');
-      return;
-    }
-    const tags = normalizeTags(tagsText);
-    const validationError = validate();
-    if (validationError) {
-      setFormError(validationError);
-      return;
-    }
-    setFormError(null);
-    const payloadBase: Partial<Article> = {
-      ...article,
-      tags,
-      status: 'draft'
-      // NÃO resetar isFeatured - preservar o valor atual
-    };
-    setArticle((prev) => ({ ...prev, ...payloadBase }));
-    logContentForDebug('before-save-draft', article.content);
-    if (isNew) {
-      createMutation.mutate(payloadBase);
-    } else if (article.id) {
-      updateMutation.mutate({ id: article.id, payload: payloadBase });
-    }
-  };
-
-  const handlePublish = () => {
-    if (!article.id) return;
-    publishMutation.mutate(article.id);
-  };
-
-  const handleRequestPublish = () => {
-    const validationError = validate();
-    if (validationError) {
-      setFormError(validationError);
-      return;
-    }
-    setFormError(null);
-    const tags = normalizeTags(tagsText);
-    setArticle((prev) => ({ ...prev, tags }));
-    logContentForDebug('before-request-publish', article.content);
-    setPublishTarget({ ...article, tags });
-  };
-
   const handleConfirmRemoveCover = () => {
     setCoverPreview(null);
     setCoverMeta(null);
     setArticle((p) => ({ ...p, coverMediaId: null, coverCrop: null, coverImageUrl: null, coverAlt: null }));
     setShowRemoveCoverConfirm(false);
-  };
-
-  const handleMoveToDraft = () => {
-    if (!article.id) return;
-    unpublishMutation.mutate(article.id);
   };
 
   const rightColumn = (
@@ -487,14 +306,13 @@ export function AdminArticleEditorPage() {
     </div>
   );
 
-
   return (
     <div className="admin-page editor-page">
       <SeoHead title={isNew ? 'Novo artigo' : `Editar: ${article.title}`} />
       <ArticleEditorActions
         article={article}
         isNew={isNew}
-        busy={busy}
+        busy={busy || coverUploading}
         draftAlert={draftAlert}
         formError={formError}
         hasUploadingBlocks={hasUploadingBlocks}
@@ -527,13 +345,13 @@ export function AdminArticleEditorPage() {
         cropRatio="16:9"
         cropTitle="Recortar Capa do Artigo"
         initialCropData={
-          article.coverCrop && (article.coverCrop as any).x !== undefined
+          article.coverCrop && (article.coverCrop as { x?: unknown }).x !== undefined
             ? {
-                x: Number((article.coverCrop as any).x),
-                y: Number((article.coverCrop as any).y),
-                width: Number((article.coverCrop as any).width),
-                height: Number((article.coverCrop as any).height),
-                ratio: ((article.coverCrop as any).ratio ?? '16:9') as CropRatio,
+                x: Number((article.coverCrop as { x: unknown }).x),
+                y: Number((article.coverCrop as { y: unknown }).y),
+                width: Number((article.coverCrop as { width: unknown }).width),
+                height: Number((article.coverCrop as { height: unknown }).height),
+                ratio: ((article.coverCrop as { ratio?: unknown }).ratio ?? '16:9') as CropRatio,
               }
             : null
         }
@@ -561,7 +379,7 @@ export function AdminArticleEditorPage() {
         description={`Publicar "${publishTarget?.title}"? Ele ficara visivel no site.`}
         onConfirm={() => publishTarget && handlePublish()}
         confirmLabel="Publicar"
-        loading={publishMutation.isPending}
+        loading={isPublishing}
       />
 
       <ConfirmModal
@@ -571,7 +389,7 @@ export function AdminArticleEditorPage() {
         description={`Mover "${unpublishTarget?.title}" para rascunho? Saira do site ate ser publicado novamente.`}
         onConfirm={() => unpublishTarget && handleMoveToDraft()}
         confirmLabel="Mover"
-        loading={unpublishMutation.isPending}
+        loading={isUnpublishing}
       />
 
       <ConfirmModal

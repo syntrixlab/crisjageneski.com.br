@@ -84,9 +84,13 @@ export const incrementArticleView = async (id: string): Promise<number> => {
   return data.data?.views ?? 0;
 };
 
-export const login = async (email: string, password: string): Promise<{ token: string; user: User }> => {
+export const login = async (email: string, password: string): Promise<{ user: User }> => {
   const { data } = await api.post('/login', { email, password });
   return data.data;
+};
+
+export const logout = async (): Promise<void> => {
+  await api.post('/logout');
 };
 
 // Admin

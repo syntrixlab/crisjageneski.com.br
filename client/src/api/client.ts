@@ -7,21 +7,15 @@ const apiUrlFromEnv = import.meta.env.VITE_API_URL?.trim();
 export const API_BASE = apiUrlFromEnv || '/api';
 export const API_ORIGIN = API_BASE.replace(/\/api$/, '');
 
+export const AUTH_FLAG_KEY = 'cris_authed';
+
 export const api = axios.create({
   baseURL: API_BASE,
-  withCredentials: false,
+  withCredentials: true,
   headers: {
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache'
   }
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('cris_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
 });
 
 // Interceptor de resposta para tratamento global de erros
@@ -30,7 +24,7 @@ api.interceptors.response.use(
   (error) => {
     // 401: Nao autenticado - redirecionar para login
     if (error.response?.status === 401 && !window.location.pathname.includes('/admin/login')) {
-      localStorage.removeItem('cris_token');
+      localStorage.removeItem(AUTH_FLAG_KEY);
       window.location.href = '/admin/login';
       return Promise.reject(new Error('Sessao expirada. Faca login novamente.'));
     }

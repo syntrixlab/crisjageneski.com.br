@@ -2453,7 +2453,7 @@ git commit -m "refactor(AdminPageEditorPage): compor orquestrador final (~200 li
 
 **Files:** nenhum arquivo novo
 
-- [ ] **Step 1: Verificar TypeScript completo**
+- [x] **Step 1: Verificar TypeScript completo**
 
 ```bash
 cd client && npx tsc --noEmit
@@ -2461,7 +2461,7 @@ cd client && npx tsc --noEmit
 
 Esperado: zero erros.
 
-- [ ] **Step 2: Rodar o app e testar o editor**
+- [x] **Step 2: Rodar o app e testar o editor**
 
 ```bash
 # Terminal 1
@@ -2483,7 +2483,7 @@ Acessar `http://localhost:5173/admin` e verificar:
 8. Acessar a página inicial (Home) — hero carrega e pode ser editado
 9. Publicar uma página (se existir uma em rascunho)
 
-- [ ] **Step 3: Verificar estrutura de arquivos criada**
+- [x] **Step 3: Verificar estrutura de arquivos criada**
 
 ```bash
 find client/src/pages/AdminPageEditorPage -type f | sort
@@ -2503,7 +2503,7 @@ client/src/pages/AdminPageEditorPage/hooks/useSectionManager.ts
 client/src/pages/AdminPageEditorPage/index.tsx
 ```
 
-- [ ] **Step 4: Commit final**
+- [x] **Step 4: Commit final**
 
 ```bash
 git add .

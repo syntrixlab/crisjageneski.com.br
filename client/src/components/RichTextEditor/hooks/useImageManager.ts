@@ -34,6 +34,12 @@ type UseImageManagerArgs = {
 export function useImageManager({ editor }: UseImageManagerArgs) {
   const imagePopoverRef = useRef<HTMLDivElement | null>(null);
   const imageAltInputRef = useRef<HTMLInputElement | null>(null);
+  // Tracks the active figure by document position (not DOM identity): Tiptap
+  // re-renders a node's DOM whenever its attrs change (e.g. when a background
+  // upload finishes while the edit modal is still open), which would silently
+  // orphan a captured DOM reference. Position survives attr-only updates and
+  // is remapped through `transaction.mapping` for structural edits elsewhere.
+  const activeFigurePosRef = useRef<number | null>(null);
 
   const [showImageModal, setShowImageModal] = useState(false);
   const [media, setMedia] = useState<Media[]>([]);
@@ -66,6 +72,19 @@ export function useImageManager({ editor }: UseImageManagerArgs) {
     if (!showImageModal || media.length) return;
     fetchMedia().then(setMedia).catch(() => {});
   }, [showImageModal, media.length]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const remapActiveFigurePos = ({ transaction }: { transaction: { mapping: { map: (pos: number) => number } } }) => {
+      if (activeFigurePosRef.current !== null) {
+        activeFigurePosRef.current = transaction.mapping.map(activeFigurePosRef.current);
+      }
+    };
+    editor.on('transaction', remapActiveFigurePos);
+    return () => {
+      editor.off('transaction', remapActiveFigurePos);
+    };
+  }, [editor]);
 
   const openImageModal = () => {
     setShowImageModal(true);
@@ -195,6 +214,7 @@ export function useImageManager({ editor }: UseImageManagerArgs) {
     const size = figure.getAttribute('data-size') ?? '100';
     const align = figure.getAttribute('data-align') ?? 'center';
     setActiveFigure(figure);
+    activeFigurePosRef.current = editor ? findImageFigurePos(editor, figure) : null;
     setImageMeta({ src: img?.getAttribute('src') ?? '', alt: img?.getAttribute('alt') ?? '', size, align });
     const rect = figure.getBoundingClientRect();
     positionImagePopover(rect);
@@ -204,6 +224,7 @@ export function useImageManager({ editor }: UseImageManagerArgs) {
 
   const closeImagePopover = () => {
     setActiveFigure(null);
+    activeFigurePosRef.current = null;
     setImagePopover({ open: false, rect: null, target: null });
   };
 
@@ -229,11 +250,11 @@ export function useImageManager({ editor }: UseImageManagerArgs) {
   };
 
   const applyImageEdits = () => {
-    if (!editor || !activeFigure) return;
-    const pos = findImageFigurePos(editor, activeFigure);
+    if (!editor) return;
+    const pos = activeFigurePosRef.current;
     if (pos === null) return;
     const node = editor.state.doc.nodeAt(pos);
-    if (!node) return;
+    if (!node || node.type.name !== 'imageFigure') return;
     const size = isValidSize(editImageModal.size) ? editImageModal.size : '100';
     const align = isValidAlign(editImageModal.align) ? editImageModal.align : 'center';
     editor
@@ -255,14 +276,15 @@ export function useImageManager({ editor }: UseImageManagerArgs) {
   };
 
   const executeRemoveImage = () => {
-    if (!editor || !activeFigure) return;
-    const pos = findImageFigurePos(editor, activeFigure);
+    if (!editor) return;
+    const pos = activeFigurePosRef.current;
     if (pos !== null) {
       const node = editor.state.doc.nodeAt(pos);
-      if (node) {
+      if (node && node.type.name === 'imageFigure') {
         editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
       }
     }
+    activeFigurePosRef.current = null;
     highlightFigure(null);
     setConfirmRemoveImage(false);
   };

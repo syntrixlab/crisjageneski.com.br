@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { Editor } from '@tiptap/react';
 import { fetchMedia, uploadMedia } from '@/api/queries';
 import type { Media } from '@/types';
 import { positionFloating } from '@/utils/positionFloating';
@@ -12,57 +13,25 @@ const isValidSize = (size?: string | null): size is (typeof allowedSizes)[number
 const isValidAlign = (align?: string | null): align is (typeof allowedAligns)[number] =>
   allowedAligns.includes((align ?? '') as (typeof allowedAligns)[number]);
 
-const getFigureSize = (figure: HTMLElement): (typeof allowedSizes)[number] => {
-  const dataSize = figure.getAttribute('data-size');
-  if (isValidSize(dataSize)) return dataSize;
-  const sizeFromClass =
-    Array.from(figure.classList)
-      .find((cls) => cls.startsWith('rte-image--size-'))
-      ?.replace('rte-image--size-', '') ?? null;
-  if (isValidSize(sizeFromClass)) return sizeFromClass;
-  return '100';
-};
-
-const getFigureAlign = (figure: HTMLElement): (typeof allowedAligns)[number] => {
-  const dataAlign = figure.getAttribute('data-align');
-  if (isValidAlign(dataAlign)) return dataAlign;
-  const alignClass =
-    Array.from(figure.classList).find((cls) => cls.startsWith('rte-image--align-')) ||
-    Array.from(figure.classList).find((cls) => cls.startsWith('img-align-'));
-  const alignValue = alignClass?.replace('rte-image--align-', '').replace('img-align-', '') ?? null;
-  if (isValidAlign(alignValue)) return alignValue;
-  return 'center';
-};
-
-export function normalizeImageBlocks(root: HTMLElement | null) {
-  if (!root) return;
-  const figures = Array.from(root.querySelectorAll<HTMLElement>('figure'));
-  figures.forEach((figure) => {
-    const img = figure.querySelector('img');
-    if (!img) return;
-    const size = getFigureSize(figure);
-    const align = getFigureAlign(figure);
-    figure.setAttribute('data-type', figure.getAttribute('data-type') ?? 'image');
-    figure.setAttribute('data-size', size);
-    figure.setAttribute('data-align', align);
-    if (!figure.classList.contains('rte-image')) figure.classList.add('rte-image');
-    allowedSizes.forEach((s) => figure.classList.remove(`rte-image--size-${s}`));
-    figure.classList.add(`rte-image--size-${size}`);
-    allowedAligns.forEach((a) => {
-      figure.classList.remove(`rte-image--align-${a}`);
-      figure.classList.remove(`img-align-${a}`);
-    });
-    figure.classList.add(`rte-image--align-${align}`, `img-align-${align}`);
+function findImageFigurePos(editor: Editor, dom: HTMLElement): number | null {
+  let pos: number | null = null;
+  editor.state.doc.descendants((node, nodePos) => {
+    if (pos !== null) return false;
+    if (node.type.name !== 'imageFigure') return true;
+    if (editor.view.nodeDOM(nodePos) === dom) {
+      pos = nodePos;
+      return false;
+    }
+    return true;
   });
+  return pos;
 }
 
 type UseImageManagerArgs = {
-  editorRef: RefObject<HTMLDivElement | null>;
-  restoreSelection: () => void;
-  onContentChange: () => void;
+  editor: Editor | null;
 };
 
-export function useImageManager({ editorRef, restoreSelection, onContentChange }: UseImageManagerArgs) {
+export function useImageManager({ editor }: UseImageManagerArgs) {
   const imagePopoverRef = useRef<HTMLDivElement | null>(null);
   const imageAltInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -104,26 +73,23 @@ export function useImageManager({ editorRef, restoreSelection, onContentChange }
     setUploadAlt('');
   };
 
-  const insertFigureHtml = (html: string) => {
-    restoreSelection();
-    document.execCommand('insertHTML', false, html);
-    onContentChange();
-  };
-
-  const insertImage = (src: string, alt?: string, tempId?: string, state?: 'uploading' | 'error') => {
-    const html = `
-      <figure class="rte-image rte-image--size-100 rte-image--align-center img-align-center ${
-        state === 'uploading' ? 'is-uploading' : ''
-      } ${state === 'error' ? 'has-error' : ''}" ${
-        tempId ? `data-temp-id="${tempId}"` : ''
-      } data-type="image" data-size="100" data-align="center">
-        <img src="${src}" alt="${alt ?? ''}" />
-        <figcaption contenteditable="true">${alt ?? ''}</figcaption>
-        ${state === 'uploading' ? '<div class="rte-image-overlay">Enviando...</div>' : ''}
-        ${state === 'error' ? '<div class="rte-image-overlay error">Falha no upload</div>' : ''}
-      </figure>
-    `;
-    insertFigureHtml(html);
+  const insertImage = (src: string, alt?: string, status: 'idle' | 'uploading' | 'error' = 'idle') => {
+    if (!editor) return null;
+    let insertedPos: number | null = null;
+    editor
+      .chain()
+      .focus()
+      .command(({ tr, state }) => {
+        insertedPos = tr.selection.from;
+        const node = state.schema.nodes.imageFigure.create(
+          { src, alt: alt ?? '', size: '100', align: 'center', status },
+          alt ? state.schema.text(alt) : undefined
+        );
+        tr.replaceSelectionWith(node);
+        return true;
+      })
+      .run();
+    return insertedPos;
   };
 
   const handleSelectFromLibrary = (item: Media) => {
@@ -132,43 +98,53 @@ export function useImageManager({ editorRef, restoreSelection, onContentChange }
   };
 
   const handleUploadNow = async (file: File, alt?: string) => {
-    const tempId = crypto.randomUUID();
-    insertImage(URL.createObjectURL(file), alt, tempId, 'uploading');
+    if (!editor) return;
+    const objectUrl = URL.createObjectURL(file);
+    const insertedPos = insertImage(objectUrl, alt, 'uploading');
     setShowImageModal(false);
     setUploadError(null);
     setUploading(true);
     try {
       const uploaded = await uploadMedia({ file, alt });
-      const figure = editorRef.current?.querySelector<HTMLElement>(`figure[data-temp-id="${tempId}"]`);
-      if (figure) {
-        const img = figure.querySelector('img');
-        const caption = figure.querySelector('figcaption');
-        if (img) {
-          img.src = uploaded.url;
-          img.alt = uploaded.alt ?? alt ?? '';
+      if (insertedPos !== null) {
+        const node = editor.state.doc.nodeAt(insertedPos);
+        if (node && node.type.name === 'imageFigure') {
+          editor
+            .chain()
+            .command(({ tr }) => {
+              tr.setNodeMarkup(insertedPos, undefined, {
+                ...node.attrs,
+                src: uploaded.url,
+                alt: uploaded.alt ?? alt ?? '',
+                status: 'idle'
+              });
+              return true;
+            })
+            .run();
         }
-        if (caption) caption.textContent = uploaded.alt ?? alt ?? '';
-        figure.classList.remove('is-uploading', 'has-error');
-        figure.removeAttribute('data-temp-id');
-        figure.querySelector('.rte-image-overlay')?.remove();
       }
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Falha no upload');
-      const figure = editorRef.current?.querySelector<HTMLElement>(`figure[data-temp-id="${tempId}"]`);
-      if (figure) {
-        figure.classList.remove('is-uploading');
-        figure.classList.add('has-error');
-        const overlay = figure.querySelector('.rte-image-overlay');
-        if (overlay) overlay.textContent = 'Falha no upload';
+      if (insertedPos !== null) {
+        const node = editor.state.doc.nodeAt(insertedPos);
+        if (node && node.type.name === 'imageFigure') {
+          editor
+            .chain()
+            .command(({ tr }) => {
+              tr.setNodeMarkup(insertedPos, undefined, { ...node.attrs, status: 'error' });
+              return true;
+            })
+            .run();
+        }
       }
     } finally {
       setUploading(false);
-      onContentChange();
+      URL.revokeObjectURL(objectUrl);
     }
   };
 
   const highlightFigure = (figure: HTMLElement | null) => {
-    const figures = editorRef.current?.querySelectorAll('figure[data-type="image"]') ?? [];
+    const figures = editor?.view.dom.querySelectorAll('figure[data-type="image"]') ?? [];
     figures.forEach((f) => f.classList.remove('is-active'));
     if (figure) figure.classList.add('is-active');
   };
@@ -253,24 +229,22 @@ export function useImageManager({ editorRef, restoreSelection, onContentChange }
   };
 
   const applyImageEdits = () => {
-    if (!activeFigure) return;
+    if (!editor || !activeFigure) return;
+    const pos = findImageFigurePos(editor, activeFigure);
+    if (pos === null) return;
+    const node = editor.state.doc.nodeAt(pos);
+    if (!node) return;
     const size = isValidSize(editImageModal.size) ? editImageModal.size : '100';
     const align = isValidAlign(editImageModal.align) ? editImageModal.align : 'center';
-    const img = activeFigure.querySelector('img');
-    const caption = activeFigure.querySelector('figcaption');
-    if (img) img.alt = editImageModal.alt;
-    if (caption) caption.textContent = editImageModal.alt;
-    activeFigure.setAttribute('data-size', size);
-    activeFigure.setAttribute('data-align', align);
-    activeFigure.setAttribute('data-type', activeFigure.getAttribute('data-type') ?? 'image');
-    allowedAligns.forEach((a) => activeFigure.classList.remove(`img-align-${a}`));
-    activeFigure.classList.add(`img-align-${align}`);
-    allowedSizes.forEach((s) => activeFigure.classList.remove(`rte-image--size-${s}`));
-    activeFigure.classList.add(`rte-image--size-${size}`);
-    allowedAligns.forEach((a) => activeFigure.classList.remove(`rte-image--align-${a}`));
-    activeFigure.classList.add(`rte-image--align-${align}`);
+    editor
+      .chain()
+      .focus()
+      .command(({ tr }) => {
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, alt: editImageModal.alt, size, align });
+        return true;
+      })
+      .run();
     setImageMeta((prev) => (prev ? { ...prev, alt: editImageModal.alt, size, align } : prev));
-    onContentChange();
     setEditImageModal((prev) => ({ ...prev, open: false }));
   };
 
@@ -281,10 +255,15 @@ export function useImageManager({ editorRef, restoreSelection, onContentChange }
   };
 
   const executeRemoveImage = () => {
-    if (!activeFigure) return;
-    activeFigure.remove();
+    if (!editor || !activeFigure) return;
+    const pos = findImageFigurePos(editor, activeFigure);
+    if (pos !== null) {
+      const node = editor.state.doc.nodeAt(pos);
+      if (node) {
+        editor.chain().focus().deleteRange({ from: pos, to: pos + node.nodeSize }).run();
+      }
+    }
     highlightFigure(null);
-    onContentChange();
     setConfirmRemoveImage(false);
   };
 

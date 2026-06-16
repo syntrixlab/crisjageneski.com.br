@@ -4,7 +4,7 @@ Site institucional de psicóloga com CMS próprio baseado em blocos.
 
 ## Stack
 
-- **Frontend:** React 19 + Vite + TypeScript strict + React Query + Axios
+- **Frontend:** React 19 + Vite + TypeScript strict + React Query + Axios + Tiptap (editor de texto rico)
 - **Backend:** Express 5 + TypeScript + Prisma + PostgreSQL
 - **Storage:** Supabase (imagens/mídia)
 - **Cache:** Redis (opcional, configurável via `REDIS_URL`)
@@ -118,4 +118,4 @@ Fases planejadas:
 - **Fase 3** (concluída): Registry de blocos (`blocks/registry.ts`)
 - **Fase 4** (concluída): Decomposição do `AdminPageEditorPage` em hooks e sub-componentes
 - **Fase 5** (concluída): `BlockErrorBoundary`, remoção de `any` em `pageLayoutHelpers.ts`, custom hooks de React Query (`client/src/hooks/queries/`), extração do `SocialLinksEditor` e `useArticleEditor`, decomposição do `RichTextEditor` em sub-componentes/hooks
-- **Fase 6** (em andamento): Segurança (auth via httpOnly cookie — concluído), migração do `RichTextEditor` de `execCommand` para Tiptap (pendente)
+- **Fase 6** (concluída): Segurança (auth via httpOnly cookie), migração do `RichTextEditor` de `execCommand` para Tiptap (`client/src/components/RichTextEditor/extensions/`)

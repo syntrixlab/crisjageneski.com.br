@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/queries';
+import { AUTH_FLAG_KEY } from '../api/client';
 import { SeoHead } from '../components/SeoHead';
 
 export function AdminLoginPage() {
@@ -14,8 +15,8 @@ export function AdminLoginPage() {
     setError('');
     setLoading(true);
     try {
-      const result = await login(form.email, form.password);
-      localStorage.setItem('cris_token', result.token);
+      await login(form.email, form.password);
+      localStorage.setItem(AUTH_FLAG_KEY, '1');
       navigate('/admin');
     } catch (err) {
       setError('Credenciais invalidas');

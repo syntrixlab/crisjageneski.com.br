@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { AUTH_FLAG_KEY } from './api/client';
 import './App.css';
 import { PublicLayout } from './components/PublicLayout';
 import { AdminLayout } from './components/AdminLayout';
@@ -64,8 +65,8 @@ const router = createBrowserRouter([
 ]);
 
 function RequireAuth({ children }: { children: ReactNode }) {
-  const token = localStorage.getItem('cris_token');
-  if (!token) return <Navigate to="/admin/login" replace />;
+  const authed = localStorage.getItem(AUTH_FLAG_KEY);
+  if (!authed) return <Navigate to="/admin/login" replace />;
   return <>{children}</>;
 }
 

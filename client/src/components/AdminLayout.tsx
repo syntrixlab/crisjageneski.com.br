@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { logout as logoutRequest } from '../api/queries';
+import { AUTH_FLAG_KEY } from '../api/client';
 import '../App.css';
 
 const navSections = [
@@ -142,9 +144,13 @@ export function AdminLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  const logout = () => {
-    localStorage.removeItem('cris_token');
-    navigate('/admin/login');
+  const logout = async () => {
+    try {
+      await logoutRequest();
+    } finally {
+      localStorage.removeItem(AUTH_FLAG_KEY);
+      navigate('/admin/login');
+    }
   };
 
   const siteUrl =

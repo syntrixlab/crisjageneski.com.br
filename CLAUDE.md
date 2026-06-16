@@ -8,7 +8,7 @@ Site institucional de psicóloga com CMS próprio baseado em blocos.
 - **Backend:** Express 5 + TypeScript + Prisma + PostgreSQL
 - **Storage:** Supabase (imagens/mídia)
 - **Cache:** Redis (opcional, configurável via `REDIS_URL`)
-- **Auth:** JWT via localStorage (`cris_token`)
+- **Auth:** JWT em cookie `httpOnly` (`cris_session`, setado pelo servidor). O client mantém só uma flag não-sensível em `localStorage` (`cris_authed`) para decidir a UI de rota — a segurança real é sempre o cookie, validado a cada request
 
 ## Como rodar
 
@@ -94,9 +94,10 @@ import type { TextBlockData } from '@/types/blocks';
 ## API
 
 - Rotas públicas: `/api/public/...` — sem autenticação
-- Rotas admin: `/api/admin/...` — requerem JWT no header `Authorization: Bearer <token>`
+- Rotas admin: `/api/admin/...` — requerem o cookie `httpOnly` `cris_session` (setado por `POST /api/login`, limpo por `POST /api/logout`)
 - Upload de mídia: `/api/media/upload` — multipart/form-data
 - Submissão de formulários: `/api/forms/submit`
+- `CLIENT_URL` (env do servidor) precisa apontar para a origem do client (CORS + cookie)
 
 ## Convenções
 
@@ -117,4 +118,4 @@ Fases planejadas:
 - **Fase 3** (concluída): Registry de blocos (`blocks/registry.ts`)
 - **Fase 4** (concluída): Decomposição do `AdminPageEditorPage` em hooks e sub-componentes
 - **Fase 5** (concluída): `BlockErrorBoundary`, remoção de `any` em `pageLayoutHelpers.ts`, custom hooks de React Query (`client/src/hooks/queries/`), extração do `SocialLinksEditor` e `useArticleEditor`, decomposição do `RichTextEditor` em sub-componentes/hooks
-- **Fase 6**: Segurança (auth via httpOnly cookie), migração do `RichTextEditor` de `execCommand` para Tiptap
+- **Fase 6** (em andamento): Segurança (auth via httpOnly cookie — concluído), migração do `RichTextEditor` de `execCommand` para Tiptap (pendente)

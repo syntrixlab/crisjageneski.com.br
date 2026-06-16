@@ -23,6 +23,7 @@ const envSchema = z.object({
   CACHE_TTL_POSTS_LIST: z.coerce.number().default(600),
   ADMIN_EMAIL: z.string().email(),
   ADMIN_PASSWORD: z.string().min(8),
+  CLIENT_URL: z.string().url().default('http://localhost:5173'),
   UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().default(5),
   ALLOWED_IMAGE_MIME_TYPES: z.string().default('image/jpeg,image/png,image/webp')
 });

@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
@@ -24,7 +25,8 @@ if (env.NODE_ENV === 'production') {
 
 app.use(
   cors({
-    origin: '*',
+    origin: env.CLIENT_URL,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
   })
 );
@@ -41,6 +43,7 @@ app.use(
 app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 
 // Middleware para desabilitar cache em rotas /api

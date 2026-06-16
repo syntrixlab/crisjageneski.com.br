@@ -42,8 +42,11 @@ O cliente roda em http://localhost:5173 e faz proxy de `/api` para o servidor em
 │   └── src/
 │       ├── api/         Axios instance + funções de query
 │       ├── assets/      Assets estáticos (SVGs, imagens)
+│       ├── blocks/      Registry de blocos + renderer/Form/schema por tipo
 │       ├── components/  Componentes React reutilizáveis
-│       ├── hooks/       Custom hooks
+│       │   └── RichTextEditor/  Editor de texto rico (toolbar + sub-modais + hooks)
+│       ├── hooks/
+│       │   └── queries/ Custom hooks de React Query (usePages, useArticles, useMedia, ...)
 │       ├── pages/       Páginas (públicas e admin)
 │       ├── types/       Tipos TypeScript por domínio
 │       │   ├── blocks.ts    Tipos dos 16 blocos (PageBlock union)
@@ -73,14 +76,11 @@ Os 16 tipos de bloco estão definidos em `client/src/types/blocks.ts` como discr
 **Tipos de bloco disponíveis:**
 `text`, `image`, `button`, `buttonGroup`, `cards`, `cta`, `form`, `hero`, `media-text`, `pills`, `recent-posts`, `services`, `social-links`, `span`, `whatsapp-cta`, `contact-info`
 
-**Adicionar um novo bloco (situação atual):**
-1. Adicionar o novo tipo ao union `PageBlock` em `client/src/types/blocks.ts`
-2. Adicionar `case` no switch de renderização em `PageRenderer.tsx`
-3. Adicionar `case` no switch de formulários em `AdminPageEditorPage.tsx`
-4. Criar componente de formulário se necessário
-5. Adicionar preset em `sectionPresets.ts` se quiser que apareça na galeria
-
-> Após a Fase 3 do plano de refatoração (`docs/superpowers/plans/`), o processo será simplificado para: criar pasta `blocks/<nome>/` com `renderer.tsx`, `Form.tsx`, `schema.ts` e adicionar 1 linha no `registry.ts`.
+**Adicionar um novo bloco:**
+1. Criar pasta `client/src/blocks/<nome>/` com `renderer.tsx`, `Form.tsx`, `schema.ts`
+2. Adicionar 1 linha no `client/src/blocks/registry.ts`
+3. Adicionar o novo tipo ao union `PageBlock` em `client/src/types/blocks.ts`
+4. Adicionar preset em `sectionPresets.ts` se quiser que apareça na galeria
 
 ## Importações
 
@@ -114,7 +114,7 @@ Os planos de execução estão em `docs/superpowers/plans/`.
 
 Fases planejadas:
 - **Fase 1+2** (concluída): Bugs críticos + DX
-- **Fase 3**: Registry de blocos (`blocks/registry.ts`)
-- **Fase 4**: Decomposição do `AdminPageEditorPage` em hooks e sub-componentes
-- **Fase 5**: Error boundaries, custom hooks React Query, remoção de `any`
-- **Fase 6**: Segurança (auth via httpOnly cookie), migração do RichTextEditor
+- **Fase 3** (concluída): Registry de blocos (`blocks/registry.ts`)
+- **Fase 4** (concluída): Decomposição do `AdminPageEditorPage` em hooks e sub-componentes
+- **Fase 5** (concluída): `BlockErrorBoundary`, remoção de `any` em `pageLayoutHelpers.ts`, custom hooks de React Query (`client/src/hooks/queries/`), extração do `SocialLinksEditor` e `useArticleEditor`, decomposição do `RichTextEditor` em sub-componentes/hooks
+- **Fase 6**: Segurança (auth via httpOnly cookie), migração do `RichTextEditor` de `execCommand` para Tiptap

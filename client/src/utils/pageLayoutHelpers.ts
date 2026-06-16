@@ -6,7 +6,7 @@ const isValidRowIndex = (value: unknown): value is number =>
   Number.isInteger(value) && Number(value) >= 0;
 
 export function getBlockRowIndex(block: PageBlock, fallbackIndex: number): number {
-  return isValidRowIndex((block as any).rowIndex) ? Number((block as any).rowIndex) : fallbackIndex;
+  return isValidRowIndex(block.rowIndex) ? Number(block.rowIndex) : fallbackIndex;
 }
 
 const sortBlocksByRowIndex = (blocks: PageBlock[]): PageBlock[] =>
@@ -100,7 +100,7 @@ export function ensureLayoutV2(layout?: PageLayout): PageLayoutV2 {
 
   const normalizeCols = (section: PageSection): PageSection => {
     const desired =
-      (section.settings as any)?.columnsLayout ??
+      section.settings?.columnsLayout ??
       (section.columnsLayout as 2 | 3 | undefined) ??
       section.columns ??
       2;

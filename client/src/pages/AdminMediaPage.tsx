@@ -1,13 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ConfirmModal, MediaGallery, Modal } from '../components/AdminUI';
-import { deleteMedia, fetchMedia, updateMedia, uploadMedia } from '../api/queries';
+import { useDeleteMedia, useMedia, useUpdateMedia, useUploadMedia } from '../hooks/queries/useMedia';
 import { SeoHead } from '../components/SeoHead';
 import type { Media } from '../types';
 
 export function AdminMediaPage() {
-  const qc = useQueryClient();
-  const { data: media } = useQuery<Media[]>({ queryKey: ['admin', 'media'], queryFn: fetchMedia });
+  const { data: media } = useMedia();
   const [file, setFile] = useState<File | null>(null);
   const [alt, setAlt] = useState('');
   const [showUpload, setShowUpload] = useState(false);
@@ -15,33 +13,9 @@ export function AdminMediaPage() {
   const [editFile, setEditFile] = useState<File | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Media | null>(null);
 
-  const uploadMutation = useMutation({
-    mutationFn: () => uploadMedia({ file: file!, alt }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'media'] });
-      setFile(null);
-      setAlt('');
-      setShowUpload(false);
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<Media> & { file?: File | null } }) =>
-      updateMedia(id, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'media'] });
-      setEditing(null);
-      setEditFile(null);
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteMedia,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'media'] });
-      setDeleteTarget(null);
-    }
-  });
+  const uploadMutation = useUploadMedia();
+  const updateMutation = useUpdateMedia();
+  const deleteMutation = useDeleteMedia();
 
   return (
     <div className="admin-page">
@@ -76,7 +50,24 @@ export function AdminMediaPage() {
           <button className="btn btn-outline" type="button" onClick={() => setShowUpload(false)}>
             Cancelar
           </button>
-          <button className="btn btn-primary" type="button" disabled={!file || uploadMutation.isPending} onClick={() => uploadMutation.mutate()}>
+          <button
+            className="btn btn-primary"
+            type="button"
+            disabled={!file || uploadMutation.isPending}
+            onClick={() =>
+              file &&
+              uploadMutation.mutate(
+                { file, alt },
+                {
+                  onSuccess: () => {
+                    setFile(null);
+                    setAlt('');
+                    setShowUpload(false);
+                  }
+                }
+              )
+            }
+          >
             {uploadMutation.isPending ? 'Enviando...' : 'Enviar'}
           </button>
         </div>
@@ -114,10 +105,18 @@ export function AdminMediaPage() {
                 className="btn btn-primary"
                 type="button"
                 onClick={() =>
-                  updateMutation.mutate({
-                    id: editing.id,
-                    payload: { alt: editing.alt ?? '', file: editFile }
-                  })
+                  updateMutation.mutate(
+                    {
+                      id: editing.id,
+                      payload: { alt: editing.alt ?? '', file: editFile }
+                    },
+                    {
+                      onSuccess: () => {
+                        setEditing(null);
+                        setEditFile(null);
+                      }
+                    }
+                  )
                 }
               >
                 Salvar
@@ -132,7 +131,7 @@ export function AdminMediaPage() {
         onClose={() => setDeleteTarget(null)}
         title="Remover imagem"
         description={`Deseja remover "${deleteTarget?.alt ?? "sem nome"}"?`}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })}
         confirmLabel="Remover"
         loading={deleteMutation.isPending}
       />

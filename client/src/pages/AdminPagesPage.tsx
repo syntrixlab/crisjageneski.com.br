@@ -1,57 +1,24 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { SeoHead } from '../components/SeoHead';
 import { ArticleStatusBadge, ConfirmModal, IconButton } from '../components/AdminUI';
-import { deletePage, fetchAdminPages, publishPage, unpublishPage, createPage } from '../api/queries';
 import { TemplateSelectModal } from '../components/TemplateSelectModal';
 import { generatePageDataFromTemplate } from '../utils/pageTemplates';
+import { usePages, usePublishPage, useUnpublishPage, useDeletePage, useCreatePage } from '../hooks/queries/usePages';
 import type { Page } from '../types';
 
 export function AdminPagesPage() {
-  const qc = useQueryClient();
   const navigate = useNavigate();
-  const { data: pages, isLoading, error, isError } = useQuery<Page[]>({ 
-    queryKey: ['admin', 'pages'], 
-    queryFn: fetchAdminPages,
-    retry: 1
-  });
+  const { data: pages, isLoading, error, isError } = usePages();
   const [deleteTarget, setDeleteTarget] = useState<Page | null>(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
-  const publishMutation = useMutation({
-    mutationFn: publishPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      qc.invalidateQueries({ queryKey: ['page', data.slug] });
-    }
-  });
+  const publishMutation = usePublishPage();
+  const unpublishMutation = useUnpublishPage();
 
-  const unpublishMutation = useMutation({
-    mutationFn: unpublishPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      qc.invalidateQueries({ queryKey: ['page', data.slug] });
-    }
-  });
+  const deleteMutation = useDeletePage();
 
-  const deleteMutation = useMutation({
-    mutationFn: deletePage,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setDeleteTarget(null);
-    }
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setShowTemplateModal(false);
-      navigate(`/admin/pages/${data.id}/edit`);
-    },
-    onError: () => {}
-  });
+  const createMutation = useCreatePage();
 
   const getSortTime = (page: Page) => {
     const value = page.updatedAt ?? page.publishedAt ?? page.createdAt ?? '';
@@ -73,7 +40,12 @@ export function AdminPagesPage() {
 
   const handleTemplateSelect = (templateId: string) => {
     const pageData = generatePageDataFromTemplate(templateId);
-    createMutation.mutate(pageData);
+    createMutation.mutate(pageData, {
+      onSuccess: (data) => {
+        setShowTemplateModal(false);
+        navigate(`/admin/pages/${data.id}/edit`);
+      }
+    });
   };
 
   return (
@@ -175,7 +147,7 @@ export function AdminPagesPage() {
         onClose={() => setDeleteTarget(null)}
         title="Remover página"
         description={`Deseja remover "${deleteTarget?.title}"?`}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })}
         confirmLabel="Remover"
         loading={deleteMutation.isPending}
       />

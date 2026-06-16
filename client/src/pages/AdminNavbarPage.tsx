@@ -1,16 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { SeoHead } from '../components/SeoHead';
 import { ConfirmModal, Modal, Switch } from '../components/AdminUI';
 import {
-  createNavbarItem,
-  deleteNavbarItem,
-  fetchAdminNavbar,
-  fetchAdminPages,
-  reorderNavbarItems,
-  updateNavbarItem
-} from '../api/queries';
-import type { NavbarItem, Page } from '../types';
+  useAdminNavbar,
+  useCreateNavbarItem,
+  useDeleteNavbarItem,
+  useReorderNavbarItems,
+  useUpdateNavbarItem
+} from '../hooks/queries/useNavbar';
+import { useAdminPagesForSelect } from '../hooks/queries/usePages';
+import type { NavbarItem } from '../types';
 import { NavigationTree } from '../components/navigation/NavigationTree';
 import { FooterPreview } from '../components/navigation/FooterPreview';
 
@@ -49,9 +48,8 @@ const builtInPages: { slug: string; label: string }[] = [
 ];
 
 export function NavigationBuilderPage() {
-  const qc = useQueryClient();
-  const { data: items } = useQuery<NavbarItem[]>({ queryKey: ['admin', 'navbar'], queryFn: fetchAdminNavbar });
-  const { data: pages } = useQuery<Page[]>({ queryKey: ['admin', 'pages', 'select'], queryFn: fetchAdminPages });
+  const { data: items } = useAdminNavbar();
+  const { data: pages } = useAdminPagesForSelect();
   const [navItems, setNavItems] = useState<NavbarItem[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<NavbarItem | null>(null);
@@ -70,41 +68,15 @@ export function NavigationBuilderPage() {
     [navItems]
   );
 
-  const refreshNav = () => {
-    qc.invalidateQueries({ queryKey: ['admin', 'navbar'] });
-    qc.invalidateQueries({ queryKey: ['navbar'] });
-  };
-
   const showToastMessage = (message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 1800);
   };
 
-  const createMutation = useMutation({
-    mutationFn: createNavbarItem,
-    onSuccess: () => {
-      refreshNav();
-      setForm(defaultForm);
-      setShowForm(false);
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<NavbarItem> }) => updateNavbarItem(id, payload),
-    onSuccess: () => {
-      refreshNav();
-      setShowForm(false);
-      setEditing(null);
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteNavbarItem,
-    onSuccess: () => {
-      refreshNav();
-      setDeleteTarget(null);
-    }
-  });
+  const createMutation = useCreateNavbarItem();
+  const updateMutation = useUpdateNavbarItem();
+  const deleteMutation = useDeleteNavbarItem();
+  const reorderMutation = useReorderNavbarItems();
 
   const normalizeNavbarOrders = (list: NavbarItem[]) => {
     const next = list.map((i) => ({ ...i }));
@@ -151,9 +123,8 @@ export function NavigationBuilderPage() {
     const normalized = normalizeNavbarOrders(swapped);
     setNavItems(normalized);
     try {
-      await reorderNavbarItems('navbar', buildNavbarPayload(normalized));
+      await reorderMutation.mutateAsync({ context: 'navbar', items: buildNavbarPayload(normalized) });
       showToastMessage('Ordem atualizada');
-      refreshNav();
     } catch {
       setNavItems(previous);
       setError('Não foi possível salvar a nova ordem da navbar.');
@@ -179,9 +150,8 @@ export function NavigationBuilderPage() {
     const normalized = normalizeFooterOrders(swapped);
     setNavItems(normalized);
     try {
-      await reorderNavbarItems('footer', buildFooterPayload(normalized));
+      await reorderMutation.mutateAsync({ context: 'footer', items: buildFooterPayload(normalized) });
       showToastMessage('Ordem do rodapé salva');
-      refreshNav();
     } catch {
       setNavItems(previous);
       setError('Não foi possível salvar a ordem do rodapé.');
@@ -210,9 +180,8 @@ export function NavigationBuilderPage() {
     const normalized = normalizeNavbarOrders(updated);
     setNavItems(normalized);
     try {
-      await reorderNavbarItems('navbar', buildNavbarPayload(normalized));
+      await reorderMutation.mutateAsync({ context: 'navbar', items: buildNavbarPayload(normalized) });
       showToastMessage(cleanParent ? 'Item movido para submenu' : 'Item movido para raiz');
-      refreshNav();
     } catch {
       setNavItems(previous);
       setError('Não foi possível alterar o submenu.');
@@ -238,7 +207,6 @@ export function NavigationBuilderPage() {
         id: item.id,
         payload: { showInNavbar: !item.showInNavbar, parentId: !item.showInNavbar ? null : item.parentId }
       });
-      refreshNav();
     } catch {
       setNavItems(previous);
     }
@@ -258,7 +226,6 @@ export function NavigationBuilderPage() {
         id: item.id,
         payload: { showInFooter: !item.showInFooter }
       });
-      refreshNav();
     } catch {
       setNavItems(previous);
     }
@@ -344,16 +311,22 @@ export function NavigationBuilderPage() {
       isVisible: form.isVisible
     };
 
+    const onSuccess = () => {
+      setForm(defaultForm);
+      setShowForm(false);
+      setEditing(null);
+    };
+
     if (editing) {
-      updateMutation.mutate({ id: editing.id, payload });
+      updateMutation.mutate({ id: editing.id, payload }, { onSuccess });
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(payload, { onSuccess });
     }
   };
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    deleteMutation.mutate(deleteTarget.id);
+    deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
   };
 
   const formTitle = editing ? 'Editar item' : 'Adicionar item';

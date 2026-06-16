@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ensureLayoutV2 } from '@/utils/pageLayoutHelpers';
 import { ensureHeroInSection } from '@/utils/heroMigration';
-import {
-  createPage,
-  fetchAdminPage,
-  publishPage,
-  unpublishPage,
-  updatePage,
-  fetchAdminHomePage
-} from '@/api/queries';
-import type { Page, PageLayoutV2, PageStatus } from '@/types';
+import { useAdminHomePage, useAdminPage } from '@/hooks/queries/usePage';
+import { useCreatePage, usePublishPage, useUnpublishPage, useUpdatePage } from '@/hooks/queries/usePages';
+import type { PageLayoutV2, PageStatus } from '@/types';
 
 export type PageForm = {
   id?: string;
@@ -55,18 +48,13 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
   const isHomePage = pageKey === 'home';
   const isNew = !isHomePage && (!id || id === 'new');
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
-  const {
-    data: existingPage,
-    isLoading: isLoadingPage,
-    isError: isPageError,
-    refetch: refetchPage
-  } = useQuery<Page>({
-    queryKey: isHomePage ? ['admin', 'page', 'home'] : ['admin', 'page', id],
-    queryFn: () => (isHomePage ? fetchAdminHomePage() : fetchAdminPage(id || '')),
-    enabled: isHomePage ? true : !isNew && !!id
-  });
+  const homeQuery = useAdminHomePage(isHomePage);
+  const pageQuery = useAdminPage(id, !isHomePage && !isNew && !!id);
+  const existingPage = isHomePage ? homeQuery.data : pageQuery.data;
+  const isLoadingPage = isHomePage ? homeQuery.isLoading : pageQuery.isLoading;
+  const isPageError = isHomePage ? homeQuery.isError : pageQuery.isError;
+  const refetchPage = isHomePage ? homeQuery.refetch : pageQuery.refetch;
 
   const [page, setPage] = useState<PageForm>(emptyPage);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
@@ -103,74 +91,15 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
     }
   }, [existingPage?.id, isHomePage]);
 
-  const createMutation = useMutation({
-    mutationFn: (payload: PageForm) => createPage(payload),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setPage({
-        id: data.id,
-        title: data.title,
-        slug: data.slug,
-        description: data.description ?? '',
-        layout: ensureLayoutV2(data.layout),
-        status: data.status ?? 'draft',
-        publishedAt: data.publishedAt ?? null
-      });
-      navigate(`/admin/pages/${data.id}/edit`, { replace: true });
-    },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-      setFormError(msg ?? 'Falha ao salvar página.');
-    }
-  });
+  const createMutation = useCreatePage();
+  const updateMutation = useUpdatePage();
+  const publishMutation = usePublishPage();
+  const unpublishMutation = useUnpublishPage();
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: PageForm }) => updatePage(id, payload),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setPage((prev) => ({
-        ...prev,
-        ...data.page,
-        layout: ensureLayoutV2(data.page.layout),
-        status: data.page.status ?? 'draft'
-      }));
-      if (data.changedToDraft) {
-        setDraftAlert('Esta página voltou para rascunho. Publique novamente para atualizar no site.');
-      }
-    },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-      setFormError(msg ?? 'Falha ao atualizar página.');
-    }
-  });
-
-  const publishMutation = useMutation({
-    mutationFn: publishPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      qc.invalidateQueries({ queryKey: ['page', data.slug] });
-      setPage((prev) => ({
-        ...prev,
-        ...data,
-        layout: ensureLayoutV2(data.layout),
-        status: data.status ?? 'published'
-      }));
-      setDraftAlert(null);
-    }
-  });
-
-  const unpublishMutation = useMutation({
-    mutationFn: unpublishPage,
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['admin', 'pages'] });
-      setPage((prev) => ({
-        ...prev,
-        ...data,
-        layout: ensureLayoutV2(data.layout),
-        status: 'draft'
-      }));
-    }
-  });
+  const handleMutationError = (err: unknown, fallback: string) => {
+    const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+    setFormError(msg ?? fallback);
+  };
 
   const busyMutations =
     createMutation.isPending ||
@@ -192,26 +121,78 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
       status: isHomePage ? 'published' : 'draft',
       layout: ensureLayoutV2(page.layout)
     };
+    const applyUpdate = async (pageId: string) => {
+      try {
+        const data = await updateMutation.mutateAsync({ id: pageId, payload });
+        setPage((prev) => ({
+          ...prev,
+          ...data.page,
+          layout: ensureLayoutV2(data.page.layout),
+          status: data.page.status ?? 'draft'
+        }));
+        if (data.changedToDraft) {
+          setDraftAlert('Esta página voltou para rascunho. Publique novamente para atualizar no site.');
+        }
+        return data.page;
+      } catch (err) {
+        handleMutationError(err, 'Falha ao atualizar página.');
+        throw err;
+      }
+    };
+
     if (isHomePage) {
       if (!page.id) {
         setFormError('Home não carregada. Tente novamente.');
         return null;
       }
-      const updated = await updateMutation.mutateAsync({ id: page.id, payload });
-      return updated.page;
+      return applyUpdate(page.id);
     }
     if (isNew || !page.id) {
-      return createMutation.mutateAsync(payload);
+      try {
+        const data = await createMutation.mutateAsync(payload);
+        setPage({
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          description: data.description ?? '',
+          layout: ensureLayoutV2(data.layout),
+          status: data.status ?? 'draft',
+          publishedAt: data.publishedAt ?? null
+        });
+        navigate(`/admin/pages/${data.id}/edit`, { replace: true });
+        return data;
+      } catch (err) {
+        handleMutationError(err, 'Falha ao salvar página.');
+        throw err;
+      }
     }
-    const updated = await updateMutation.mutateAsync({ id: page.id, payload });
-    return updated.page;
+    return applyUpdate(page.id);
   };
 
-  const publish = (pageId: string) => publishMutation.mutateAsync(pageId);
+  const publish = async (pageId: string) => {
+    const data = await publishMutation.mutateAsync(pageId);
+    setPage((prev) => ({
+      ...prev,
+      ...data,
+      layout: ensureLayoutV2(data.layout),
+      status: data.status ?? 'published'
+    }));
+    setDraftAlert(null);
+    return data;
+  };
 
   const handleMoveToDraft = () => {
     if (!page.id || isHomePage) return;
-    unpublishMutation.mutate(page.id);
+    unpublishMutation.mutate(page.id, {
+      onSuccess: (data) => {
+        setPage((prev) => ({
+          ...prev,
+          ...data,
+          layout: ensureLayoutV2(data.layout),
+          status: 'draft'
+        }));
+      }
+    });
   };
 
   return {

@@ -127,36 +127,8 @@ export const fetchAdminHomePage = async (): Promise<Page> => {
 };
 
 export const fetchAdminPages = async (): Promise<Page[]> => {
-  try {
-    console.log('[FRONTEND] Iniciando request para /admin/pages...');
-    const response = await api.get('/admin/pages', {
-      params: { _t: Date.now() } // Cache-buster temporário
-    });
-    
-    // [DEBUG] Log temporário para validação
-    console.log('[FRONTEND] Response completo:', response);
-    console.log('[FRONTEND] GET /admin/pages - Status:', response.status, 'Data:', response.data);
-    console.log('[FRONTEND] Total páginas recebidas:', Array.isArray(response.data?.data) ? response.data.data.length : 'not array');
-    
-    if (!response.data) {
-      console.error('[FRONTEND] Response.data está vazio!');
-      throw new Error('Resposta vazia do servidor');
-    }
-    
-    if (!response.data.data) {
-      console.error('[FRONTEND] Response.data.data está vazio!', response.data);
-      throw new Error('Formato de resposta inválido: falta data.data');
-    }
-    
-    return response.data.data;
-  } catch (error) {
-    console.error('[FRONTEND] Erro ao buscar páginas:', error);
-    if (error instanceof Error) {
-      console.error('[FRONTEND] Mensagem de erro:', error.message);
-      console.error('[FRONTEND] Stack:', error.stack);
-    }
-    throw error;
-  }
+  const { data } = await api.get('/admin/pages');
+  return data.data;
 };
 
 export const fetchAdminPage = async (id: string): Promise<Page> => {

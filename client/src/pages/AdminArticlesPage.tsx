@@ -1,45 +1,20 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArticleStatusBadge, ConfirmModal, IconButton } from '../components/AdminUI';
 import { SeoHead } from '../components/SeoHead';
-import { deleteArticle, fetchAdminArticles, publishArticle, unpublishArticle } from '../api/queries';
+import { useArticles, useDeleteArticle, usePublishArticle, useUnpublishArticle } from '../hooks/queries/useArticles';
 import type { Article } from '../types';
 
 export function AdminArticlesPage() {
-  const qc = useQueryClient();
   const navigate = useNavigate();
-  const { data: articles } = useQuery<Article[]>({ queryKey: ['admin', 'posts'], queryFn: fetchAdminArticles });
+  const { data: articles } = useArticles();
   const [deleteTarget, setDeleteTarget] = useState<Article | null>(null);
   const [publishTarget, setPublishTarget] = useState<Article | null>(null);
   const [unpublishTarget, setUnpublishTarget] = useState<Article | null>(null);
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteArticle,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      setDeleteTarget(null);
-    }
-  });
-
-  const publishMutation = useMutation({
-    mutationFn: publishArticle,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      setPublishTarget(null);
-    }
-  });
-
-  const unpublishMutation = useMutation({
-    mutationFn: unpublishArticle,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin', 'posts'] });
-      qc.invalidateQueries({ queryKey: ['articles'] });
-      setUnpublishTarget(null);
-    }
-  });
+  const deleteMutation = useDeleteArticle();
+  const publishMutation = usePublishArticle();
+  const unpublishMutation = useUnpublishArticle();
 
   return (
     <div className="admin-page">
@@ -102,7 +77,7 @@ export function AdminArticlesPage() {
         onClose={() => setDeleteTarget(null)}
         title="Remover artigo"
         description={`Deseja remover "${deleteTarget?.title}"?`}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })}
         confirmLabel="Remover"
         loading={deleteMutation.isPending}
       />
@@ -112,7 +87,7 @@ export function AdminArticlesPage() {
         onClose={() => setPublishTarget(null)}
         title="Publicar artigo"
         description={`Publicar "${publishTarget?.title}"? Ele ficara visivel no site.`}
-        onConfirm={() => publishTarget && publishMutation.mutate(publishTarget.id)}
+        onConfirm={() => publishTarget && publishMutation.mutate(publishTarget.id, { onSuccess: () => setPublishTarget(null) })}
         confirmLabel="Publicar"
         loading={publishMutation.isPending}
       />
@@ -122,7 +97,7 @@ export function AdminArticlesPage() {
         onClose={() => setUnpublishTarget(null)}
         title="Mover para rascunho"
         description={`Mover "${unpublishTarget?.title}" para rascunho? Saira do site ate ser publicado novamente.`}
-        onConfirm={() => unpublishTarget && unpublishMutation.mutate(unpublishTarget.id)}
+        onConfirm={() => unpublishTarget && unpublishMutation.mutate(unpublishTarget.id, { onSuccess: () => setUnpublishTarget(null) })}
         confirmLabel="Mover"
         loading={unpublishMutation.isPending}
       />

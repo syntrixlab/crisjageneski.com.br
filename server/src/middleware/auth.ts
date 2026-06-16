@@ -2,14 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { HttpError } from '../utils/errors';
+import { SESSION_COOKIE_NAME } from '../modules/auth/auth.controller';
 
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header) {
-    return next(new HttpError(401, 'Unauthorized'));
-  }
-
-  const [, token] = header.split(' ');
+  const token = req.cookies?.[SESSION_COOKIE_NAME];
   if (!token) {
     return next(new HttpError(401, 'Unauthorized'));
   }

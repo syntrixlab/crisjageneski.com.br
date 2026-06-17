@@ -70,3 +70,12 @@ temp/
 # Auto-installation flag (Hostinger)
 .installed
 
+# IA
+*.ia
+.agents/
+.claude/
+.codex/
+.superpowers/
+.playwright-cli/
+.docs/superpowers/
+

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
-import { ConfirmModal, IconButton, Modal } from './AdminUI';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faEye, faEyeSlash, faGlobe, faGripVertical, faLink as faLinkSolid, faPencil, faPhone, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faInstagram, faFacebook, faLinkedin, faYoutube, faTiktok, faXTwitter, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { ConfirmModal, Modal } from './AdminUI';
 import type { SocialLink } from '../types';
 
 const socialPlatforms: SocialLink['platform'][] = [
@@ -48,86 +51,21 @@ function normalizeSocialLink(link: SocialLink): SocialLink {
 }
 
 function SocialIcon({ platform }: { platform: SocialLink['platform'] }) {
-  switch (platform) {
-    case 'instagram':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="3" y="3" width="18" height="18" rx="5" />
-          <circle cx="12" cy="12" r="4" />
-          <circle cx="17" cy="7" r="1" fill="currentColor" />
-        </svg>
-      );
-    case 'facebook':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M14 9h3V5h-3a4 4 0 0 0-4 4v3H7v4h3v5h4v-5h3l1-4h-4v-3a1 1 0 0 1 1-1z" />
-        </svg>
-      );
-    case 'linkedin':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
-          <rect x="2" y="9" width="4" height="12" />
-          <circle cx="4" cy="4" r="2" />
-        </svg>
-      );
-    case 'youtube':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-2C18.88 4 12 4 12 4s-6.88 0-8.59.42a2.78 2.78 0 0 0-1.95 2A29 29 0 0 0 1 9.75v2.5A29 29 0 0 0 1.46 17.6a2.78 2.78 0 0 0 1.95 2C5.12 20 12 20 12 20s6.88 0 8.59-.42a2.78 2.78 0 0 0 1.95-2A29 29 0 0 0 23 12.25v-2.5A29 29 0 0 0 22.54 6.42ZM10 15.5V8.5l6 3.5Z" />
-        </svg>
-      );
-    case 'whatsapp':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M3 21l1.65-3.9a8 8 0 1 1 3 3L3 21z" />
-          <path d="M9 10c.2 1.3 1.7 2.7 3 3l1-1 2 1-1 2c-1.7.3-5.3-2.3-5-5z" />
-        </svg>
-      );
-    case 'tiktok':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M14 4v9a4 4 0 1 1-4-4" />
-          <path d="M14 6a5 5 0 0 0 5 5" />
-        </svg>
-      );
-    case 'x':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M4 4l16 16" />
-          <path d="M20 4 4 20" />
-        </svg>
-      );
-    case 'email':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <path d="m3 7 9 6 9-6" />
-        </svg>
-      );
-    case 'site':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M3 12h18" />
-          <path d="M12 3a15 15 0 0 1 4 9 15 15 0 0 1-4 9 15 15 0 0 1-4-9 15 15 0 0 1 4-9z" />
-        </svg>
-      );
-    case 'telefone':
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.1 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="m10 20 6-16" />
-          <path d="m6 6 12 6" />
-          <path d="m6 12 12 6" />
-        </svg>
-      );
-  }
+  const iconMap: Record<SocialLink['platform'], any> = {
+    instagram: faInstagram,
+    facebook: faFacebook,
+    linkedin: faLinkedin,
+    youtube: faYoutube,
+    tiktok: faTiktok,
+    x: faXTwitter,
+    whatsapp: faWhatsapp,
+    email: faEnvelope,
+    site: faGlobe,
+    telefone: faPhone,
+    custom: faLinkSolid
+  };
+
+  return <FontAwesomeIcon icon={iconMap[platform] || faLinkSolid} />;
 }
 
 type SocialLinksEditorProps = {
@@ -202,7 +140,7 @@ export function SocialLinksEditor({ socials, onChange }: SocialLinksEditorProps)
 
   return (
     <>
-      <div style={{ marginTop: '1rem' }}>
+      <div>
         <div className="admin-grid">
           <div className="admin-drag-list">
             <div className="admin-actions" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -235,7 +173,9 @@ export function SocialLinksEditor({ socials, onChange }: SocialLinksEditorProps)
                   setFromIndex(null);
                 }}
               >
-                <div className="admin-drag-handle" aria-label="Mover rede">↕</div>
+                <div className="admin-drag-handle" aria-label="Mover rede">
+                  <FontAwesomeIcon icon={faGripVertical} />
+                </div>
                 <div className="admin-drag-content" style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <SocialIcon platform={item.platform} />
@@ -245,21 +185,25 @@ export function SocialLinksEditor({ socials, onChange }: SocialLinksEditorProps)
                   <span className="muted" style={{ wordBreak: 'break-word' }}>{item.url}</span>
                 </div>
                 <div className="admin-actions" style={{ gap: '0.35rem', marginLeft: 'auto' }}>
-                  <IconButton
-                    icon={item.isVisible ? 'eye' : 'eye-off'}
-                    label={item.isVisible ? 'Ocultar' : 'Mostrar'}
+                  <button
+                    className="icon-button"
+                    type="button"
                     onClick={() => {
                       const next = socials.map((s) =>
                         s.id === item.id ? { ...s, isVisible: !s.isVisible } : s
                       );
                       onChange(next);
                     }}
-                  />
-                  <button className="icon-button" type="button" onClick={() => openSocialModal(item)} aria-label="Editar rede">
-                    ✎
+                    aria-label={item.isVisible ? 'Ocultar rede' : 'Mostrar rede'}
+                    title={item.isVisible ? 'Ocultar rede' : 'Mostrar rede'}
+                  >
+                    <FontAwesomeIcon icon={item.isVisible ? faEye : faEyeSlash} />
                   </button>
-                  <button className="icon-button tone-danger" type="button" onClick={() => setDeleteSocial(item)} aria-label="Remover rede">
-                    🗑
+                  <button className="icon-button" type="button" onClick={() => openSocialModal(item)} aria-label="Editar rede" title="Editar rede">
+                    <FontAwesomeIcon icon={faPencil} />
+                  </button>
+                  <button className="icon-button tone-danger" type="button" onClick={() => setDeleteSocial(item)} aria-label="Remover rede" title="Remover rede">
+                    <FontAwesomeIcon icon={faTrash} />
                   </button>
                 </div>
               </div>

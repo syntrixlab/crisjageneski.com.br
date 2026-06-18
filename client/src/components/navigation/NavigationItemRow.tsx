@@ -1,5 +1,10 @@
-import { IconButton } from '../AdminUI';
+import { useRef, useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGripVertical, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import type { NavbarItem } from '../../types';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SyntheticListenerMap = Record<string, any>;
 
 type NavigationItemRowProps = {
   item: NavbarItem;
@@ -9,14 +14,9 @@ type NavigationItemRowProps = {
   onToggleVisible: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  disableUp?: boolean;
-  disableDown?: boolean;
-  parentOptions: { id: string; label: string }[];
-  currentParentId: string | null;
-  onChangeParent: (parentId: string | null) => void;
-  showParentSelect: boolean;
+  dragListeners?: SyntheticListenerMap;
+  dragAttributes?: Record<string, unknown>;
+  isDragging?: boolean;
 };
 
 export function NavigationItemRow({
@@ -27,15 +27,13 @@ export function NavigationItemRow({
   onToggleVisible,
   onEdit,
   onDelete,
-  onMoveUp,
-  onMoveDown,
-  disableUp,
-  disableDown,
-  parentOptions,
-  currentParentId,
-  onChangeParent,
-  showParentSelect
+  dragListeners,
+  dragAttributes,
+  isDragging,
 }: NavigationItemRowProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const resolveHref = () => {
     if (item.type === 'EXTERNAL_URL') return item.url ?? '';
     const key = item.pageKey ?? '';
@@ -45,70 +43,113 @@ export function NavigationItemRow({
     return `/p/${key}`;
   };
 
-  const renderChip = (label: string, active: boolean, onClick: () => void) => (
-    <button
-      type="button"
-      className={`nav-chip-toggle ${active ? 'is-active' : ''}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-    >
-      {label}
-    </button>
-  );
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   return (
-    <div className="nav-row-wrapper" aria-label={`Item ${item.label}`}>
-      <div className={`nav-row ${depth > 0 ? 'is-child' : ''}`}>
-        <div className="nav-left-controls">
-          <div className="nav-reorder">
-            <IconButton icon="arrow-up" label="Mover para cima" onClick={onMoveUp} disabled={disableUp} />
-            <IconButton icon="arrow-down" label="Mover para baixo" onClick={onMoveDown} disabled={disableDown} />
-          </div>
+    <div
+      className={`nav-row ${depth > 0 ? 'is-child' : ''} ${isDragging ? 'is-dragging' : ''}`}
+      style={{ '--nav-depth': depth } as React.CSSProperties}
+    >
+      {/* Drag handle */}
+      <button
+        className="nav-drag-handle"
+        {...dragListeners}
+        {...dragAttributes}
+        type="button"
+        aria-label="Arrastar para reordenar"
+        tabIndex={0}
+      >
+        <FontAwesomeIcon icon={faGripVertical} />
+      </button>
+
+      {/* Indentação visual para filhos */}
+      {depth > 0 && <span className="nav-indent-line" aria-hidden="true" />}
+
+      <div className="nav-row-body">
+        <div className="nav-row-title">
+          <strong>{item.label}</strong>
+          {!item.isVisible && <span className="nav-chip-soft muted">Oculto</span>}
         </div>
-        <div className="nav-row-body">
-          <div className="nav-row-header">
-            <div className="nav-row-title">
-              <strong>{item.label}</strong>
-              {item.showInNavbar && item.showInFooter && <span className="nav-chip-soft">Ambos</span>}
-              {!item.isVisible && <span className="nav-chip-soft muted">Oculto</span>}
-            </div>
-            <div className="nav-row-actions">
-              <IconButton
-                icon={item.isVisible ? 'eye' : 'eye-off'}
-                label={item.isVisible ? 'Ocultar' : 'Mostrar'}
-                onClick={onToggleVisible}
-              />
-              <IconButton icon="edit" label="Editar" tone="info" onClick={onEdit} />
-              <IconButton icon="trash" label="Excluir" tone="danger" onClick={onDelete} />
-            </div>
-          </div>
-          <div className="nav-row-meta">
-            <span className="muted small">{resolveHref()}</span>
-            <div className="nav-chip-group">
-              {renderChip('Navbar', item.showInNavbar, onToggleNavbar)}
-              {renderChip('Rodapé', item.showInFooter, onToggleFooter)}
-            </div>
-          </div>
-          {showParentSelect ? (
-            <div className="nav-parent-select">
-              <label>Submenu de</label>
-              <select
-                value={currentParentId ?? ''}
-                onChange={(e) => onChangeParent(e.target.value ? e.target.value : null)}
-                aria-label="Selecionar pai"
-              >
-                <option value="">Nenhum (nível raiz)</option>
-                {parentOptions.map((option) => (
-                  <option key={option.id} value={option.id} disabled={option.id === item.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
+        <span className="muted small">{resolveHref()}</span>
+        <div className="nav-chip-group">
+          <button
+            type="button"
+            className={`nav-chip-toggle ${item.showInNavbar ? 'is-active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleNavbar();
+            }}
+          >
+            Navbar
+          </button>
+          <button
+            type="button"
+            className={`nav-chip-toggle ${item.showInFooter ? 'is-active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFooter();
+            }}
+          >
+            Rodapé
+          </button>
+          <button
+            type="button"
+            className={`nav-chip-toggle ${item.isVisible ? 'is-active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleVisible();
+            }}
+          >
+            Visível
+          </button>
         </div>
+      </div>
+
+      {/* Menu de 3 pontos */}
+      <div className="nav-context-menu-wrapper" ref={menuRef}>
+        <button
+          type="button"
+          className="nav-three-dots"
+          onClick={() => setMenuOpen((p) => !p)}
+          aria-label="Mais ações"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+        >
+          <FontAwesomeIcon icon={faEllipsisVertical} />
+        </button>
+        {menuOpen && (
+          <div className="nav-context-menu" role="menu">
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                onEdit();
+              }}
+            >
+              Editar
+            </button>
+            <button
+              role="menuitem"
+              type="button"
+              className="danger"
+              onClick={() => {
+                setMenuOpen(false);
+                onDelete();
+              }}
+            >
+              Excluir
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

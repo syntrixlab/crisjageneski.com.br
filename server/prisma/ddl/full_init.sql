@@ -130,6 +130,7 @@ CREATE TABLE "SiteSettings" (
     "whatsappPosition" TEXT,
     "hideScheduleCta" BOOLEAN NOT NULL DEFAULT false,
     "brandTagline" VARCHAR(80),
+    "theme" JSONB NOT NULL DEFAULT '{}',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

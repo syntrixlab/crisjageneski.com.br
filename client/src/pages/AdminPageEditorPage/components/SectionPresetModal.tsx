@@ -1,4 +1,3 @@
-import React from 'react';
 import { sectionPresets } from '@/utils/sectionPresets';
 import type { PageSection } from '@/types';
 

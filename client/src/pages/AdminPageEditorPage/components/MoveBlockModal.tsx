@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from '@/components/AdminUI';
 import type { PageSection } from '@/types';
 import type { MoveModalState } from '../hooks/useBlockManager';

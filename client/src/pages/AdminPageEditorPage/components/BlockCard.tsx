@@ -1,4 +1,5 @@
-import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@/components/AdminUI';
 import { PageBlockView } from '@/components/PageRenderer';
 import { blockRegistry } from '@/blocks/registry';
@@ -67,10 +68,7 @@ export function BlockCard(_props: {
                 transition: 'background 0.15s'
               }}
             >
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <FontAwesomeIcon icon={faPlus} />
             </button>
           )}
           {!isHero && <IconButton icon="copy" label="Duplicar" onClick={onDuplicate} />}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArticleStatusBadge } from '@/components/AdminUI';
 import type { PageForm } from '../hooks/usePageEditor';

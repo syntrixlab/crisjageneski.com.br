@@ -11,6 +11,7 @@ import {
 import { createSectionFromPreset } from '@/utils/sectionPresets';
 import type { PageSection } from '@/types';
 import type { PageForm } from './usePageEditor';
+import { toast } from '@/components/Toast';
 
 export function useSectionManager(
   setPage: Dispatch<SetStateAction<PageForm>>,
@@ -24,7 +25,10 @@ export function useSectionManager(
     const newSection = createSectionFromPreset(presetId);
     if (newSection) {
       if (newSection.kind === 'hero' && sections.some((s) => s.kind === 'hero')) {
-        alert('Já existe uma seção Hero na página. Apenas uma seção Hero é permitida.');
+        toast.warning('Seção Hero duplicada', {
+          message: 'Já existe uma seção Hero nesta página. Apenas uma é permitida.',
+          code: 'EDITOR-001',
+        });
         setPresetModal(false);
         return;
       }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ConfirmModal } from '@/components/AdminUI';
 import { SeoHead } from '@/components/SeoHead';

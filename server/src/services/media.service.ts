@@ -9,16 +9,28 @@ const repository = new MediaRepository();
 const allowedTypes = env.ALLOWED_IMAGE_MIME_TYPES.split(',').map((t) => t.trim());
 const maxBytes = env.UPLOAD_MAX_FILE_SIZE_MB * 1024 * 1024;
 
+type MediaMeta = {
+  alt?: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+};
+
+type ListOptions = {
+  search?: string;
+  tag?: string;
+};
+
 export class MediaService {
-  async list(): Promise<Media[]> {
-    return repository.list();
+  async list(opts: ListOptions = {}): Promise<Media[]> {
+    return repository.list(opts);
   }
 
-  async upload(file: Express.Multer.File | undefined, alt?: string): Promise<Media> {
+  async upload(file: Express.Multer.File | undefined, meta: MediaMeta = {}): Promise<Media> {
     if (!file) throw new HttpError(400, 'File is required');
     if (!file.mimetype.startsWith('image/')) throw new HttpError(400, 'Only image uploads are allowed');
     if (!allowedTypes.includes(file.mimetype)) throw new HttpError(400, 'Unsupported image type');
-    if (file.size > maxBytes) throw new HttpError(400, `Image exceeds ${env.UPLOAD_MAX_FILE_SIZE_MB}MB`);
+    if (file.size > maxBytes) throw new HttpError(400, 'Image exceeds ' + env.UPLOAD_MAX_FILE_SIZE_MB + 'MB');
 
     const uploadResult = await storageProvider.uploadImage(file.buffer, file.originalname, file.mimetype, {
       cacheControl: '86400',
@@ -35,14 +47,17 @@ export class MediaService {
       size: uploadResult.size,
       width: uploadResult.width ?? undefined,
       height: uploadResult.height ?? undefined,
-      alt: alt ?? null
-    });
+      alt: meta.alt ?? null,
+      title: meta.title ?? null,
+      description: meta.description ?? null,
+      tags: meta.tags ?? []
+    } as any);
 
     await cacheProvider.del([cacheKeys.postsList]);
     return media;
   }
 
-  async update(id: string, file: Express.Multer.File | undefined, alt?: string | null): Promise<Media> {
+  async update(id: string, file: Express.Multer.File | undefined, meta: Partial<MediaMeta> = {}): Promise<Media> {
     const existing = await repository.findById(id);
     if (!existing) throw new HttpError(404, 'Media not found');
 
@@ -50,7 +65,7 @@ export class MediaService {
     if (file) {
       if (!file.mimetype.startsWith('image/')) throw new HttpError(400, 'Only image uploads are allowed');
       if (!allowedTypes.includes(file.mimetype)) throw new HttpError(400, 'Unsupported image type');
-      if (file.size > maxBytes) throw new HttpError(400, `Image exceeds ${env.UPLOAD_MAX_FILE_SIZE_MB}MB`);
+      if (file.size > maxBytes) throw new HttpError(400, 'Image exceeds ' + env.UPLOAD_MAX_FILE_SIZE_MB + 'MB');
 
       await storageProvider.delete(existing.path);
       uploadResult = await storageProvider.uploadImage(file.buffer, file.originalname, file.mimetype, {
@@ -62,7 +77,10 @@ export class MediaService {
     }
 
     const updated = await repository.update(id, {
-      alt: alt === undefined ? undefined : alt,
+      ...(meta.alt !== undefined && { alt: meta.alt }),
+      ...(meta.title !== undefined && { title: meta.title } as any),
+      ...(meta.description !== undefined && { description: meta.description } as any),
+      ...(meta.tags !== undefined && { tags: meta.tags } as any),
       ...(uploadResult && {
         path: uploadResult.path,
         url: uploadResult.url,

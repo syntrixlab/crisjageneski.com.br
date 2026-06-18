@@ -1,9 +1,27 @@
 import { Media, Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma';
 
+type ListOptions = { search?: string; tag?: string };
+
 export class MediaRepository {
-  list(): Promise<Media[]> {
-    return prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
+  list({ search, tag }: ListOptions = {}): Promise<Media[]> {
+    const where: Prisma.MediaWhereInput = {};
+
+    if (tag) {
+      (where as any).tags = { has: tag.toLowerCase() };
+    }
+
+    if (search) {
+      const s = search.toLowerCase();
+      where.OR = [
+        { alt: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: 'insensitive' } } as any,
+        { description: { contains: search, mode: 'insensitive' } } as any,
+        { tags: { has: s } } as any
+      ];
+    }
+
+    return prisma.media.findMany({ where, orderBy: { createdAt: 'desc' } });
   }
 
   findById(id: string): Promise<Media | null> {

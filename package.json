@@ -8,7 +8,7 @@
     "build": "npm ci --include=dev --prefix client && npm run build --prefix client && npm ci --include=dev --prefix server && npm run prisma:generate --prefix server && npm run build --prefix server",
     "start": "node server.js",
     "postinstall": "node postinstall.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm test --prefix client && npm test --prefix server"
   },
   "keywords": [],
   "author": "",

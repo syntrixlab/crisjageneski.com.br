@@ -46,14 +46,31 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 
-// Middleware para desabilitar cache em rotas /api
-app.use('/api', (_req, res, next) => {
+// Rotas admin: sem cache (comportamento atual)
+app.use('/api/admin', (_req, res, next) => {
   res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
     'Pragma': 'no-cache',
-    'Expires': '0',
-    'Surrogate-Control': 'no-store'
+    'Expires': '0'
   });
+  next();
+});
+
+// Rotas de autenticação: sem cache
+app.use('/api/login', (_req, res, next) => {
+  res.set({ 'Cache-Control': 'no-store' });
+  next();
+});
+app.use('/api/logout', (_req, res, next) => {
+  res.set({ 'Cache-Control': 'no-store' });
+  next();
+});
+
+// Rotas públicas com dados estáveis: cache de 60s no browser
+// (o servidor já usa Redis/memory cache interno; o browser cache é adicional)
+app.use('/api/public', (_req, res, next) => {
+  // Permite cache de 60s no browser mas revalida
+  res.set({ 'Cache-Control': 'public, max-age=60, stale-while-revalidate=30' });
   next();
 });
 

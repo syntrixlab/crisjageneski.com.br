@@ -1,15 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteMedia, fetchMedia, updateMedia, uploadMedia } from '@/api/queries';
+import { deleteMedia, fetchMedia, updateMedia, uploadMedia, type MediaUploadPayload } from '@/api/queries';
 import type { Media } from '@/types';
 
-export function useMedia() {
-  return useQuery<Media[]>({ queryKey: ['admin', 'media'], queryFn: fetchMedia });
+export function useMedia(opts?: { search?: string; tag?: string }) {
+  return useQuery<Media[]>({
+    queryKey: ['admin', 'media', opts?.search ?? '', opts?.tag ?? ''],
+    queryFn: () => fetchMedia(opts)
+  });
 }
 
 export function useUploadMedia() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { file: File; alt?: string }) => uploadMedia(payload),
+    mutationFn: (payload: MediaUploadPayload) => uploadMedia(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'media'] })
   });
 }

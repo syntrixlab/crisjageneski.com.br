@@ -7,6 +7,17 @@ import type { SiteSettings, SocialLink } from '@/types';
 import type { BlockRendererProps } from '../_shared/types';
 import type { SocialLinksBlockData } from './schema';
 
+const platformDescriptions: Record<string, string> = {
+  instagram: 'Reflexões e conteúdo semanal',
+  facebook: 'Atualidades e dicas práticas',
+  linkedin: 'Artigos profissionais',
+  youtube: 'Vídeos e entrevistas',
+  tiktok: 'Dicas rápidas em vídeo',
+  x: 'Pensamentos e notícias',
+  email: 'Contato direto',
+  site: 'Visite meu site'
+};
+
 export function SocialLinksRenderer({ data }: BlockRendererProps<SocialLinksBlockData>) {
   const { data: settings, isLoading } = useQuery<SiteSettings>({
     queryKey: ['site-settings'],
@@ -32,7 +43,6 @@ export function SocialLinksRenderer({ data }: BlockRendererProps<SocialLinksBloc
   const showIcons = data.showIcons !== false;
   const align = data.align || 'left';
 
-  // Mapa de ícones por tipo
   const getIconForType = (platform: string) => {
     const icons: Record<string, any> = {
       instagram: faInstagram,
@@ -64,22 +74,33 @@ export function SocialLinksRenderer({ data }: BlockRendererProps<SocialLinksBloc
     return labels[social.platform] || social.platform;
   };
 
+  const getDescriptionForType = (social: SocialLink): string => {
+    return social.label || platformDescriptions[social.platform] || '';
+  };
+
   return (
     <div className="social-links-block" style={{ textAlign: align }}>
       {title && <h3 style={{ marginBottom: '1rem' }}>{title}</h3>}
       <div className={`social-links-${variant}`}>
-        {socials.map((social) => (
-          <a
-            key={social.id}
-            href={social.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`social-link social-link--${variant}`}
-          >
-            {showIcons && <span className="social-icon"><FontAwesomeIcon icon={getIconForType(social.platform)} /></span>}
-            <span className="social-label">{getLabelForType(social)}</span>
-          </a>
-        ))}
+        {socials.map((social) => {
+          const description = getDescriptionForType(social);
+
+          return (
+            <a
+              key={social.id}
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`social-link social-link--${variant}`}
+            >
+              {showIcons && <span className="social-icon"><FontAwesomeIcon icon={getIconForType(social.platform)} /></span>}
+              <span className="social-link-content">
+                <span className="social-label">{getLabelForType(social)}</span>
+                {description && <span className="social-description">{description}</span>}
+              </span>
+            </a>
+          );
+        })}
       </div>
     </div>
   );

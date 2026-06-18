@@ -8,6 +8,17 @@ import type { SiteSettings, SocialLink } from '@/types';
 import type { BlockRendererProps } from '../_shared/types';
 import type { ContactInfoBlockData } from './schema';
 
+const platformDescriptions: Record<string, string> = {
+  instagram: 'Reflexões e conteúdo semanal',
+  facebook: 'Atualidades e dicas práticas',
+  linkedin: 'Artigos profissionais',
+  youtube: 'Vídeos e entrevistas',
+  tiktok: 'Dicas rápidas em vídeo',
+  x: 'Pensamentos e notícias',
+  email: 'Contato direto',
+  site: 'Visite meu site'
+};
+
 export function ContactInfoRenderer({ data }: BlockRendererProps<ContactInfoBlockData>) {
   const { data: settings } = useQuery<SiteSettings>({
     queryKey: ['site-settings'],
@@ -34,6 +45,43 @@ export function ContactInfoRenderer({ data }: BlockRendererProps<ContactInfoBloc
   // Determinar classes do botão WhatsApp baseado no variant
   const whatsappVariant = data.whatsappVariant || 'primary';
   const whatsappButtonClass = whatsappVariant === 'primary' ? 'btn btn-primary' : 'btn btn-outline';
+
+  const getLabelForSocial = (social: SocialLink): string => {
+    if (social.label) return social.label;
+    const labels: Record<string, string> = {
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      linkedin: 'LinkedIn',
+      youtube: 'YouTube',
+      tiktok: 'TikTok',
+      x: 'X (Twitter)',
+      site: 'Website',
+      email: 'Email',
+      whatsapp: 'WhatsApp'
+    };
+    return labels[social.platform] || social.platform;
+  };
+
+  const getDescriptionForSocial = (social: SocialLink): string => {
+    return social.label || platformDescriptions[social.platform] || '';
+  };
+
+  const getIconForSocial = (platform: string) => {
+    const iconMap: Record<string, any> = {
+      instagram: faInstagram,
+      facebook: faFacebook,
+      linkedin: faLinkedin,
+      youtube: faYoutube,
+      tiktok: faTiktok,
+      x: faXTwitter,
+      site: faGlobe,
+      email: faEnvelope,
+      whatsapp: faWhatsapp
+    };
+    return iconMap[platform] || faLink;
+  };
+
+  const variant = data.socialLinksVariant || 'list';
 
   return (
     <div className="contact-info-block">
@@ -62,39 +110,11 @@ export function ContactInfoRenderer({ data }: BlockRendererProps<ContactInfoBloc
       {/* Redes Sociais */}
       {socialLinks.length > 0 && (
         <div className="contact-info-social">
-          {data.socialLinksTitle && <h3 style={{ marginBottom: '1rem' }}>{data.socialLinksTitle}</h3>}
-          <div className={`social-links-${data.socialLinksVariant || 'list'}`}>
+          {data.socialLinksTitle && <h3 className="contact-info-social-title">{data.socialLinksTitle}</h3>}
+          <div className={`social-links-${variant}`}>
             {socialLinks.map((link: SocialLink) => {
-              const iconMap: Record<string, any> = {
-                instagram: faInstagram,
-                facebook: faFacebook,
-                linkedin: faLinkedin,
-                youtube: faYoutube,
-                tiktok: faTiktok,
-                x: faXTwitter,
-                site: faGlobe,
-                email: faEnvelope,
-                whatsapp: faWhatsapp
-              };
-
-              const icon = iconMap[link.platform] || faLink;
-              const variant = data.socialLinksVariant || 'list';
-
-              const getLabelForSocial = (social: SocialLink): string => {
-                if (social.label) return social.label;
-                const labels: Record<string, string> = {
-                  instagram: 'Instagram',
-                  facebook: 'Facebook',
-                  linkedin: 'LinkedIn',
-                  youtube: 'YouTube',
-                  tiktok: 'TikTok',
-                  x: 'X (Twitter)',
-                  site: 'Website',
-                  email: 'Email',
-                  whatsapp: 'WhatsApp'
-                };
-                return labels[social.platform] || social.platform;
-              };
+              const icon = getIconForSocial(link.platform);
+              const description = getDescriptionForSocial(link);
 
               return (
                 <a
@@ -105,7 +125,10 @@ export function ContactInfoRenderer({ data }: BlockRendererProps<ContactInfoBloc
                   className={`social-link social-link--${variant}`}
                 >
                   <span className="social-icon"><FontAwesomeIcon icon={icon} /></span>
-                  <span className="social-label">{getLabelForSocial(link)}</span>
+                  <span className="social-link-content">
+                    <span className="social-label">{getLabelForSocial(link)}</span>
+                    {description && <span className="social-description">{description}</span>}
+                  </span>
                 </a>
               );
             })}

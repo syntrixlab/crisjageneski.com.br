@@ -61,7 +61,7 @@ export function AdminPagesPage() {
         </button>
       </div>
 
-      <div className="admin-card admin-table">
+      <div className="admin-table">
         {isError && (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
             <strong>Erro ao carregar páginas:</strong>
@@ -139,7 +139,6 @@ export function AdminPagesPage() {
             )}
           </tbody>
         </table>
-        {isLoading && <div className="admin-empty">Carregando páginas...</div>}
       </div>
 
       <ConfirmModal

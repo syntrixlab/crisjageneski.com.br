@@ -29,7 +29,7 @@ export function AdminArticlesPage() {
         </Link>
       </div>
 
-      <div className="admin-card admin-table">
+      <div className="admin-table">
         <table>
           <thead>
             <tr>

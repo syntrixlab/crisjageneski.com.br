@@ -188,7 +188,7 @@ export function AdminArticleEditorPage() {
   const rightColumn = (
     <div className="editor-side">
       <div className="admin-card editor-card" style={{ display: 'grid', gap: '0.75rem' }}>
-        <div className="muted small">Configuracoes</div>
+        <div className="muted small">Configurações do artigo</div>
         <div className="editor-field">
           <label>Titulo</label>
           <input value={article.title} onChange={(e) => setArticle((p) => ({ ...p, title: e.target.value }))} />
@@ -206,7 +206,7 @@ export function AdminArticleEditorPage() {
           />
         </div>
         <div className="editor-field">
-          <label>Tags (separadas por virgula)</label>
+          <label>Tags (separadas por vírgula)</label>
           <input
             value={tagsText}
             onChange={(e) => {
@@ -239,9 +239,9 @@ export function AdminArticleEditorPage() {
           <Switch
             checked={!!article.isFeatured}
             onChange={(value) => setArticle((p) => ({ ...p, isFeatured: value }))}
-            label="Mostrar na sessao de destaque (max 3)"
+            label="Mostrar na seção de destaque (máx. 3)"
           />
-          <p className="muted small">Maximo de 3 posts publicados em destaque. Rascunhos podem estar marcados, mas só aparecem no site após publicados.</p>
+          <p className="muted small">Máximo de 3 posts publicados em destaque. Rascunhos podem estar marcados, mas só aparecem no site após publicados.</p>
           {article.isFeatured && article.status === 'draft' && (
             <div className="admin-info" style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'rgba(84, 94, 69, 0.1)', borderRadius: '6px', fontSize: '0.9rem' }}>
               <strong>ℹ️ Informação:</strong> Este artigo está marcado como destaque, mas só aparecerá na seção "Em destaque" do site quando estiver publicado.

@@ -1,12 +1,23 @@
 import { SeoHead } from '../components/SeoHead';
+import { useCurrentUser } from '../hooks/queries/useCurrentUser';
+import { DashboardMetrics } from '../components/DashboardMetrics';
 
 export function AdminDashboardPage() {
+  const { data: user } = useCurrentUser();
+  const userName = user?.name || 'Admin';
+
   return (
     <div className="admin-page">
       <SeoHead title="Painel" />
       <div className="admin-page-header">
-        <h1 style={{ margin: 0 }}>Bem-vinda, Cris</h1>
-        <p style={{ margin: 0, color: 'var(--color-forest)' }}>Edite navbar, secoes da home, paginas e artigos.</p>
+        <h1 style={{ margin: 0 }}>Olá, {userName}</h1>
+        <p style={{ margin: 0, color: 'var(--color-forest)' }}>Edite o conteúdo que já existe, crie novos, remova antigos. Tudo que você precisa está aqui. </p>
+      </div>
+
+      <DashboardMetrics />
+
+      <div style={{ marginTop: '2rem' }}>
+        <h3 style={{ marginBottom: '1rem' }}>Gerenciamento</h3>
       </div>
       <div className="admin-grid columns-3">
         {[

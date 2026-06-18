@@ -6,6 +6,7 @@ import { createPage, deletePage, getPageAdmin, listPages, publishPage, unpublish
 import { createPost, deletePost, listPostsAdmin, publishPost, unpublishPost, updatePost } from './posts.controller';
 import { getSiteSettingsAdmin, updateSiteSettings } from './siteSettings.controller';
 import { deleteFormSubmission, getFormSubmission, listFormSubmissions } from './formSubmissions.controller';
+import { getDashboardMetrics } from './metrics.controller';
 
 export const adminRoutes = Router();
 
@@ -57,3 +58,5 @@ adminRoutes.patch('/admin/site-settings', updateSiteSettings);
 adminRoutes.get('/admin/form-submissions', listFormSubmissions);
 adminRoutes.get('/admin/form-submissions/:id', getFormSubmission);
 adminRoutes.delete('/admin/form-submissions/:id', deleteFormSubmission);
+
+adminRoutes.get('/admin/metrics', getDashboardMetrics);

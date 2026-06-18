@@ -34,3 +34,15 @@ export async function logout(_req: Request, res: Response) {
   res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
   return sendSuccess(res, { ok: true });
 }
+
+export async function getCurrentUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user;
+    if (!user) {
+      return next(new (require('../../utils/errors').HttpError)(401, 'Unauthorized'));
+    }
+    return sendSuccess(res, { id: user.id, email: user.email, name: user.name, role: user.role });
+  } catch (error) {
+    return next(error);
+  }
+}

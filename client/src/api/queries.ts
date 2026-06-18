@@ -93,6 +93,11 @@ export const logout = async (): Promise<void> => {
   await api.post('/logout');
 };
 
+export const fetchCurrentUser = async (): Promise<User> => {
+  const { data } = await api.get('/admin/me');
+  return data.data;
+};
+
 // Admin
 export const fetchAdminNavbar = async (): Promise<NavbarItem[]> => {
   const { data } = await api.get('/navigation-items');
@@ -189,15 +194,29 @@ export const unpublishArticle = async (id: string) => {
   return data.data as Article;
 };
 
-export const fetchMedia = async (): Promise<Media[]> => {
-  const { data } = await api.get('/admin/media');
+export const fetchMedia = async (opts?: { search?: string; tag?: string }): Promise<Media[]> => {
+  const params = new URLSearchParams();
+  if (opts?.search) params.set('search', opts.search);
+  if (opts?.tag) params.set('tag', opts.tag);
+  const { data } = await api.get(`/admin/media${params.toString() ? '?' + params : ''}`);
   return data.data;
 };
 
-export const uploadMedia = async (payload: { file: File; alt?: string }) => {
+export type MediaUploadPayload = {
+  file: File;
+  alt?: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+};
+
+export const uploadMedia = async (payload: MediaUploadPayload) => {
   const form = new FormData();
   form.append('file', payload.file);
   if (payload.alt) form.append('alt', payload.alt);
+  if (payload.title) form.append('title', payload.title);
+  if (payload.description) form.append('description', payload.description);
+  if (payload.tags?.length) payload.tags.forEach((t) => form.append('tags', t));
   const { data } = await api.post('/admin/media/upload', form, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
@@ -208,6 +227,12 @@ export const updateMedia = async (id: string, payload: Partial<Media> & { file?:
   const form = new FormData();
   if (payload.file instanceof File) form.append('file', payload.file);
   if (payload.alt !== undefined) form.append('alt', payload.alt ?? '');
+  if (payload.title !== undefined) form.append('title', payload.title ?? '');
+  if (payload.description !== undefined) form.append('description', payload.description ?? '');
+  if (payload.tags !== undefined) {
+    if (payload.tags.length === 0) form.append('tags', '');
+    else payload.tags.forEach((t) => form.append('tags', t));
+  }
   const { data } = await api.put(`/admin/media/${id}`, form, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
@@ -227,9 +252,19 @@ export const saveCropData = async (id: string, cropData: {
 
 export const deleteMedia = async (id: string) => api.delete(`/admin/media/${id}`);
 
-// Site settings
+// Site settings (public)
+// Agora usa o mesmo endpoint cacheado que fetchTheme
+// para evitar requisições múltiplas e aproveitar Redis cache
 export const fetchSiteSettings = async (): Promise<SiteSettings> => {
-  const { data } = await api.get('/public/site-settings');
+  const { data } = await api.get('/public/theme');
+  return data.data;
+};
+
+// Fetch complete site config (optimized, Redis-cached)
+// Retorna toda SiteSettings: tema, branding, sociais, WhatsApp, etc
+// 10-100x mais rápido que banco de dados
+export const fetchTheme = async () => {
+  const { data } = await api.get('/public/theme');
   return data.data;
 };
 
@@ -354,4 +389,21 @@ export const fetchFormSubmission = async (id: string): Promise<FormSubmission> =
  */
 export const deleteFormSubmission = async (id: string): Promise<void> => {
   await api.delete(`/admin/form-submissions/${id}`);
+};
+
+// Analytics/Metrics
+export interface DashboardMetrics {
+  pagesPublished: number;
+  pagesDraft: number;
+  articlesPublished: number;
+  articlesDraft: number;
+  totalArticleViews: number;
+  totalImages: number;
+  totalArticles: number;
+  totalPages: number;
+}
+
+export const fetchDashboardMetrics = async (): Promise<DashboardMetrics> => {
+  const { data } = await api.get('/admin/metrics');
+  return data.data;
 };

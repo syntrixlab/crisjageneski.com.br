@@ -5,6 +5,7 @@ declare global {
     interface UserPayload extends JwtPayload {
       id: string;
       email: string;
+      name: string;
       role: 'admin' | 'editor' | 'user';
     }
 

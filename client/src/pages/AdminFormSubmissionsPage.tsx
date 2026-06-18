@@ -2,13 +2,27 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCalendarDays,
+  faChevronLeft,
+  faChevronRight,
+  faCircleExclamation,
+  faEye,
+  faFilter,
+  faInbox,
+  faLayerGroup,
+  faMagnifyingGlass,
+  faRotateRight,
+  faTrash
+} from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { 
-  fetchFormSubmissions, 
+import { ConfirmModal } from '../components/AdminUI';
+import { toast } from '../components/Toast';
+import {
   deleteFormSubmission,
+  fetchFormSubmissions,
   type FormSubmission,
-  type FormSubmissionsResponse 
+  type FormSubmissionsResponse
 } from '../api/queries';
 
 interface Page {
@@ -19,13 +33,14 @@ interface Page {
 
 export function AdminFormSubmissionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterPageId, setFilterPageId] = useState<string>('');
-  const [searchText, setSearchText] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [filterPageId, setFilterPageId] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const limit = 20;
 
-  // Buscar lista de páginas para o dropdown
   const { data: pages } = useQuery<Page[]>({
     queryKey: ['pages-list'],
     queryFn: async () => {
@@ -40,26 +55,33 @@ export function AdminFormSubmissionsPage() {
 
   const { data, isLoading, error, refetch } = useQuery<FormSubmissionsResponse>({
     queryKey: ['formSubmissions', currentPage, filterPageId, searchText, startDate, endDate],
-    queryFn: () => fetchFormSubmissions({
-      pageId: filterPageId || undefined,
-      search: searchText || undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-      page: currentPage,
-      limit
-    })
+    queryFn: () =>
+      fetchFormSubmissions({
+        pageId: filterPageId || undefined,
+        search: searchText || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        page: currentPage,
+        limit
+      })
   });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta resposta?')) {
-      return;
-    }
+  const handleDelete = (id: string) => setConfirmDeleteId(id);
 
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    setDeleting(true);
     try {
-      await deleteFormSubmission(id);
+      await deleteFormSubmission(confirmDeleteId);
       refetch();
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Erro ao excluir');
+      toast.error('Falha ao excluir', {
+        message: error instanceof Error ? error.message : 'Nao foi possivel excluir a resposta.',
+        code: 'FORM-002'
+      });
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -86,7 +108,10 @@ export function AdminFormSubmissionsPage() {
       .toLowerCase()
       .trim();
 
-  const getWhatsAppLink = (phone: string | null, message = 'Ol\u00e1! Vi sua mensagem enviada pelo formul\u00e1rio do site. Posso te ajudar?') => {
+  const getWhatsAppLink = (
+    phone: string | null,
+    message = 'Ola! Vi sua mensagem enviada pelo formulario do site. Posso te ajudar?'
+  ) => {
     const normalized = normalizePhone(phone || undefined);
     if (!normalized) return null;
     return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
@@ -131,110 +156,112 @@ export function AdminFormSubmissionsPage() {
   };
 
   return (
-    <div className="admin-page">
-      <div className="admin-page-header">
-        <h1>Respostas de Formulários</h1>
-        <p className="muted">Visualize e gerencie as respostas enviadas pelos visitantes</p>
+    <div className="admin-page form-submissions-page">
+      <div className="admin-page-header form-submissions-header">
+        <div>
+          <h1>Respostas de Formulários</h1>
+          <p className="muted">Acompanhe leads, mensagens e contatos enviados pelos visitantes.</p>
+        </div>
+        {data && (
+          <div className="form-submissions-summary" aria-label="Resumo das respostas">
+            <span className="form-submissions-summary-value">{data.total}</span>
+            <span className="form-submissions-summary-label">respostas</span>
+          </div>
+        )}
       </div>
 
-      <div className="admin-card">
-        {/* Filtros */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-          padding: '1.5rem',
-          background: '#f9fafb',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-              Buscar
-            </label>
-            <input
-              type="text"
-              placeholder="Nome, email, telefone..."
-              value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
-                setCurrentPage(1);
-              }}
-              style={{ width: '100%' }}
-            />
+      <div className="admin-card form-submissions-card">
+        <section className="form-submissions-filters" aria-label="Filtros de respostas">
+          <div className="form-submissions-filters-heading">
+            <FontAwesomeIcon icon={faFilter} />
+            <span>Filtros</span>
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-              Página
+          <div className="form-submissions-filter-grid">
+            <label className="form-field form-submissions-field">
+              <span>
+                <FontAwesomeIcon icon={faMagnifyingGlass} />
+                Buscar
+              </span>
+              <input
+                type="text"
+                placeholder="Nome, email, telefone..."
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
             </label>
-            <select
-              value={filterPageId}
-              onChange={(e) => {
-                setFilterPageId(e.target.value);
-                setCurrentPage(1);
-              }}
-              style={{ width: '100%' }}
-            >
-              <option value="">Todas as páginas</option>
-              {pages?.map((page) => (
-                <option key={page.id} value={page.id}>
-                  {page.title}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-              Data inicial
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-              Data final
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          {hasActiveFilters && (
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={handleClearFilters}
-                style={{ width: '100%' }}
+            <label className="form-field form-submissions-field">
+              <span>
+                <FontAwesomeIcon icon={faLayerGroup} />
+                Página
+              </span>
+              <select
+                value={filterPageId}
+                onChange={(e) => {
+                  setFilterPageId(e.target.value);
+                  setCurrentPage(1);
+                }}
               >
-                Limpar filtros
-              </button>
-            </div>
-          )}
-        </div>
+                <option value="">Todas as páginas</option>
+                {pages?.map((page) => (
+                  <option key={page.id} value={page.id}>
+                    {page.title}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        {/* Stats */}
+            <label className="form-field form-submissions-field">
+              <span>
+                <FontAwesomeIcon icon={faCalendarDays} />
+                Data inicial
+              </span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </label>
+
+            <label className="form-field form-submissions-field">
+              <span>
+                <FontAwesomeIcon icon={faCalendarDays} />
+                Data final
+              </span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </label>
+
+            {hasActiveFilters && (
+              <div className="form-submissions-clear">
+                <button className="btn btn-outline" onClick={handleClearFilters}>
+                  Limpar filtros
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
         {data && (
-          <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+          <div className="form-submissions-status">
             {data.total > 0 ? (
               <>
-                Mostrando {((currentPage - 1) * limit) + 1} a {Math.min(currentPage * limit, data.total)} de {data.total} respostas
+                Mostrando <strong>{(currentPage - 1) * limit + 1}</strong> a{' '}
+                <strong>{Math.min(currentPage * limit, data.total)}</strong> de{' '}
+                <strong>{data.total}</strong> respostas
               </>
             ) : (
               'Nenhuma resposta encontrada'
@@ -242,49 +269,34 @@ export function AdminFormSubmissionsPage() {
           </div>
         )}
 
-        {/* Loading/Error States */}
         {isLoading && (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
-            <div style={{ 
-              width: '40px', 
-              height: '40px', 
-              border: '3px solid #e5e7eb',
-              borderTopColor: 'var(--color-clay)',
-              borderRadius: '50%',
-              margin: '0 auto 1rem',
-              animation: 'spin 0.8s linear infinite'
-            }}></div>
+          <div className="form-submissions-state">
+            <span className="form-submissions-spinner" aria-hidden="true" />
             <p>Carregando respostas...</p>
           </div>
         )}
-        
+
         {error && (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '2rem',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            color: '#991b1b'
-          }}>
-            <p style={{ marginBottom: '1rem' }}>Erro ao carregar respostas</p>
-            <button className="btn btn-sm btn-outline" onClick={() => refetch()}>
+          <div className="form-submissions-state form-submissions-state-error" role="alert">
+            <FontAwesomeIcon icon={faCircleExclamation} />
+            <p>Erro ao carregar respostas</p>
+            <button className="btn btn-outline" onClick={() => refetch()}>
+              <FontAwesomeIcon icon={faRotateRight} />
               Tentar novamente
             </button>
           </div>
         )}
 
-        {/* Tabela */}
         {data && data.submissions.length > 0 && (
           <>
-            <div style={{ width: '100%', overflowX: 'auto' }}>
-              <table className="admin-table" style={{ width: '100%', tableLayout: 'auto' }}>
+            <div className="form-submissions-table-wrap">
+              <table className="admin-table form-submissions-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '160px' }}>Data/Hora</th>
+                    <th>Data/Hora</th>
                     <th>Página</th>
-                    <th>Lead / Mensagem</th>
-                    <th style={{ width: '170px', textAlign: 'right' }}>Ações</th>
+                    <th>Resposta</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,59 +304,46 @@ export function AdminFormSubmissionsPage() {
                     const phoneNormalized = derivePhone(submission);
                     const waLink = phoneNormalized ? getWhatsAppLink(phoneNormalized) : null;
                     const { leadName, leadMessage } = deriveLeadInfo(submission);
+
                     return (
                       <tr key={submission.id}>
                         <td>
-                          <div style={{ fontSize: '0.875rem' }}>
-                            {new Date(submission.createdAt).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric'
-                            })}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                            {new Date(submission.createdAt).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </div>
+                          <time className="submission-date" dateTime={submission.createdAt}>
+                            <span>
+                              {new Date(submission.createdAt).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
+                            </span>
+                            <small>
+                              {new Date(submission.createdAt).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </small>
+                          </time>
                         </td>
                         <td>
                           {submission.page ? (
-                            <div>
-                              <div style={{ fontWeight: 500 }}>{submission.page.title}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                                /p/{submission.page.slug}
-                              </div>
+                            <div className="submission-page">
+                              <strong>{submission.page.title}</strong>
+                              <small>/p/{submission.page.slug}</small>
                             </div>
                           ) : (
-                            <span className="muted">—</span>
+                            <span className="muted">-</span>
                           )}
                         </td>
                         <td>
-                          <div style={{ fontWeight: 600, color: '#111827' }}>{leadName}</div>
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: '#4b5563',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              maxWidth: '460px',
-                              lineHeight: 1.4
-                            }}
-                            title={leadMessage || undefined}
-                          >
-                            {leadMessage || 'Sem mensagem'}
+                          <div className="submission-lead">
+                            <strong>{leadName}</strong>
+                            <p title={leadMessage || undefined}>{leadMessage || 'Sem mensagem'}</p>
                           </div>
                         </td>
-                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                          <div className="admin-actions">
+                        <td>
+                          <div className="submission-actions">
                             <button
-                              className="btn btn-sm btn-outline icon-btn"
-                              style={{ color: waLink ? '#25d366' : '#9ca3af', borderColor: '#e5e7eb' }}
+                              className="submission-action submission-action-whatsapp"
                               aria-label={waLink ? 'Chamar no WhatsApp' : 'Telefone não informado'}
                               title={waLink ? 'Chamar no WhatsApp' : 'Telefone não informado'}
                               onClick={() => waLink && window.open(waLink, '_blank', 'noopener,noreferrer')}
@@ -354,16 +353,14 @@ export function AdminFormSubmissionsPage() {
                             </button>
                             <Link
                               to={`/admin/form-submissions/${submission.id}`}
-                              className="btn btn-sm btn-outline icon-btn"
-                              style={{ borderColor: '#e5e7eb' }}
+                              className="submission-action"
                               aria-label="Visualizar resposta"
                               title="Visualizar resposta"
                             >
                               <FontAwesomeIcon icon={faEye} />
                             </Link>
                             <button
-                              className="btn btn-sm btn-outline icon-btn"
-                              style={{ color: '#dc2626', borderColor: '#fecaca' }}
+                              className="submission-action submission-action-danger"
                               onClick={() => handleDelete(submission.id)}
                               aria-label="Excluir resposta"
                               title="Excluir resposta"
@@ -379,24 +376,17 @@ export function AdminFormSubmissionsPage() {
               </table>
             </div>
 
-            {/* Paginação */}
             {data.totalPages > 1 && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: '1.5rem',
-                paddingTop: '1.5rem',
-                borderTop: '1px solid #e5e7eb'
-              }}>
+              <div className="form-submissions-pagination">
                 <button
-                  className="btn btn-sm btn-outline"
+                  className="btn btn-outline"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  ← Anterior
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                  Anterior
                 </button>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div className="form-submissions-pages">
                   {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
                     let pageNum;
                     if (data.totalPages <= 5) {
@@ -408,13 +398,12 @@ export function AdminFormSubmissionsPage() {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
-                        className={`btn btn-sm ${currentPage === pageNum ? 'btn-primary' : 'btn-ghost'}`}
+                        className={`form-submissions-page-button ${currentPage === pageNum ? 'is-active' : ''}`}
                         onClick={() => setCurrentPage(pageNum)}
-                        style={{ minWidth: '36px' }}
                       >
                         {pageNum}
                       </button>
@@ -422,50 +411,45 @@ export function AdminFormSubmissionsPage() {
                   })}
                 </div>
                 <button
-                  className="btn btn-sm btn-outline"
+                  className="btn btn-outline"
                   onClick={() => setCurrentPage((p) => Math.min(data.totalPages, p + 1))}
                   disabled={currentPage === data.totalPages}
                 >
-                  Próxima →
+                  Próxima
+                  <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               </div>
             )}
           </>
         )}
 
-        {/* Empty State */}
         {data && data.submissions.length === 0 && !isLoading && (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '4rem 1rem',
-            color: '#6b7280'
-          }}>
-            <svg 
-              width="64" 
-              height="64" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1.5"
-              style={{ margin: '0 auto 1rem', opacity: 0.3 }}
-            >
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-              <rect x="9" y="3" width="6" height="4" rx="1" />
-            </svg>
-            <h3 style={{ marginBottom: '0.5rem', color: '#374151' }}>Nenhuma resposta encontrada</h3>
-            <p style={{ marginBottom: '1.5rem' }}>
-              {hasActiveFilters 
+          <div className="form-submissions-state">
+            <FontAwesomeIcon icon={faInbox} />
+            <h3>Nenhuma resposta encontrada</h3>
+            <p>
+              {hasActiveFilters
                 ? 'Tente ajustar os filtros para encontrar respostas.'
                 : 'As respostas de formulários aparecerão aqui.'}
             </p>
             {hasActiveFilters && (
-              <button className="btn btn-sm btn-outline" onClick={handleClearFilters}>
+              <button className="btn btn-outline" onClick={handleClearFilters}>
                 Limpar filtros
               </button>
             )}
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!confirmDeleteId}
+        title="Excluir resposta"
+        description="Esta ação não pode ser desfeita. Tem certeza que deseja excluir esta resposta?"
+        confirmLabel="Excluir"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setConfirmDeleteId(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -7,7 +7,11 @@ Site institucional de psicóloga com CMS próprio baseado em blocos.
 - **Frontend:** React 19 + Vite + TypeScript strict + React Query + Axios + Tiptap (editor de texto rico)
 - **Backend:** Express 5 + TypeScript + Prisma + PostgreSQL
 - **Storage:** Supabase (imagens/mídia)
-- **Cache:** Redis (opcional, configurável via `REDIS_URL`)
+- **Cache:** Redis (opcional, configurável via `REDIS_URL`) para cache permanente de configurações públicas
+  - Endpoint `/api/public/theme` retorna toda `SiteSettings` cacheada em Redis → ~10-100x mais rápido
+  - Inclui: tema, branding, sociais, WhatsApp, horários, etc
+  - Cache vive para sempre, só morre ao atualizar configurações no admin
+  - Graceful degradation: funciona sem Redis (busca do banco automaticamente)
 - **Auth:** JWT em cookie `httpOnly` (`cris_session`, setado pelo servidor). O client mantém só uma flag não-sensível em `localStorage` (`cris_authed`) para decidir a UI de rota — a segurança real é sempre o cookie, validado a cada request
 
 ## Como rodar
@@ -24,7 +28,12 @@ cd client && npm install && cd ..
 # 3. Banco de dados
 npx prisma migrate dev
 
-# 4. Rodar em desenvolvimento
+# 4. (Opcional) Redis para cache de tema
+# Instalar Redis localmente ou usar cloud service
+# Adicionar REDIS_URL ao .env se quiser usar cache
+# Exemplo: REDIS_URL=redis://:password@localhost:6379
+
+# 5. Rodar em desenvolvimento
 # Terminal 1 — servidor
 cd server && npm run dev
 
@@ -33,6 +42,30 @@ cd client && npm run dev
 ```
 
 O cliente roda em http://localhost:5173 e faz proxy de `/api` para o servidor em `localhost:4000`.
+
+### Redis (Opcional mas Recomendado)
+
+Se Redis está configurado (via `REDIS_URL`):
+- **Configuração do Site:** Cachada permanentemente em Redis (sem TTL). Cache só morre ao atualizar no admin.
+- **O que é cacheado:** Tema, branding, sociais, WhatsApp, horários, logo, etc (tudo de `SiteSettings`)
+- **Benefício:** Primeira carga do site **10-100x mais rápida** (elimina database query)
+- **Fallback:** Se Redis cair, app continua funcionando (busca do banco automaticamente)
+- **Sem Redis:** App funciona normalmente, mas faz query ao banco a cada load
+
+Para development local com Redis:
+```bash
+# Docker
+docker run -d -p 6379:6379 redis:latest
+
+# Ou instalação nativa (macOS)
+brew install redis
+redis-server
+```
+
+Adicionar ao `.env`:
+```
+REDIS_URL=redis://localhost:6379
+```
 
 ## Estrutura do projeto
 

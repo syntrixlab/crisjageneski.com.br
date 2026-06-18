@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -89,24 +90,27 @@ model Page {
 }
 
 model Media {
-  id        String   @id @default(uuid())
-  path      String
-  url       String
-  bucket    String
-  mimeType  String
-  size      Int
-  width     Int?
-  height    Int?
-  alt       String?
+  id          String   @id @default(uuid())
+  path        String
+  url         String
+  bucket      String
+  mimeType    String
+  size        Int
+  width       Int?
+  height      Int?
+  alt         String?
+  title       String?
+  description String?
+  tags        String[] @default([])
   // Crop data fields
-  cropX     Float?
-  cropY     Float?
-  cropWidth Float?
-  cropHeight Float?
-  cropRatio String? // "16:9", "1:1", "4:3", "free"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  posts     Post[]   @relation("PostCoverMedia")
+  cropX       Float?
+  cropY       Float?
+  cropWidth   Float?
+  cropHeight  Float?
+  cropRatio   String?  // "16:9", "1:1", "4:3", "free"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  posts       Post[]   @relation("PostCoverMedia")
 }
 
 model Post {
@@ -129,6 +133,7 @@ model Post {
   @@index([publishedAt])
   @@index([isFeatured, status])
   @@index([status, views])
+  @@index([status, publishedAt])
 }
 
 model SiteSettings {
@@ -138,6 +143,7 @@ model SiteSettings {
   crp       String?
   contactEmail String?
   logoUrl   String?
+  phone     String?
   socials   Json     @default("[]")
   whatsappEnabled Boolean @default(false)
   whatsappLink   String?
@@ -145,6 +151,13 @@ model SiteSettings {
   whatsappPosition String? // "right" | "left"
   hideScheduleCta Boolean @default(false)
   brandTagline String? @db.VarChar(80)
+  theme     Json     @default("{}")
+  address   Json?    // { street?, city?, state?, zip? }
+  officeHours Json?   // Array<{ label: string; hours: string }>
+  metaDescription String? @db.VarChar(320)
+  ogImageUrl String?
+  gaId      String?
+  gscVerification String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

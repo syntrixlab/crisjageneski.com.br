@@ -4,6 +4,7 @@ import { getHome } from './home.controller';
 import { getPage } from './pages.controller';
 import { getBlogHome, getPost, incrementView, listFeaturedPosts, listMostViewedPosts, listPosts } from './posts.controller';
 import { getPublicSiteSettings } from './siteSettings.controller';
+import { getTheme } from './theme.controller';
 import { submitForm } from './forms.controller';
 import { rateLimitMiddleware } from '../../middleware/rateLimit';
 
@@ -21,5 +22,6 @@ publicRoutes.get('/public/blog', listPosts); // legacy alias
 publicRoutes.post('/public/blog/posts/:id/view', incrementView);
 publicRoutes.get('/public/blog/home', getBlogHome);
 publicRoutes.get('/public/blog/:slug', getPost);
+publicRoutes.get('/public/theme', getTheme);
 publicRoutes.get('/public/site-settings', getPublicSiteSettings);
 publicRoutes.post('/public/forms/submit', rateLimitMiddleware, submitForm);

@@ -1,5 +1,5 @@
 import { PostStatus } from '@prisma/client';
-import { cacheKeys, cacheProvider } from '../config/cache';
+import { cacheKeys, cacheTTL, cacheProvider } from '../config/cache';
 import { HttpError } from '../utils/errors';
 import { PostFilters, PostRepository, PostWithMedia } from '../repositories/post.repository';
 import { sanitizeContent } from '../utils/sanitize';
@@ -24,52 +24,68 @@ export class PostService {
   }
 
   async getPublicBySlug(slug: string): Promise<PostWithMedia> {
-    const post = await repository.findPublishedBySlug(slug);
+    const post = await cacheProvider.wrap(
+      cacheKeys.post(slug),
+      cacheTTL.post,
+      () => repository.findPublishedBySlug(slug)
+    );
     if (!post) throw new HttpError(404, 'Post not found');
     return post;
   }
 
   async listPaginated(filters?: PostFilters) {
-    return repository.paginatePublished(filters);
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 9;
+    const search = filters?.search ?? '';
+    const key = `${cacheKeys.postsList}:p${page}:l${limit}:q${search}`;
+    return cacheProvider.wrap(key, cacheTTL.postsList, () =>
+      repository.paginatePublished(filters)
+    );
   }
 
   async listFeatured(limit = 3) {
-    return repository.listFeatured(limit);
+    return cacheProvider.wrap(cacheKeys.postsFeatured, cacheTTL.featuredPosts, () =>
+      repository.listFeatured(limit)
+    );
   }
 
   async listMostViewed(limit = 3, excludeIds?: string[]) {
+    // Cachear apenas a versão sem exclusão (chamada direta de /public/blog/most-viewed)
+    // Deixar o getBlogHome cacheado como um todo para variações com excludeIds
+    if (!excludeIds?.length) {
+      return cacheProvider.wrap(cacheKeys.postsMostViewed, cacheTTL.mostViewedPosts, () =>
+        repository.listMostViewed(limit, [])
+      );
+    }
     return repository.listMostViewed(limit, excludeIds);
   }
 
   async getBlogHome() {
-    // 1. Buscar posts em destaque (isFeatured=true)
-    let featured = await repository.listFeatured(3);
-    
-    // 2. Se não houver posts em destaque, usar os 3 mais recentes
-    if (featured.length === 0) {
-      const recent = await repository.listPublished();
-      featured = recent.slice(0, 3);
-    }
-    
-    const featuredIds = featured.map(p => p.id);
-    
-    // 3. Buscar top 3 mais vistos (independente de featured)
-    // O frontend remove duplicatas se necessário
-    const mostViewed = await repository.listMostViewed(3, []);
-    
-    // 4. Buscar posts mais recentes para o feed (excluindo featured e mostViewed)
-    const excludeIds = [...featuredIds, ...mostViewed.map(p => p.id)];
-    const latest = await repository.paginatePublished({
-      page: 1,
-      limit: 6,
-      excludeIds
+    return cacheProvider.wrap(cacheKeys.blogHome, cacheTTL.blogHome, async () => {
+      // Paralelizar featured e mostViewed (independentes entre si)
+      const [featuredRaw, mostViewed] = await Promise.all([
+        repository.listFeatured(3),
+        repository.listMostViewed(3, [])
+      ]);
+
+      // Fallback: se não há destaques, usar os 3 mais recentes
+      // Usar paginatePublished com limit:3 em vez de listPublished() sem limit
+      const featured =
+        featuredRaw.length > 0
+          ? featuredRaw
+          : (await repository.paginatePublished({ page: 1, limit: 3 })).items;
+
+      const featuredIds = featured.map((p) => p.id);
+      const excludeIds = [...featuredIds, ...mostViewed.map((p) => p.id)];
+
+      const latest = await repository.paginatePublished({ page: 1, limit: 6, excludeIds });
+
+      return {
+        featured: featured.slice(0, 3),
+        mostViewed: mostViewed,
+        latest
+      };
     });
-    
-    return {
-      featured: featured.slice(0, 3),
-      mostViewed: mostViewed,
-      latest
-    };
   }
 
   async listAdmin(): Promise<PostWithMedia[]> {
@@ -198,7 +214,12 @@ export class PostService {
   }
 
   private async invalidateCache(slug?: string) {
-    const keys = [cacheKeys.postsList, cacheKeys.postsFeatured, cacheKeys.postsMostViewed];
+    const keys = [
+      cacheKeys.postsList,
+      cacheKeys.postsFeatured,
+      cacheKeys.postsMostViewed,
+      cacheKeys.blogHome
+    ];
     if (slug) keys.push(cacheKeys.post(slug));
     await cacheProvider.del(keys);
   }

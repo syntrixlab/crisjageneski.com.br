@@ -91,9 +91,13 @@ export async function getPost(req: Request, res: Response, next: NextFunction) {
 export async function incrementView(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = z.object({ id: z.string() }).parse(req.params);
-    const views = await service.incrementViews(id);
     res.setHeader('Cache-Control', 'no-store');
-    return sendSuccess(res, { views });
+    // Responder imediatamente — não bloquear o usuário esperando o DB
+    sendSuccess(res, { queued: true });
+    // Atualizar em background (sem await)
+    service.incrementViews(id).catch(() => {
+      // falha silenciosa — views é não-crítico
+    });
   } catch (error) {
     return next(error);
   }

@@ -9,8 +9,8 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: env.ADMIN_EMAIL },
-    update: { password: passwordHash, name: 'Admin', role: 'admin' },
-    create: { email: env.ADMIN_EMAIL, password: passwordHash, name: 'Admin', role: 'admin' }
+    update: { password: passwordHash, role: 'admin' },
+    create: { email: env.ADMIN_EMAIL, password: passwordHash, name: env.ADMIN_EMAIL.split('@')[0], role: 'admin' }
   });
 
   await prisma.navItem.deleteMany();
@@ -77,7 +77,7 @@ async function main() {
           eyebrow: 'Psicologia clínica',
           heading: 'Cuidado emocional que respeita a sua história',
           subheading:
-            'Cristiane Jageneski ajuda você a construir equilíbrio, autoconfiança e relações saudáveis.',
+            'Oferecemos apoio profissional para ajudá-lo a construir equilíbrio, autoconfiança e relações saudáveis.',
           ctaLabel: 'Agendar sessão',
           ctaHref: '/contato'
         }
@@ -109,7 +109,7 @@ async function main() {
         order: 2,
         data: {
           text: 'Agende uma conversa inicial e entenda como a terapia pode apoiar você agora.',
-          ctaLabel: 'Falar com a Cris',
+          ctaLabel: 'Agendar sessão',
           ctaHref: '/contato'
         }
       }
@@ -127,7 +127,7 @@ async function main() {
             type: 'text',
             data: {
               contentHtml: sanitizeContent(
-                '<h2>Psicóloga clínica especializada em cuidado integral</h2><p>Atuo há mais de 10 anos apoiando mulheres a navegarem ansiedade, relações e carreira com mais clareza e acolhimento.</p>'
+                '<h2>Cuidado psicológico integrado e humanizado</h2><p>Oferecemos atendimento especializado para apoiar você em momentos de transformação, oferecendo espaço seguro e acolhedor para compreender e fortalecer sua saúde emocional.</p>'
               ),
               width: 'wide'
             }
@@ -150,7 +150,7 @@ async function main() {
             data: {
               mediaId: null,
               src: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
-              alt: 'Retrato profissional da Cris',
+              alt: 'Foto profissional',
               size: 100,
               align: 'center',
               caption: 'Foto institucional'
@@ -194,7 +194,7 @@ async function main() {
     data: [
       {
         slug: 'sobre',
-        title: 'Sobre a Cris',
+        title: 'Sobre',
         description: 'Conheça a formação e a abordagem de cuidado',
         layout: aboutLayout as any,
         status: 'published',

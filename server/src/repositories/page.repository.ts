@@ -32,37 +32,25 @@ export class PageRepository {
 
   findAll(options?: { excludePageKey?: string; excludeSlug?: string }): Promise<Page[]> {
     const filters: Prisma.PageWhereInput[] = [];
-    
+
     // Filtro para pageKey: exclui APENAS se for igual ao valor especificado (NULL é diferente)
     if (options?.excludePageKey) {
-      filters.push({ 
+      filters.push({
         OR: [
           { pageKey: null },
           { pageKey: { not: options.excludePageKey } }
         ]
       });
     }
-    
+
     // Filtro para slug: exclui se for igual ao valor especificado
     if (options?.excludeSlug) {
       filters.push({ slug: { not: options.excludeSlug } });
     }
 
     const where: Prisma.PageWhereInput | undefined = filters.length ? { AND: filters } : undefined;
-    
-    console.log('[PageRepository] findAll - options:', options);
-    console.log('[PageRepository] findAll - where:', JSON.stringify(where, null, 2));
-    
-    return prisma.page.findMany({ where, orderBy: { updatedAt: 'desc' } }).then(pages => {
-      console.log('[PageRepository] findAll - resultado:', pages.length, 'páginas');
-      console.log('[PageRepository] Páginas encontradas:', pages.map(p => ({ 
-        id: p.id, 
-        title: p.title, 
-        slug: p.slug, 
-        pageKey: p.pageKey 
-      })));
-      return pages;
-    });
+
+    return prisma.page.findMany({ where, orderBy: { updatedAt: 'desc' } });
   }
 
   create(data: Prisma.PageCreateInput): Promise<Page> {

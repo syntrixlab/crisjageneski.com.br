@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchArticle, incrementArticleView } from '../api/queries';
 import { SeoHead } from '../components/SeoHead';
+import { ContentLoader } from '../components/ContentLoader';
 import { RichText } from '../components/RichText';
 
 export function ArticlePage() {
@@ -46,7 +47,15 @@ export function ArticlePage() {
     return () => window.removeEventListener('pageshow', handlePageShow);
   }, [article?.id]);
 
-  if (!article) return <div className="container" style={{ padding: '2rem 0' }}>Carregando...</div>;
+  if (!article) {
+    return (
+      <section className="section-block">
+        <div className="container">
+          <ContentLoader message="Carregando artigo..." />
+        </div>
+      </section>
+    );
+  }
 
   const formattedDate = article.publishedAt
     ? (() => {

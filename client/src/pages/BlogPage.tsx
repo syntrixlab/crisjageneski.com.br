@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { ArticleCard } from '../components/ArticleCard';
+import { ArticleCardSkeleton } from '../components/ArticleCardSkeleton';
 import { ArticleListItem } from '../components/ArticleListItem';
+import { ArticleListItemSkeleton } from '../components/ArticleListItemSkeleton';
 import { SeoHead } from '../components/SeoHead';
 import {
   fetchArticles,
@@ -22,20 +26,20 @@ export function BlogPage() {
   }, [search]);
 
   // Buscar dados agregados do blog (featured, mostViewed, latest)
-  const { data: blogHome } = useQuery<BlogHomeData>({
+  const { data: blogHome, isPending: isBlogHomePending } = useQuery<BlogHomeData>({
     queryKey: ['blog-home'],
     queryFn: fetchBlogHome
   });
 
   const featured = blogHome?.featured ?? [];
   const mostViewed = blogHome?.mostViewed ?? [];
-  
+
   // Criar sets de IDs para adicionar badges em "Todos os artigos"
   const featuredIds = useMemo(() => new Set(featured.map(a => a.id)), [featured]);
   const mostViewedIds = useMemo(() => new Set(mostViewed.map(a => a.id)), [mostViewed]);
 
   // SEMPRE buscar TODOS os artigos (sem excludeIds) para a seção "Todos os artigos"
-  const { data: allPosts } = useQuery<PaginatedResponse<Article>>({
+  const { data: allPosts, isPending: isAllPostsPending } = useQuery<PaginatedResponse<Article>>({
     queryKey: ['articles', 'all-posts', search, page],
     queryFn: () =>
       fetchArticles({
@@ -72,66 +76,69 @@ export function BlogPage() {
                 aria-label="Buscar por titulo ou tema"
               />
               <button className="search-button" type="submit" aria-label="Filtrar artigos">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <FontAwesomeIcon icon={faMagnifyingGlass} />
               </button>
             </div>
           </form>
         </div>
 
         <div className="blog-sections">
-          <div className="blog-section">
-            <div className="section-title">
-              <h2>Em destaque</h2>
-              <p>Selecionados para aparecer primeiro no blog.</p>
-            </div>
-            {featured.length > 0 ? (
-              <div className="article-grid featured-grid">
-                {featured.map((article) => (
-                  <ArticleCard key={article.id} article={article} variant="featured" badge="Em destaque" />
-                ))}
+          {!search && (
+            <>
+              <div className="blog-section">
+                <div className="section-title">
+                  <h2>Em destaque</h2>
+                  <p>Selecionados para aparecer primeiro no blog.</p>
+                </div>
+                {isBlogHomePending ? (
+                  <div className="article-grid featured-grid">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <ArticleCardSkeleton key={`skeleton-${i}`} variant="featured" />
+                    ))}
+                  </div>
+                ) : featured.length > 0 ? (
+                  <div className="article-grid featured-grid">
+                    {featured.map((article) => (
+                      <ArticleCard key={article.id} article={article} variant="featured" badge="Em destaque" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="admin-empty">Nenhum post publicado ainda.</div>
+                )}
               </div>
-            ) : (
-              <div className="admin-empty">Nenhum post publicado ainda.</div>
-            )}
-          </div>
 
-          <div className="blog-section">
-            <div className="section-title">
-              <h2>Mais vistos</h2>
-              <p>O que as leitoras estao consumindo agora.</p>
-            </div>
-            {mostViewed.length > 0 ? (
-              <div className="article-grid most-viewed-grid">
-                {mostViewed.map((article, index) => {
-                  const rank = index + 1;
-                  return (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      variant="default"
-                      badge={`#${rank} Mais visto`}
-                      showViews
-                    />
-                  );
-                })}
+              <div className="blog-section">
+                <div className="section-title">
+                  <h2>Mais vistos</h2>
+                  <p>O que as leitoras estao consumindo agora.</p>
+                </div>
+                {isBlogHomePending ? (
+                  <div className="article-grid most-viewed-grid">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <ArticleCardSkeleton key={`skeleton-${i}`} variant="default" />
+                    ))}
+                  </div>
+                ) : mostViewed.length > 0 ? (
+                  <div className="article-grid most-viewed-grid">
+                    {mostViewed.map((article, index) => {
+                      const rank = index + 1;
+                      return (
+                        <ArticleCard
+                          key={article.id}
+                          article={article}
+                          variant="default"
+                          badge={`#${rank} Mais visto`}
+                          showViews
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="admin-empty">Sem dados de visualizações suficientes ainda.</div>
+                )}
               </div>
-            ) : (
-              <div className="admin-empty">Sem dados de visualizações suficientes ainda.</div>
-            )}
-          </div>
+            </>
+          )}
 
           <div className="blog-section">
             <div className="section-title">
@@ -139,21 +146,25 @@ export function BlogPage() {
               <p>Artigos mais recentes, incluindo destaques e mais vistos.</p>
             </div>
             <div className="article-list">
-              {allPosts?.items?.map((article) => {
+              {isAllPostsPending ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <ArticleListItemSkeleton key={`skeleton-${i}`} />
+                ))
+              ) : allPosts?.items?.map((article) => {
                 // Gerar badges baseados nos sets de IDs
                 const articleBadges: string[] = [];
                 if (featuredIds.has(article.id)) articleBadges.push('Em destaque');
                 if (mostViewedIds.has(article.id)) articleBadges.push('Mais visto');
-                
+
                 return (
                   <ArticleListItem
-                    key={article.id} 
-                    article={article} 
+                    key={article.id}
+                    article={article}
                     badges={articleBadges.length > 0 ? articleBadges : undefined}
                   />
                 );
               })}
-              {!allPosts?.items?.length && <div className="admin-empty">Nenhum artigo encontrado.</div>}
+              {!isAllPostsPending && !allPosts?.items?.length && <div className="admin-empty">Nenhum artigo encontrado.</div>}
             </div>
             {allPosts && allPosts.totalPages > 1 && (
               <div className="pagination">

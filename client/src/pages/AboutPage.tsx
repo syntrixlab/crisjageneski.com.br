@@ -1,12 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchPage } from '../api/queries';
 import { SeoHead } from '../components/SeoHead';
+import { ContentLoader } from '../components/ContentLoader';
 import { PageRenderer } from '../components/PageRenderer';
 
 export function AboutPage() {
   const { data: page, isLoading, isError } = useQuery({ queryKey: ['page', 'sobre'], queryFn: () => fetchPage('sobre') });
 
-  if (isLoading) return <div className="container" style={{ padding: '2rem 0' }}>Carregando...</div>;
+  if (isLoading) {
+    return (
+      <section className="section-block">
+        <div className="container">
+          <ContentLoader message="Carregando página..." />
+        </div>
+      </section>
+    );
+  }
   if (isError || !page) return <div className="container" style={{ padding: '2rem 0' }}>Página não encontrada.</div>;
 
   return (

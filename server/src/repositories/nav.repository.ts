@@ -67,34 +67,23 @@ export class NavRepository {
     return (max ?? -1) + 1;
   }
 
-  reorder(context: 'navbar' | 'footer', items: ReorderInput[]): Promise<NavItem[]> {
+  async reorder(context: 'navbar' | 'footer', items: ReorderInput[]): Promise<NavItem[]> {
+    // Otimização: usar batch update com todos os items em uma transação única
+    // Evita 2N queries (antes: N updates em temp + N updates finais)
     return prisma.$transaction(async (tx) => {
-      // Phase 1: move all items to temporary unique orders to avoid unique constraint clashes
-      const tempBase = -1000000;
-      for (let i = 0; i < items.length; i += 1) {
-        const item = items[i];
-        const tempOrder = tempBase - i;
-        await tx.navItem.update({
-          where: { id: item.id },
-          data: {
-            parentId: item.parentId ?? null,
-            orderNavbar: context === 'navbar' ? tempOrder : undefined,
-            orderFooter: context === 'footer' ? tempOrder : undefined
-          }
-        });
-      }
-
-      // Phase 2: apply final orders
-      for (const item of items) {
-        await tx.navItem.update({
-          where: { id: item.id },
-          data: {
-            parentId: item.parentId ?? null,
-            orderNavbar: context === 'navbar' ? item.order : undefined,
-            orderFooter: context === 'footer' ? item.order : undefined
-          }
-        });
-      }
+      // Atualizar todos em uma passagem única
+      await Promise.all(
+        items.map((item) =>
+          tx.navItem.update({
+            where: { id: item.id },
+            data: {
+              parentId: item.parentId ?? null,
+              orderNavbar: context === 'navbar' ? item.order : undefined,
+              orderFooter: context === 'footer' ? item.order : undefined
+            }
+          })
+        )
+      );
 
       const orderBy =
         context === 'navbar'

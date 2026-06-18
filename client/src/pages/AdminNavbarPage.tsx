@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SeoHead } from '../components/SeoHead';
-import { ConfirmModal, Modal, Switch } from '../components/AdminUI';
+import { ConfirmModal, NavDrawer, Switch } from '../components/AdminUI';
 import {
   useAdminNavbar,
   useCreateNavbarItem,
@@ -9,9 +9,10 @@ import {
   useUpdateNavbarItem
 } from '../hooks/queries/useNavbar';
 import { useAdminPagesForSelect } from '../hooks/queries/usePages';
+import { useAdminSiteSettings } from '../hooks/queries/useSiteSettings';
 import type { NavbarItem } from '../types';
 import { NavigationTree } from '../components/navigation/NavigationTree';
-import { FooterPreview } from '../components/navigation/FooterPreview';
+import { NavbarPreview } from '../components/navigation/NavbarPreview';
 
 type NavigationForm = {
   label: string;
@@ -50,6 +51,7 @@ const builtInPages: { slug: string; label: string }[] = [
 export function NavigationBuilderPage() {
   const { data: items } = useAdminNavbar();
   const { data: pages } = useAdminPagesForSelect();
+  const { data: settings } = useAdminSiteSettings();
   const [navItems, setNavItems] = useState<NavbarItem[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<NavbarItem | null>(null);
@@ -93,98 +95,16 @@ export function NavigationBuilderPage() {
     return next;
   };
 
-  const normalizeFooterOrders = (list: NavbarItem[]) => {
-    const next = list.map((i) => ({ ...i }));
-    const group = next.filter((i) => i.showInFooter).sort(sortFooter);
-    group.forEach((item, index) => {
-      const ref = next.find((i) => i.id === item.id);
-      if (ref) ref.orderFooter = index;
-    });
-    return next;
-  };
-
-  const moveNavbarItem = async (item: NavbarItem, direction: 'up' | 'down') => {
+  const handleReorder = async (updatedItems: NavbarItem[]) => {
     const previous = navItems;
-    const working = normalizeNavbarOrders(navItems);
-    const target = working.find((i) => i.id === item.id && i.showInNavbar);
-    if (!target) return;
-    const parentId = target.parentId ?? null;
-    const group = working.filter((i) => i.showInNavbar && (i.parentId ?? null) === parentId).sort(sortNavbar);
-    const index = group.findIndex((i) => i.id === item.id);
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= group.length) return;
-    const swapId = group[swapIndex].id;
-
-    const swapped = working.map((i) => {
-      if (i.id === item.id) return { ...i, orderNavbar: swapIndex };
-      if (i.id === swapId) return { ...i, orderNavbar: index };
-      return i;
-    });
-    const normalized = normalizeNavbarOrders(swapped);
-    setNavItems(normalized);
+    const normalized = normalizeNavbarOrders(updatedItems);
+    setNavItems(normalized);  // Optimistic update — feedback imediato
     try {
       await reorderMutation.mutateAsync({ context: 'navbar', items: buildNavbarPayload(normalized) });
-      showToastMessage('Ordem atualizada');
+      // Sem toast necessário — já refletiu na UI
     } catch {
       setNavItems(previous);
-      setError('Não foi possível salvar a nova ordem da navbar.');
-    }
-  };
-
-  const moveFooterItem = async (item: NavbarItem, direction: 'up' | 'down') => {
-    const previous = navItems;
-    const working = normalizeFooterOrders(navItems);
-    const target = working.find((i) => i.id === item.id && i.showInFooter);
-    if (!target) return;
-    const group = working.filter((i) => i.showInFooter).sort(sortFooter);
-    const index = group.findIndex((i) => i.id === item.id);
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= group.length) return;
-    const swapId = group[swapIndex].id;
-
-    const swapped = working.map((i) => {
-      if (i.id === item.id) return { ...i, orderFooter: swapIndex };
-      if (i.id === swapId) return { ...i, orderFooter: index };
-      return i;
-    });
-    const normalized = normalizeFooterOrders(swapped);
-    setNavItems(normalized);
-    try {
-      await reorderMutation.mutateAsync({ context: 'footer', items: buildFooterPayload(normalized) });
-      showToastMessage('Ordem do rodapé salva');
-    } catch {
-      setNavItems(previous);
-      setError('Não foi possível salvar a ordem do rodapé.');
-    }
-  };
-
-  const handleChangeParent = async (item: NavbarItem, parentId: string | null) => {
-    const previous = navItems;
-    const working = normalizeNavbarOrders(navItems);
-    const targetParent = parentId ? working.find((p) => p.id === parentId) : null;
-    if (targetParent && !targetParent.isParent) {
-      setError('Escolha um item pai válido.');
-      return;
-    }
-    if (targetParent && targetParent.parentId) {
-      setError('Profundidade máxima é de 2 níveis.');
-      return;
-    }
-    const cleanParent = parentId === item.id ? null : parentId;
-    const nextOrder = working.filter((i) => i.showInNavbar && (i.parentId ?? null) === cleanParent).length;
-
-    const updated = working.map((i) => {
-      if (i.id === item.id) return { ...i, parentId: cleanParent, isParent: false, orderNavbar: nextOrder };
-      return i;
-    });
-    const normalized = normalizeNavbarOrders(updated);
-    setNavItems(normalized);
-    try {
-      await reorderMutation.mutateAsync({ context: 'navbar', items: buildNavbarPayload(normalized) });
-      showToastMessage(cleanParent ? 'Item movido para submenu' : 'Item movido para raiz');
-    } catch {
-      setNavItems(previous);
-      setError('Não foi possível alterar o submenu.');
+      setError('Não foi possível salvar a nova ordem.');
     }
   };
 
@@ -280,6 +200,38 @@ export function NavigationBuilderPage() {
     setShowForm(true);
   };
 
+  const handleChangeParent = async (parentId: string | null) => {
+    if (!editing) return;
+    const previous = navItems;
+    const working = normalizeNavbarOrders(navItems);
+    const targetParent = parentId ? working.find((p) => p.id === parentId) : null;
+    if (targetParent && !targetParent.isParent) {
+      setError('Escolha um item pai válido.');
+      return;
+    }
+    if (targetParent && targetParent.parentId) {
+      setError('Profundidade máxima é de 2 níveis.');
+      return;
+    }
+    const cleanParent = parentId === editing.id ? null : parentId;
+    const nextOrder = working.filter((i) => i.showInNavbar && (i.parentId ?? null) === cleanParent).length;
+
+    const updated = working.map((i) => {
+      if (i.id === editing.id) return { ...i, parentId: cleanParent, isParent: false, orderNavbar: nextOrder };
+      return i;
+    });
+    const normalized = normalizeNavbarOrders(updated);
+    setNavItems(normalized);
+    setForm((prev) => ({ ...prev, parentId: cleanParent }));
+    try {
+      await reorderMutation.mutateAsync({ context: 'navbar', items: buildNavbarPayload(normalized) });
+      showToastMessage(cleanParent ? 'Item movido para submenu' : 'Item movido para raiz');
+    } catch {
+      setNavItems(previous);
+      setError('Não foi possível alterar o submenu.');
+    }
+  };
+
   const handleSubmitForm = () => {
     setError(null);
     if (!form.label.trim()) {
@@ -331,6 +283,10 @@ export function NavigationBuilderPage() {
 
   const formTitle = editing ? 'Editar item' : 'Adicionar item';
 
+  const parentOptions = navbarItems
+    .filter((i) => i.parentId === null && i.showInNavbar && i.isParent && i.id !== editing?.id)
+    .map((r) => ({ id: r.id, label: r.label }));
+
   return (
     <div className="admin-page nav-builder-shell">
       <SeoHead title="Navegação" />
@@ -338,7 +294,7 @@ export function NavigationBuilderPage() {
         <div>
           <p className="eyebrow">Construtor da navegação</p>
           <h1>Navegação</h1>
-          <p className="muted">Organize itens, defina destino e use setas para reordenar.</p>
+          <p className="muted">Arraste e solte para reordenar, defina destino e visibilidade.</p>
         </div>
         <div className="admin-actions">
           <button className="btn btn-primary" onClick={openCreate} type="button">
@@ -356,7 +312,6 @@ export function NavigationBuilderPage() {
             <div>
               <p className="eyebrow">Estrutura</p>
               <h3>Estrutura da navegação</h3>
-              <p className="muted small">Use as setas para ordenar; selecione um pai para criar submenus.</p>
             </div>
           </div>
           <NavigationTree
@@ -366,9 +321,7 @@ export function NavigationBuilderPage() {
             onToggleVisible={handleToggleVisible}
             onEdit={openEdit}
             onDelete={(item) => setDeleteTarget(item)}
-            onMoveUp={(item) => moveNavbarItem(item, 'up')}
-            onMoveDown={(item) => moveNavbarItem(item, 'down')}
-            onChangeParent={handleChangeParent}
+            onReorder={handleReorder}
             onAddChild={handleAddChild}
           />
         </div>
@@ -377,31 +330,47 @@ export function NavigationBuilderPage() {
           <div className="nav-card-header">
             <div>
               <p className="eyebrow">Pré-visualização</p>
-              <h3>Preview do rodapé</h3>
-              <p className="muted small">Somente itens marcados para o rodapé aparecem aqui.</p>
+              <h3>Preview</h3>
+              <p className="muted small">Como sua navegação aparecerá no site.</p>
             </div>
           </div>
-          <FooterPreview
-            items={footerItems}
-            onMoveUp={(item) => moveFooterItem(item, 'up')}
-            onMoveDown={(item) => moveFooterItem(item, 'down')}
-            onToggleVisible={handleToggleVisible}
-            onEdit={openEdit}
-            onDelete={(item) => setDeleteTarget(item)}
-          />
+          <NavbarPreview items={navbarItems} footerItems={footerItems} siteName={settings?.siteName} />
         </div>
       </div>
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title={formTitle} description="Defina onde o item deve aparecer.">
-        <div className="admin-grid">
+      <NavDrawer isOpen={showForm} onClose={() => setShowForm(false)} title={formTitle} footer={
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-outline" type="button" onClick={() => setShowForm(false)}>
+            Cancelar
+          </button>
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={handleSubmitForm}
+            disabled={createMutation.isPending || updateMutation.isPending}
+          >
+            {editing ? 'Salvar' : 'Adicionar'}
+          </button>
+        </div>
+      }>
+        {/* Fieldset 1 — Conteúdo */}
+        <fieldset className="nav-form-fieldset">
+          <legend>Conteúdo</legend>
           <input
-            placeholder="Rótulo"
+            placeholder="Rótulo do item"
             value={form.label}
             onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))}
+            style={{ width: '100%' }}
           />
+        </fieldset>
+
+        {/* Fieldset 2 — Destino */}
+        <fieldset className="nav-form-fieldset">
+          <legend>Destino</legend>
           <select
             value={form.type}
             onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value as NavigationForm['type'] }))}
+            style={{ width: '100%', marginBottom: '0.75rem' }}
           >
             <option value="INTERNAL_PAGE">Página interna</option>
             <option value="EXTERNAL_URL">URL externa</option>
@@ -410,6 +379,7 @@ export function NavigationBuilderPage() {
             <select
               value={form.pageKey}
               onChange={(e) => setForm((prev) => ({ ...prev, pageKey: e.target.value }))}
+              style={{ width: '100%' }}
             >
               <option value="">Selecione uma página</option>
               {builtInPages.map((p) => (
@@ -425,12 +395,18 @@ export function NavigationBuilderPage() {
             </select>
           ) : (
             <input
-              placeholder="URL externa"
+              placeholder="https://exemplo.com"
               value={form.url}
               onChange={(e) => setForm((prev) => ({ ...prev, url: e.target.value }))}
+              style={{ width: '100%' }}
             />
           )}
-          <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+        </fieldset>
+
+        {/* Fieldset 3 — Exibição */}
+        <fieldset className="nav-form-fieldset">
+          <legend>Exibição</legend>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <Switch
               checked={form.showInNavbar}
               onChange={(value) =>
@@ -452,53 +428,56 @@ export function NavigationBuilderPage() {
               onChange={(value) => setForm((prev) => ({ ...prev, isVisible: value }))}
               label="Visível"
             />
-            <div>
-              <Switch
-                checked={form.isParent}
-                onChange={(value) => {
-                  if (form.parentId) return;
-                  setForm((prev) => ({
-                    ...prev,
-                    isParent: value,
-                    parentId: value ? null : prev.parentId,
-                    showInNavbar: value ? true : prev.showInNavbar
-                  }));
-                }}
-                label="Item pai"
-              />
-              {form.parentId && <p className="muted small">Submenus não podem ser itens pai.</p>}
-            </div>
           </div>
+        </fieldset>
+
+        {/* Fieldset 4 — Hierarquia */}
+        <fieldset className="nav-form-fieldset">
+          <legend>Hierarquia</legend>
+          <div style={{ marginBottom: '1rem' }}>
+            <Switch
+              checked={form.isParent}
+              onChange={(value) => {
+                if (form.parentId) return;
+                setForm((prev) => ({
+                  ...prev,
+                  isParent: value,
+                  parentId: value ? null : prev.parentId,
+                  showInNavbar: value ? true : prev.showInNavbar
+                }));
+              }}
+              label="Permitir submenus"
+              id="isParent"
+            />
+            <p className="muted small" style={{ marginTop: '0.25rem' }}>
+              Este item pode conter submenus. Itens com submenus não podem ser filhos de outros itens.
+            </p>
+          </div>
+
           {!form.isParent && (
             <div>
-              <label htmlFor="parent">Item pai (submenu)</label>
+              <label htmlFor="parentId" style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                Submenu de
+              </label>
               <select
-                id="parent"
+                id="parentId"
                 value={form.parentId ?? ''}
                 disabled={!form.showInNavbar}
-                onChange={(e) => setForm((prev) => ({ ...prev, parentId: e.target.value || null }))}
+                onChange={(e) => handleChangeParent(e.target.value || null)}
+                style={{ width: '100%' }}
+                title={!form.showInNavbar ? 'Ative "Mostrar na navbar" primeiro' : ''}
               >
                 <option value="">Nenhum (nível raiz)</option>
-                {navbarItems
-                  .filter((p) => p.parentId === null && p.showInNavbar && p.isParent)
-                  .map((p) => (
-                    <option key={p.id} value={p.id} disabled={editing?.id === p.id}>
-                      {p.label}
-                    </option>
-                  ))}
+                {parentOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
               </select>
             </div>
           )}
-        </div>
-        <div className="admin-modal-footer">
-          <button className="btn btn-outline" type="button" onClick={() => setShowForm(false)}>
-            Cancelar
-          </button>
-          <button className="btn btn-primary" type="button" onClick={handleSubmitForm} disabled={createMutation.isPending || updateMutation.isPending}>
-            {editing ? 'Salvar alterações' : 'Adicionar'}
-          </button>
-        </div>
-      </Modal>
+        </fieldset>
+      </NavDrawer>
 
       <ConfirmModal
         isOpen={!!deleteTarget}
@@ -524,12 +503,5 @@ function buildNavbarPayload(items: NavbarItem[]) {
       .sort(sortNavbar);
     group.forEach((item, order) => payload.push({ id: item.id, parentId, order }));
   });
-  return payload;
-}
-
-function buildFooterPayload(items: NavbarItem[]) {
-  const payload: { id: string; parentId: string | null; order: number }[] = [];
-  const group = items.filter((i) => i.showInFooter).sort(sortFooter);
-  group.forEach((item, order) => payload.push({ id: item.id, parentId: null, order }));
   return payload;
 }

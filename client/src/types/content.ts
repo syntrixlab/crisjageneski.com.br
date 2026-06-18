@@ -22,12 +22,48 @@ export type Article = {
   coverOriginalUrl?: string | null;
 };
 
+export type SiteThemePreset = 'terra-oliva' | 'sereno-azul' | 'salvia' | 'vinho-suave';
+
+export type SiteThemeColors = {
+  background: string;
+  text: string;
+  primary: string;
+  accent: string;
+};
+
+export type SiteTypography = {
+  headingFont: string | null;
+  bodyFont: string | null;
+};
+
+export type SiteTheme = {
+  preset: SiteThemePreset;
+  colors: SiteThemeColors;
+  typography?: SiteTypography;
+};
+
+export type SiteAddress = {
+  street?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+};
+
+export type OfficeHour = {
+  label: string;
+  hours: string;
+};
+
 export type SiteSettings = {
   siteName: string;
   cnpj?: string | null;
   crp?: string | null;
   contactEmail?: string | null;
   logoUrl?: string | null;
+  phone?: string | null;
+  address?: SiteAddress | null;
+  officeHours?: OfficeHour[] | null;
   socials: SocialLink[];
   whatsappEnabled?: boolean | null;
   whatsappLink?: string | null;
@@ -35,6 +71,11 @@ export type SiteSettings = {
   whatsappPosition?: 'right' | 'left' | null;
   hideScheduleCta?: boolean | null;
   brandTagline?: string | null;
+  theme?: SiteTheme | null;
+  metaDescription?: string | null;
+  ogImageUrl?: string | null;
+  gaId?: string | null;
+  gscVerification?: string | null;
 };
 
 export type FormSubmission = {

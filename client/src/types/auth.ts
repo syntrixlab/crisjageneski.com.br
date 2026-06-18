@@ -30,6 +30,9 @@ export type Media = {
   path?: string;
   bucket?: string;
   alt?: string | null;
+  title?: string | null;
+  description?: string | null;
+  tags?: string[];
   mimeType: string;
   size: number;
   width?: number | null;

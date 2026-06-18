@@ -14,12 +14,16 @@ export const cacheTTL = {
   post: env.CACHE_TTL_POST,
   postsList: env.CACHE_TTL_POSTS_LIST,
   featuredPosts: env.CACHE_TTL_POSTS_LIST,
-  mostViewedPosts: env.CACHE_TTL_POSTS_LIST
+  mostViewedPosts: env.CACHE_TTL_POSTS_LIST,
+  siteSettings: 3600,
+  blogHome: 120
 };
 
 export const cacheKeys = {
   nav: 'nav:public',
   home: 'home:public',
+  siteSettings: 'site-settings:public',
+  blogHome: 'posts:blog-home',
   postsList: 'posts:list:published',
   postsFeatured: 'posts:list:featured',
   postsMostViewed: 'posts:list:most-viewed',

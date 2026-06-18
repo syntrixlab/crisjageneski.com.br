@@ -1,5 +1,6 @@
 import { SiteSettings, Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma';
+import { toNullableJsonInput } from '../utils/prismaJson';
 
 const DEFAULT_ID = 'default';
 
@@ -13,13 +14,21 @@ export class SiteSettingsRepository {
       data: {
         id: DEFAULT_ID,
         siteName: 'Meu Site',
+        phone: null,
+        address: toNullableJsonInput(null),
+        officeHours: toNullableJsonInput(null),
         socials: [],
         whatsappEnabled: false,
         whatsappLink: null,
         whatsappMessage: null,
         whatsappPosition: 'right',
         hideScheduleCta: false,
-        brandTagline: 'Psicologia Junguiana'
+        brandTagline: 'Psicologia Junguiana',
+        theme: {},
+        metaDescription: null,
+        ogImageUrl: null,
+        gaId: null,
+        gscVerification: null
       }
     });
   }
@@ -40,7 +49,8 @@ export class SiteSettingsRepository {
         whatsappMessage: (data as any).whatsappMessage ?? null,
         whatsappPosition: (data as any).whatsappPosition ?? 'right',
         hideScheduleCta: (data as any).hideScheduleCta ?? false,
-        brandTagline: (data as any).brandTagline ?? 'Psicologia Junguiana'
+        brandTagline: (data as any).brandTagline ?? 'Psicologia Junguiana',
+        theme: (data as any).theme ?? {}
       },
       update: data
     });

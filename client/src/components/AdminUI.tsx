@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import ReactDOM from 'react-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPencil, faTrash, faArrowUp, faArrowDown, faEye, faEyeSlash, faGlobe, faCopy, faUpload, faDownload, faImage } from '@fortawesome/free-solid-svg-icons';
 import type { Media, NavbarItem } from '../types';
 import '../App.css';
 
@@ -18,9 +20,13 @@ export function Modal({ isOpen, title, description, onClose, children, footer, w
   useEffect(() => setMounted(true), []);
   if (!mounted || !isOpen) return null;
 
+  const modalStyle = {
+    '--modal-width': typeof width === 'number' ? `${width}px` : width
+  } as CSSProperties;
+
   return ReactDOM.createPortal(
     <div className="admin-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="admin-modal" style={{ width }}>
+      <div className="admin-modal" style={modalStyle}>
         <div className="admin-modal-header">
           <div>
             <h2 id="modal-title">{title}</h2>
@@ -47,90 +53,19 @@ type IconButtonProps = {
 };
 
 export function IconButton({ icon, onClick, label, tone = 'default', disabled }: IconButtonProps) {
-  const renderIcon = () => {
-    switch (icon) {
-      case 'edit':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
-          </svg>
-        );
-      case 'trash':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-            <path d="M14 10v8" />
-            <path d="M10 10v8" />
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-          </svg>
-        );
-      case 'publish':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" />
-            <path d="M12 3v14" />
-            <path d="m6 9 6-6 6 6" />
-          </svg>
-        );
-      case 'unpublish':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="M3 3l18 18" />
-            <path d="M4 17v2a1 1 0 0 0 1 1h11" />
-            <path d="m6 9 6-6 6 6" />
-          </svg>
-        );
-      case 'eye':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        );
-      case 'eye-off':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="m3 3 18 18" />
-            <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-            <path d="M9.5 5.3A10.5 10.5 0 0 1 12 5c7 0 11 7 11 7a13 13 0 0 1-4.2 4.9" />
-            <path d="M6.7 6.7A13 13 0 0 0 1 12s4 7 11 7a10.9 10.9 0 0 0 5.4-1.4" />
-          </svg>
-        );
-      case 'globe':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M3 12h18" />
-            <path d="M12 3a15 15 0 0 1 4 9 15 15 0 0 1-4 9 15 15 0 0 1-4-9 15 15 0 0 1 4-9z" />
-          </svg>
-        );
-      case 'arrow-up':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="M12 5v14" />
-            <path d="m6 11 6-6 6 6" />
-          </svg>
-        );
-      case 'arrow-down':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <path d="M12 5v14" />
-            <path d="m6 13 6 6 6-6" />
-          </svg>
-        );
-      case 'copy':
-        return (
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="1.8">
-            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-          </svg>
-        );
-      default:
-        return null;
-    }
+  const iconMap: Record<string, any> = {
+    edit: faPencil,
+    trash: faTrash,
+    publish: faUpload,
+    unpublish: faDownload,
+    eye: faEye,
+    'eye-off': faEyeSlash,
+    globe: faGlobe,
+    'arrow-up': faArrowUp,
+    'arrow-down': faArrowDown,
+    copy: faCopy
   };
+
   return (
     <button
       className={`icon-button tone-${tone}`}
@@ -140,7 +75,7 @@ export function IconButton({ icon, onClick, label, tone = 'default', disabled }:
       title={label}
       disabled={disabled}
     >
-      {renderIcon()}
+      {iconMap[icon] && <FontAwesomeIcon icon={iconMap[icon]} />}
     </button>
   );
 }
@@ -218,6 +153,20 @@ type MediaGalleryProps = {
 };
 
 export function MediaGallery({ items, onEdit, onDelete }: MediaGalleryProps) {
+  if (items.length === 0) {
+    return (
+      <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+        <div style={{ margin: '0 auto 1.5rem', fontSize: '3rem', opacity: 0.3, color: 'var(--color-forest)' }}>
+          <FontAwesomeIcon icon={faImage} />
+        </div>
+        <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-deep)' }}>Nenhuma imagem cadastrada</h3>
+        <p style={{ margin: '0 0 1.5rem 0', color: 'var(--color-forest)' }}>
+          Comece enviando sua primeira imagem para a biblioteca.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-gallery">
       {items.map((item) => (
@@ -331,5 +280,44 @@ export function ArticleStatusBadge({ status }: { status: 'draft' | 'published' }
     >
       {isDraft ? 'Rascunho' : 'Publicado'}
     </span>
+  );
+}
+
+type NavDrawerProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+};
+
+export function NavDrawer({ isOpen, onClose, title, children, footer }: NavDrawerProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return ReactDOM.createPortal(
+    <>
+      {/* overlay */}
+      <div
+        className={`nav-drawer-overlay ${isOpen ? 'is-open' : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* painel */}
+      <div
+        className={`nav-drawer ${isOpen ? 'is-open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="nav-drawer-header">
+          <h2>{title}</h2>
+          <button className="admin-close" onClick={onClose} aria-label="Fechar">×</button>
+        </div>
+        <div className="nav-drawer-body">{children}</div>
+        {footer && <div className="nav-drawer-footer">{footer}</div>}
+      </div>
+    </>,
+    document.body
   );
 }

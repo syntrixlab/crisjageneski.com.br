@@ -57,7 +57,7 @@ export function Navbar({ settings }: { settings?: SiteSettings }) {
   const mobileToggleRef = useRef<HTMLButtonElement | null>(null);
   const mobileCloseRef = useRef<HTMLButtonElement | null>(null);
   const wasMobileOpen = useRef(false);
-  const brand = settings?.siteName || 'Cris Jageneski';
+  const brand = settings?.siteName || 'Site';
   const brandTagline = (settings?.brandTagline ?? '').trim();
   const showBrandTagline = brandTagline.length > 0;
   const showScheduleCta = !(settings?.hideScheduleCta ?? false);

@@ -1,8 +1,31 @@
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchSiteSettings } from '../api/queries';
+
+// Get cached site name from localStorage
+const getCachedSiteName = () => {
+  try {
+    const cached = localStorage.getItem('cris_theme_cache');
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    return parsed.settings?.siteName || null;
+  } catch {
+    return null;
+  }
+};
 
 export function SeoHead({ title, description }: { title: string; description?: string }) {
+  // Fetch site config (includes siteName, theme, etc.)
+  const { data: settings } = useQuery({
+    queryKey: ['site-config'],
+    queryFn: fetchSiteSettings,
+    staleTime: 60 * 60 * 1000
+  });
+
+  const siteName = settings?.siteName || getCachedSiteName() || 'Cris Jageneski';
+
   useEffect(() => {
-    document.title = `${title} | Cris Jageneski`;
+    document.title = `${title} | ${siteName}`;
     if (description) {
       let meta = document.querySelector('meta[name="description"]');
       if (!meta) {
@@ -12,7 +35,7 @@ export function SeoHead({ title, description }: { title: string; description?: s
       }
       meta.setAttribute('content', description);
     }
-  }, [title, description]);
+  }, [title, description, siteName]);
 
   return null;
 }

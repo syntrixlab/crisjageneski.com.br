@@ -1,27 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGrip, faBars, faHome, faFileLines, faNewspaper, faImage, faClipboard, faSignOutAlt, faChevronLeft, faCog } from '@fortawesome/free-solid-svg-icons';
 import { logout as logoutRequest } from '../api/queries';
 import { AUTH_FLAG_KEY } from '../api/client';
+import { useAdminTheme } from '../hooks/useAdminTheme';
 import '../App.css';
 
 const navSections = [
   {
-    label: 'Conteudo',
+    label: 'Conteúdo',
     items: [
       { to: '/admin', label: 'Dashboard', icon: 'grid' },
-      { to: '/admin/navbar', label: 'Barra de navegacao', icon: 'menu' },
-      { to: '/admin/home', label: 'Pagina inicial', icon: 'home' },
-      { to: '/admin/pages', label: 'Paginas', icon: 'pages' },
+      { to: '/admin/navbar', label: 'Barra de navegação', icon: 'menu' },
+      { to: '/admin/home', label: 'Página inicial', icon: 'home' },
+      { to: '/admin/pages', label: 'Páginas', icon: 'pages' },
       { to: '/admin/articles', label: 'Artigos', icon: 'article' },
-      { to: '/admin/settings', label: 'Configuracoes do Site', icon: 'settings' }
+      { to: '/admin/settings', label: 'Configurações do Site', icon: 'settings' }
     ]
   },
   {
-    label: 'Formularios',
+    label: 'Formulários',
     items: [{ to: '/admin/form-submissions', label: 'Respostas dos formulários', icon: 'clipboard' }]
   },
   {
-    label: 'Midia',
+    label: 'Mídia',
     items: [{ to: '/admin/media', label: 'Imagens', icon: 'image' }]
   }
 ];
@@ -30,90 +33,29 @@ const pageTitles: Record<string, string> = {
   '/admin': 'Painel',
   '/admin/navbar': 'Navbar',
   '/admin/home': 'Home',
-  '/admin/pages': 'Paginas',
+  '/admin/pages': 'Páginas',
   '/admin/articles': 'Artigos',
-  '/admin/media': 'Midia',
-  '/admin/form-submissions': 'Respostas dos Formularios',
-  '/admin/settings': 'Configuracoes'
+  '/admin/media': 'Mídia',
+  '/admin/form-submissions': 'Respostas dos Formulários',
+  '/admin/settings': 'Configurações'
 };
 
 function Icon({ name }: { name: string }) {
-  switch (name) {
-    case 'grid':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="3" y="3" width="8" height="8" rx="2" />
-          <rect x="13" y="3" width="8" height="8" rx="2" />
-          <rect x="3" y="13" width="8" height="8" rx="2" />
-          <rect x="13" y="13" width="8" height="8" rx="2" />
-        </svg>
-      );
-    case 'menu':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <line x1="4" y1="7" x2="20" y2="7" />
-          <line x1="4" y1="12" x2="14" y2="12" />
-          <line x1="4" y1="17" x2="18" y2="17" />
-        </svg>
-      );
-    case 'home':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5a.5.5 0 0 1-.5-.5V15h-4v5.5a.5.5 0 0 1-.5.5H5a1 1 0 0 1-1-1z" />
-        </svg>
-      );
-    case 'pages':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="4" y="5" width="14" height="16" rx="2" />
-          <path d="M8 9h6" />
-          <path d="M8 13h6" />
-          <path d="M8 17h3" />
-        </svg>
-      );
-    case 'article':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M6 4h9l3 3v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-          <path d="M9 10h6" />
-          <path d="M9 14h6" />
-        </svg>
-      );
-    case 'image':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="4" y="4" width="16" height="16" rx="2" />
-          <circle cx="9" cy="9" r="2" />
-          <path d="m21 15-3.5-3.5L10 19" />
-        </svg>
-      );
-    case 'clipboard':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-          <rect x="9" y="3" width="6" height="4" rx="1" />
-          <path d="M9 14h6" />
-          <path d="M9 10h6" />
-        </svg>
-      );
-    case 'logout':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-          <path d="M10 17 15 12 10 7" />
-          <path d="M15 12H3" />
-        </svg>
-      );
-    case 'settings':
-      return (
-        <svg className="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const iconMap: Record<string, any> = {
+    grid: faGrip,
+    menu: faBars,
+    home: faHome,
+    pages: faFileLines,
+    article: faNewspaper,
+    image: faImage,
+    clipboard: faClipboard,
+    logout: faSignOutAlt,
+    'chevron-left': faChevronLeft,
+    settings: faCog
+  };
+
+  const icon = iconMap[name];
+  return icon ? <FontAwesomeIcon icon={icon} className="admin-icon" /> : null;
 }
 
 type AdminTopbarProps = {
@@ -143,6 +85,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { siteName, initials, themeCssVars, isLoading } = useAdminTheme();
 
   const logout = async () => {
     try {
@@ -162,16 +105,46 @@ export function AdminLayout() {
 
   const title = useMemo(() => pageTitles[location.pathname] ?? 'Painel', [location.pathname]);
 
+  // Aplicar tema como inline styles para o shell do admin
+  const adminShellStyle = useMemo(
+    () => (isLoading ? {} : (themeCssVars as CSSProperties)),
+    [themeCssVars, isLoading]
+  );
+
+  useEffect(() => {
+    if (isLoading) return undefined;
+
+    const previousValues = new Map<string, string>();
+    const bodyStyle = document.body.style;
+
+    Object.entries(themeCssVars).forEach(([key, value]) => {
+      previousValues.set(key, bodyStyle.getPropertyValue(key));
+      bodyStyle.setProperty(key, value);
+    });
+
+    return () => {
+      previousValues.forEach((value, key) => {
+        if (value) {
+          bodyStyle.setProperty(key, value);
+        } else {
+          bodyStyle.removeProperty(key);
+        }
+      });
+    };
+  }, [themeCssVars, isLoading]);
+
   return (
-    <div className={`admin-shell ${collapsed ? 'is-collapsed' : ''}`}>
+    <div className={`admin-shell ${collapsed ? 'is-collapsed' : ''}`} style={adminShellStyle}>
       <aside className="admin-sidebar">
         <div className="admin-logo-row">
           <div className="admin-logo">
-            <span className="admin-logo-badge">CJ</span>
-            <span>crisjageneski</span>
+            <span className="admin-logo-badge" title={siteName}>
+              {initials || 'AD'}
+            </span>
+            <span title={siteName}>{siteName}</span>
           </div>
-          <button className="sidebar-toggle" onClick={() => setCollapsed((c) => !c)} aria-label="Alternar menu">
-            <Icon name="menu" />
+          <button className="sidebar-toggle" onClick={() => setCollapsed((c) => !c)} aria-label="Expandir/colapsar menu">
+            <Icon name="chevron-left" />
           </button>
         </div>
         <nav className="admin-nav">

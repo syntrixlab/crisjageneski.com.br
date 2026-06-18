@@ -15,6 +15,16 @@
   --color-surface: #fffaf4;
   --color-lines: rgba(84, 94, 69, 0.18);
 
+  /* Admin UI variables */
+  --surface: #ffffff;
+  --surface-hover: #f9f4ec;
+  --surface-muted: #f5f2ed;
+  --text: #1f2d16;
+  --text-muted: #545e45;
+  --border: rgba(118, 112, 76, 0.18);
+  --color-primary: #8d2b00;
+  --color-danger: #dc2626;
+
   --shadow-soft: 0 18px 48px rgba(31, 45, 22, 0.12);
   --shadow-floating: 0 28px 70px rgba(31, 45, 22, 0.16);
 
@@ -73,7 +83,7 @@ body,
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 12% 18%, rgba(190, 103, 49, 0.08), transparent 30%),
+    radial-gradient(circle at 12% 18%, rgba(var(--theme-accent-rgb), 0.08), transparent 30%),
     radial-gradient(circle at 82% 6%, rgba(84, 94, 69, 0.09), transparent 26%),
     linear-gradient(180deg, #fffdf8 0%, #f4eee6 100%);
   color: var(--color-forest);
@@ -183,15 +193,15 @@ button {
 }
 
 .btn:focus-visible {
-  outline: 3px solid rgba(190, 103, 49, 0.45);
+  outline: 3px solid rgba(var(--theme-accent-rgb), 0.45);
   outline-offset: 2px;
 }
 
 .btn-primary {
   background: linear-gradient(120deg, var(--color-terracotta), var(--color-terracotta));
   color: #ffffff;
-  box-shadow: 0 12px 30px rgba(141, 43, 0, 0.2);
-  border-color: rgba(141, 43, 0, 0.8);
+  box-shadow: 0 12px 30px rgba(var(--theme-primary-rgb), 0.2);
+  border-color: rgba(var(--theme-primary-rgb), 0.8);
   font-weight: 700;
 }
 
@@ -200,12 +210,12 @@ button {
   transform: translateY(-2px);
   background: linear-gradient(120deg, var(--color-terracotta-strong), var(--color-terracotta-strong));
   color: #ffffff;
-  box-shadow: 0 14px 34px rgba(141, 43, 0, 0.25);
+  box-shadow: 0 14px 34px rgba(var(--theme-primary-rgb), 0.25);
 }
 
 .btn-primary:focus-visible {
   color: #ffffff;
-  outline: 3px solid rgba(190, 103, 49, 0.45);
+  outline: 3px solid rgba(var(--theme-accent-rgb), 0.45);
   outline-offset: 2px;
 }
 
@@ -216,15 +226,15 @@ button {
 }
 
 .btn-outline:hover {
-  background: rgba(190, 103, 49, 0.12);
+  background: rgba(var(--theme-accent-rgb), 0.12);
   border-color: var(--color-terracotta-strong);
   color: var(--color-terracotta);
 }
 
 .btn-ghost {
   color: var(--color-terracotta);
-  background: rgba(190, 103, 49, 0.12);
-  border: 1px solid rgba(190, 103, 49, 0.2);
+  background: rgba(var(--theme-accent-rgb), 0.12);
+  border: 1px solid rgba(var(--theme-accent-rgb), 0.2);
 }
 
 .pill {
@@ -270,7 +280,7 @@ button {
   inset: auto -20% -24% auto;
   width: 140px;
   height: 140px;
-  background: radial-gradient(circle, rgba(190, 103, 49, 0.12), transparent 60%);
+  background: radial-gradient(circle, rgba(var(--theme-accent-rgb), 0.12), transparent 60%);
   transform: rotate(-12deg);
   opacity: 0.55;
   pointer-events: none;
@@ -304,7 +314,7 @@ button {
   bottom: -0.4rem;
   width: 96px;
   height: 8px;
-  background: linear-gradient(90deg, rgba(190, 103, 49, 0.5), rgba(118, 112, 76, 0.25));
+  background: linear-gradient(90deg, var(--color-forest), var(--color-clay));
   border-radius: 999px;
   filter: blur(0.3px);
 }
@@ -330,7 +340,7 @@ button {
   color: var(--color-terracotta-strong);
   text-decoration: underline;
   text-decoration-thickness: 2px;
-  text-decoration-color: rgba(190, 103, 49, 0.5);
+  text-decoration-color: rgba(var(--theme-accent-rgb), 0.5);
 }
 
 input,
@@ -404,7 +414,7 @@ label {
   inset: auto auto -0.35rem 0;
   width: 120px;
   height: 14px;
-  background: radial-gradient(circle at 10% 50%, rgba(190, 103, 49, 0.5), transparent 52%),
+  background: radial-gradient(circle at 10% 50%, rgba(var(--theme-accent-rgb), 0.5), transparent 52%),
     radial-gradient(circle at 70% 40%, rgba(118, 112, 76, 0.45), transparent 54%);
   filter: blur(1px);
   opacity: 0.65;
@@ -435,7 +445,7 @@ label {
 }
 
 .rich-content blockquote {
-  border-left: 4px solid rgba(190, 103, 49, 0.5);
+  border-left: 4px solid rgba(var(--theme-accent-rgb), 0.5);
   padding-left: 1rem;
   color: var(--color-deep);
   font-weight: 600;
@@ -444,7 +454,7 @@ label {
 .rich-content a {
   color: var(--color-terracotta);
   text-decoration: underline;
-  text-decoration-color: rgba(190, 103, 49, 0.55);
+  text-decoration-color: rgba(var(--theme-accent-rgb), 0.55);
 }
 
 .rich-content .align-left {

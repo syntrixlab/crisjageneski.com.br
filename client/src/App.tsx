@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { ToastProvider } from './components/Toast';
 import { AUTH_FLAG_KEY } from './api/client';
 import './App.css';
 import { PublicLayout } from './components/PublicLayout';
@@ -73,7 +74,9 @@ function RequireAuth({ children }: { children: ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

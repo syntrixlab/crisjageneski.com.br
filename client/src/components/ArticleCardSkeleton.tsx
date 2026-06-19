@@ -1,5 +1,5 @@
 import { COVER_ASPECT } from '../constants';
-import { SkeletonShimmer, SkeletonLines } from './SkeletonShimmer';
+import { SkeletonShimmer } from './SkeletonShimmer';
 
 type ArticleCardSkeletonProps = {
   variant?: 'default' | 'featured' | 'compact';

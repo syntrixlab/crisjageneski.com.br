@@ -64,7 +64,7 @@ export function normalizeSiteTheme(value?: Partial<SiteTheme> | null): SiteTheme
   const colors: Partial<SiteThemeColors> = value?.colors ?? {};
 
   // Normalize typography
-  const rawTypography = isTypographyObject(value?.typography) ? value.typography : {};
+  const rawTypography: Partial<SiteTypography> = isTypographyObject(value?.typography) ? value.typography : {};
   const headingFont = typeof rawTypography.headingFont === 'string' && rawTypography.headingFont.trim()
     ? rawTypography.headingFont.trim()
     : null;

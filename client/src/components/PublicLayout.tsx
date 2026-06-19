@@ -169,12 +169,12 @@ export function PublicLayout() {
 
   return (
     <div className="app-shell" style={siteThemeToCssVars(currentSettings?.theme)}>
-      <Navbar settings={currentSettings} />
+      <Navbar settings={currentSettings ?? undefined} />
       <main className="app-main">
         <Outlet />
       </main>
-      <WhatsAppFloatingButton settings={currentSettings} />
-      <Footer settings={currentSettings} />
+      <WhatsAppFloatingButton settings={currentSettings ?? undefined} />
+      <Footer settings={currentSettings ?? undefined} />
     </div>
   );
 }

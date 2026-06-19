@@ -469,7 +469,7 @@ function AppearanceSettingsSection({ settings, setSettings }: { settings: SiteSe
               onChange={(font) =>
                 setTheme({
                   ...theme,
-                  typography: { ...theme.typography, headingFont: font }
+                  typography: { headingFont: font, bodyFont: theme.typography?.bodyFont ?? null }
                 })
               }
             />
@@ -481,7 +481,7 @@ function AppearanceSettingsSection({ settings, setSettings }: { settings: SiteSe
               onChange={(font) =>
                 setTheme({
                   ...theme,
-                  typography: { ...theme.typography, bodyFont: font }
+                  typography: { headingFont: theme.typography?.headingFont ?? null, bodyFont: font }
                 })
               }
             />

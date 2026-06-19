@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGripVertical, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
+import type { DraggableAttributes } from '@dnd-kit/core';
 import type { NavbarItem } from '../../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,7 +16,7 @@ type NavigationItemRowProps = {
   onEdit: () => void;
   onDelete: () => void;
   dragListeners?: SyntheticListenerMap;
-  dragAttributes?: Record<string, unknown>;
+  dragAttributes?: DraggableAttributes;
   isDragging?: boolean;
 };
 

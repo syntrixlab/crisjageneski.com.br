@@ -8,12 +8,7 @@ type OfficeHoursEditorProps = {
   onAdd?: () => void;
 };
 
-export function OfficeHoursEditor({ value, onChange, onAdd }: OfficeHoursEditorProps) {
-  const handleAdd = () => {
-    onChange([...value, { label: '', hours: '' }]);
-    onAdd?.();
-  };
-
+export function OfficeHoursEditor({ value, onChange }: OfficeHoursEditorProps) {
   const handleUpdate = (index: number, field: keyof OfficeHour, newValue: string) => {
     const updated = [...value];
     updated[index] = { ...updated[index], [field]: newValue };

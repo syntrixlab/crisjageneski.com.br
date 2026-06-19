@@ -1,4 +1,4 @@
-import { SkeletonShimmer, SkeletonLines } from './SkeletonShimmer';
+import { SkeletonShimmer } from './SkeletonShimmer';
 
 export function ArticleListItemSkeleton() {
   return (

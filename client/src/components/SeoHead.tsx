@@ -5,7 +5,7 @@ import { fetchSiteSettings } from '../api/queries';
 // Get cached site name from localStorage
 const getCachedSiteName = () => {
   try {
-    const cached = localStorage.getItem('cris_theme_cache');
+    const cached = localStorage.getItem('site_theme_cache');
     if (!cached) return null;
     const parsed = JSON.parse(cached);
     return parsed.settings?.siteName || null;
@@ -22,7 +22,7 @@ export function SeoHead({ title, description }: { title: string; description?: s
     staleTime: 60 * 60 * 1000
   });
 
-  const siteName = settings?.siteName || getCachedSiteName() || 'Cris Jageneski';
+  const siteName = settings?.siteName || getCachedSiteName() || 'Meu Site';
 
   useEffect(() => {
     document.title = `${title} | ${siteName}`;

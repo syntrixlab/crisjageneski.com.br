@@ -13,7 +13,7 @@ export function HomePage() {
   } = useQuery<Page>({ queryKey: ['home', 'page-builder'], queryFn: fetchHomePage });
 
   const seoTitle = homePage?.title ?? 'Inicio';
-  const seoDescription = homePage?.description ?? 'Cuidado emocional humanizado com a psicologa Cristiane Jageneski.';
+  const seoDescription = homePage?.description ?? 'Cuidado emocional humanizado com a psicologa ....';
 
   return (
     <>

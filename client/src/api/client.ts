@@ -7,7 +7,7 @@ const apiUrlFromEnv = import.meta.env.VITE_API_URL?.trim();
 export const API_BASE = apiUrlFromEnv || '/api';
 export const API_ORIGIN = API_BASE.replace(/\/api$/, '');
 
-export const AUTH_FLAG_KEY = 'cris_authed';
+export const AUTH_FLAG_KEY = 'admin_authed';
 
 export const api = axios.create({
   baseURL: API_BASE,

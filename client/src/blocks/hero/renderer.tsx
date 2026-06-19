@@ -169,7 +169,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
     const fc = (dataV1.fourCards as any) || {};
     const medium = fc.medium || {
       title: fallbackQuote,
-      text: 'Cristiane Jageneski'
+      text: 'Texto'
     };
     const small = Array.from({ length: 3 }).map((_, idx) => {
       const card = fc.small?.[idx] || {};
@@ -213,7 +213,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
   const renderCardsOnly = () => {
     // V1 hero: sem schema tipado, dado bruto de páginas legadas
     const fc = (dataV1.fourCards as any) || {};
-    const medium = fc.medium || { title: fallbackQuote, text: 'Cristiane Jageneski' };
+    const medium = fc.medium || { title: fallbackQuote, text: 'Texto' };
     const small = Array.from({ length: 3 }).map((_, idx) => {
       const card = fc.small?.[idx] || {};
       const defaults = [

@@ -79,7 +79,7 @@ export function Footer({ settings }: { settings?: SiteSettings }) {
     return link.url;
   };
 
-  const siteName = settings?.siteName || 'crisjageneski.com.br';
+  const siteName = settings?.siteName || 'seusite.com.br';
 
   return (
     <footer className="footer brand-footer">

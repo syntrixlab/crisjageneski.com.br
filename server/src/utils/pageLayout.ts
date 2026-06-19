@@ -1383,7 +1383,7 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
               title:
                 (data as any).singleCard?.quote?.toString().trim() ||
                 'Cada sessão é um espaço seguro para você compreender suas emoções, criar novas rotas e caminhar com leveza.',
-              text: (data as any).singleCard?.author?.toString().trim() || 'Cristiane Jageneski'
+              text: (data as any).singleCard?.author?.toString().trim() || 'Texto'
             }
           : null;
 
@@ -1391,7 +1391,7 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
         medium: normalizeCard(
           fourCardsSource?.medium ?? fallbackMediumFromSingle,
           'Cada sessão é um espaço seguro para você compreender suas emoções, criar novas rotas e caminhar com leveza.',
-          'Cristiane Jageneski'
+          'Texto'
         ),
         small: Array.from({ length: 3 }).map((_, idx) =>
           normalizeCard(fourCardsSource?.small?.[idx], defaultSmall[idx].title, defaultSmall[idx].text)
@@ -1402,7 +1402,7 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
         quote:
           (data as any).singleCard?.quote?.toString().trim() ||
           'Cada sessão é um espaço seguro para você compreender suas emoções, criar novas rotas e caminhar com leveza.',
-        author: (data as any).singleCard?.author?.toString().trim() || 'Cristiane Jageneski'
+        author: (data as any).singleCard?.author?.toString().trim() || 'Texto'
       };
 
       const singleImage = normalizeImage((data as any).singleImage);

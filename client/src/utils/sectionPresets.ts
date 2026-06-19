@@ -161,7 +161,7 @@ export const sectionPresets: SectionPreset[] = [
                     id: uuidv4(),
                     type: 'text',
                     data: {
-                      contentHtml: '<h1>Olá, meu nome é Cristiane Jageneski</h1>',
+                      contentHtml: '<h1>Olá, meu nome é ...</h1>',
                       width: 'normal',
                       background: 'none'
                     }

@@ -12,7 +12,7 @@ import type { SiteSettings } from '../types';
 // Buscar settings cacheados para renderização inicial (fallback)
 const getCachedSettings = (): SiteSettings | null => {
   try {
-    const cached = localStorage.getItem('cris_theme_cache');
+    const cached = localStorage.getItem('site_theme_cache');
     if (!cached) return null;
     const parsed = JSON.parse(cached);
     return parsed.settings;
@@ -57,7 +57,7 @@ export function PublicLayout() {
   useEffect(() => {
     if (settings) {
       try {
-        localStorage.setItem('cris_theme_cache', JSON.stringify({
+        localStorage.setItem('site_theme_cache', JSON.stringify({
           version: 1,
           settings: {
             siteName: settings.siteName,

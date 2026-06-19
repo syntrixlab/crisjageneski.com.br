@@ -65,13 +65,13 @@ const defaultHeroData: HeroBlockDataV1 = {
   singleCard: {
     quote:
       'Cada sessão é um espaço seguro para você compreender suas emoções, criar novas rotas e caminhar com leveza.',
-    author: 'Cristiane Jageneski'
+    author: 'Autor'
   },
   fourCards: {
     medium: {
       title:
         'Cada sessão é um espaço seguro para você compreender suas emoções, criar novas rotas e caminhar com leveza.',
-      text: 'Cristiane Jageneski',
+      text: 'Texto',
       icon: null,
       imageId: null,
       url: null,

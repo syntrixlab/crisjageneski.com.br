@@ -1292,7 +1292,7 @@ const toBlockDraft = (block?: PageBlock): BlockDraft | null =>
 
 // Mantido apenas para fallback de validação de Hero V1 (fourCards)
 const heroV1FallbackFourCards = {
-  medium: { title: 'Sessão', text: 'Cristiane Jageneski', icon: null, imageId: null, url: null, alt: null },
+  medium: { title: 'Sessão', text: 'Texto', icon: null, imageId: null, url: null, alt: null },
   small: [
     { title: 'Equilíbrio emocional', text: 'Ferramentas práticas para o dia a dia.', icon: null, imageId: null, url: null, alt: null },
     { title: 'Relações saudáveis', text: 'Comunicação e limites claros.', icon: null, imageId: null, url: null, alt: null },

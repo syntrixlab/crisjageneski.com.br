@@ -236,7 +236,7 @@ function IdentitySettingsSection({
               id="site-name"
               value={settings.siteName}
               onChange={(e) => setSettings((prev) => ({ ...prev, siteName: e.target.value }))}
-              placeholder="Ex.: Cris Jageneski"
+              placeholder="Ex.: John Doe"
             />
           </div>
           <div className="form-field">

@@ -1,6 +1,6 @@
 import type { SiteSettings } from '../types';
 
-const THEME_CACHE_KEY = 'cris_theme_cache';
+const THEME_CACHE_KEY = 'site_theme_cache';
 const THEME_CACHE_VERSION = 1;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 

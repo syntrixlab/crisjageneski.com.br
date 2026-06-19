@@ -51,7 +51,7 @@ function Hero({ section }: { section: HomeSection }) {
 
   const renderFourCards = () => {
     const fc = (data.fourCards as any) || {};
-    const medium = fc.medium || { title: fallbackQuote, text: 'Cristiane Jageneski' };
+    const medium = fc.medium || { title: fallbackQuote, text: 'Texto' };
     const small = Array.from({ length: 3 }).map((_, idx) => {
       const card = fc.small?.[idx] || {};
       const defaults = [
@@ -92,7 +92,7 @@ function Hero({ section }: { section: HomeSection }) {
 
   const renderCardsOnly = () => {
     const fc = (data.fourCards as any) || {};
-    const medium = fc.medium || { title: fallbackQuote, text: 'Cristiane Jageneski' };
+    const medium = fc.medium || { title: fallbackQuote, text: 'Texto' };
     const small = Array.from({ length: 3 }).map((_, idx) => {
       const card = fc.small?.[idx] || {};
       const defaults = [
@@ -227,7 +227,7 @@ function CTA({ section }: { section: HomeSection }) {
               {ctaLabel}
             </a>
             <a className="btn btn-outline" href="/sobre">
-              Conhecer a Cris
+              Saiba mais sobre John Doe
             </a>
           </div>
         </div>

@@ -10,7 +10,7 @@ function makeRes() {
 describe('requireAuth', () => {
   it('calls next with the decoded payload when the cookie has a valid token', () => {
     const token = jwt.sign({ id: '1', email: 'a@b.com', role: 'admin' }, env.JWT_SECRET, { expiresIn: '2h' });
-    const req = { cookies: { cris_session: token } } as any;
+    const req = { cookies: { user_session: token } } as any;
     const next = vi.fn();
 
     requireAuth(req, makeRes(), next);
@@ -29,7 +29,7 @@ describe('requireAuth', () => {
   });
 
   it('calls next with a 401 error when the cookie token is invalid', () => {
-    const req = { cookies: { cris_session: 'not-a-real-token' } } as any;
+    const req = { cookies: { user_session: 'not-a-real-token' } } as any;
     const next = vi.fn();
 
     requireAuth(req, makeRes(), next);

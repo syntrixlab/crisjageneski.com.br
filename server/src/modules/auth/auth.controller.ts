@@ -9,7 +9,7 @@ const loginSchema = z.object({
   password: z.string().min(6)
 });
 
-export const SESSION_COOKIE_NAME = 'cris_session';
+export const SESSION_COOKIE_NAME = 'user_session';
 
 const sessionCookieOptions = {
   httpOnly: true,

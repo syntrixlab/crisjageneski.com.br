@@ -18,8 +18,17 @@ export function useSectionManager(
   sections: PageSection[]
 ) {
   const [presetModal, setPresetModal] = useState(false);
+  const [insertAfterIndex, setInsertAfterIndex] = useState<number | undefined>(undefined);
 
-  const handleAddSection = () => setPresetModal(true);
+  const handleAddSection = (afterSectionId?: string) => {
+    if (afterSectionId) {
+      const index = sections.findIndex((s) => s.id === afterSectionId);
+      setInsertAfterIndex(index >= 0 ? index + 1 : undefined);
+    } else {
+      setInsertAfterIndex(undefined);
+    }
+    setPresetModal(true);
+  };
 
   const handleSelectPreset = (presetId: string) => {
     const newSection = createSectionFromPreset(presetId);
@@ -32,15 +41,17 @@ export function useSectionManager(
         setPresetModal(false);
         return;
       }
-      setPage((prev) => ({ ...prev, layout: addSection(prev.layout, newSection) }));
+      setPage((prev) => ({ ...prev, layout: addSection(prev.layout, newSection, insertAfterIndex) }));
     }
     setPresetModal(false);
+    setInsertAfterIndex(undefined);
   };
 
   const handleAddBlankSection = () => {
     const newSection = createSection(2);
-    setPage((prev) => ({ ...prev, layout: addSection(prev.layout, newSection) }));
+    setPage((prev) => ({ ...prev, layout: addSection(prev.layout, newSection, insertAfterIndex) }));
     setPresetModal(false);
+    setInsertAfterIndex(undefined);
   };
 
   const handleRemoveSection = (sectionId: string) => {
@@ -75,7 +86,7 @@ export function useSectionManager(
         ...prev.layout,
         sections: prev.layout.sections.map((s) =>
           s.id === sectionId
-            ? { ...s, settings: { ...s.settings, background, backgroundStyle: background } }
+            ? { ...s, settings: { ...s.settings, background } }
             : s
         )
       }
@@ -92,7 +103,7 @@ export function useSectionManager(
         ...prev.layout,
         sections: prev.layout.sections.map((s) =>
           s.id === sectionId
-            ? { ...s, settings: { ...s.settings, padding, density: padding } }
+            ? { ...s, settings: { ...s.settings, padding } }
             : s
         )
       }
@@ -106,7 +117,7 @@ export function useSectionManager(
         ...prev.layout,
         sections: prev.layout.sections.map((s) =>
           s.id === sectionId
-            ? { ...s, settings: { ...s.settings, maxWidth, width: maxWidth } }
+            ? { ...s, settings: { ...s.settings, maxWidth } }
             : s
         )
       }

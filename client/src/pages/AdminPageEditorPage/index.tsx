@@ -4,8 +4,8 @@ import { ConfirmModal } from '@/components/AdminUI';
 import { SeoHead } from '@/components/SeoHead';
 import { PageRendererCore } from '@/components/PageRenderer';
 import { usePageValidation } from '@/hooks/usePageValidation';
-import { ValidationErrorsModal, ValidationInput, CharCounter } from '@/components/ValidationComponents';
-import { usePageEditor, slugify } from './hooks/usePageEditor';
+import { ValidationErrorsModal } from '@/components/ValidationComponents';
+import { usePageEditor } from './hooks/usePageEditor';
 import { useSectionManager } from './hooks/useSectionManager';
 import { useBlockManager } from './hooks/useBlockManager';
 import { PageEditorToolbar } from './components/PageEditorToolbar';
@@ -13,6 +13,9 @@ import { SectionEditor } from './components/SectionEditor';
 import { BlockEditorModal } from './components/BlockEditorModal';
 import { SectionPresetModal } from './components/SectionPresetModal';
 import { MoveBlockModal } from './components/MoveBlockModal';
+import { EditorDrawer } from './components/EditorDrawer';
+import { SectionSettingsPanel } from './components/SectionSettingsPanel';
+import { PageSettingsPanel } from './components/PageSettingsPanel';
 
 export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +30,8 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const blocks = useBlockManager(setPage, page.layout.sections);
   const { errors: validationErrors, fieldStates, markFieldTouched, validateForPublication } = usePageValidation(page);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<'page' | 'section' | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
   const busy = busyMutations || blocks.hasUploading;
 
@@ -108,12 +113,12 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         onSaveDraft={() => saveDraft()}
         onPublish={handlePublish}
         onMoveToDraft={handleMoveToDraft}
+        onConfigurePage={() => setDrawerMode('page')}
       />
 
       <div className="editor-body">
         <div className="editor-container">
-          <div className="editor-grid">
-            <div className="editor-main">
+          <div className="editor-main" style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
               {viewMode === 'preview' ? (
                 <div className="page-preview-wrapper">
                   {page.layout.sections.length === 0 ? (
@@ -141,14 +146,13 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       section={section}
                       sectionIndex={sectionIndex}
                       totalSections={page.layout.sections.length}
-                      onChangeSectionColumns={(cols) => sections.handleChangeSectionColumns(section.id, cols)}
-                      onChangeSectionBackground={(bg) => sections.handleChangeSectionBackground(section.id, bg)}
-                      onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(section.id, pad)}
-                      onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(section.id, mw)}
-                      onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(section.id, h)}
                       onMoveSection={(dir) => sections.handleMoveSection(section.id, dir)}
                       onRemoveSection={() => sections.handleRemoveSection(section.id)}
                       onDuplicateSection={() => sections.handleDuplicateSection(section.id)}
+                      onConfigureSection={() => {
+                        setDrawerMode('section');
+                        setSelectedSectionId(section.id);
+                      }}
                       onAddBlock={(colIndex, insertIndex) => blocks.handleOpenAddBlock(section.id, colIndex, insertIndex)}
                       onAddBlockSide={(colIndex, rowIndex) => blocks.handleAddBlockSide(section.id, colIndex, rowIndex)}
                       onEditBlock={(colIndex, block, blockIndex) => blocks.handleOpenEditBlock(section.id, colIndex, block, blockIndex)}
@@ -159,65 +163,13 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                     />
                   ))}
                   <div style={{ marginTop: '1.5rem' }}>
-                    <button className="btn btn-outline" type="button" onClick={sections.handleAddSection}>
+                    <button className="btn btn-outline" type="button" onClick={() => sections.handleAddSection()}>
                       + Adicionar seção
                     </button>
                   </div>
                 </div>
               )}
             </div>
-            <div className="editor-side">
-              <div className="admin-card editor-card" style={{ display: 'grid', gap: '0.75rem' }}>
-                <div className="muted small">Configurações da Página</div>
-                <div className="editor-field">
-                  <label>Título</label>
-                  <ValidationInput
-                    fieldId="page-title"
-                    hasError={fieldStates['page-title']?.hasError || false}
-                    errorMessage={fieldStates['page-title']?.errorMessage}
-                    showError={fieldStates['page-title']?.isTouched}
-                  >
-                    <input
-                      value={page.title}
-                      onChange={(e) => setPage((prev) => ({ ...prev, title: e.target.value }))}
-                      onBlur={() => markFieldTouched('page-title')}
-                      placeholder="Título da página"
-                    />
-                  </ValidationInput>
-                </div>
-                <div className="editor-field">
-                  <label>Slug</label>
-                  <ValidationInput
-                    fieldId="page-slug"
-                    hasError={fieldStates['page-slug']?.hasError || false}
-                    errorMessage={fieldStates['page-slug']?.errorMessage}
-                    showError={fieldStates['page-slug']?.isTouched}
-                  >
-                    <input
-                      value={page.slug}
-                      onChange={(e) => setPage((prev) => ({ ...prev, slug: e.target.value }))}
-                      onBlur={(e) => {
-                        markFieldTouched('page-slug');
-                        setPage((prev) => ({ ...prev, slug: slugify(e.target.value) }));
-                      }}
-                      placeholder="ex: sobre, contato, servicos"
-                    />
-                  </ValidationInput>
-                  <p className="muted small">URLs públicas ficam em /p/slug. Use letras minúsculas e hifens.</p>
-                </div>
-                <div className="editor-field">
-                  <label>Descrição</label>
-                  <textarea
-                    value={page.description ?? ''}
-                    onChange={(e) => setPage((prev) => ({ ...prev, description: e.target.value }))}
-                    onBlur={() => markFieldTouched('page-description')}
-                    rows={3}
-                  />
-                  <CharCounter text={page.description || ''} limit={300} />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -266,6 +218,33 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         errors={validationErrors}
         onGoToError={() => setShowValidationErrors(false)}
       />
+
+      <EditorDrawer
+        isOpen={drawerMode !== null}
+        onClose={() => {
+          setDrawerMode(null);
+          setSelectedSectionId(null);
+        }}
+      >
+        {drawerMode === 'page' && (
+          <PageSettingsPanel
+            page={page}
+            setPage={setPage}
+            fieldStates={fieldStates}
+            markFieldTouched={markFieldTouched}
+          />
+        )}
+        {drawerMode === 'section' && selectedSectionId && (
+          <SectionSettingsPanel
+            section={page.layout.sections.find((s) => s.id === selectedSectionId)!}
+            onChangeSectionColumns={(cols) => sections.handleChangeSectionColumns(selectedSectionId, cols)}
+            onChangeSectionBackground={(bg) => sections.handleChangeSectionBackground(selectedSectionId, bg)}
+            onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(selectedSectionId, pad)}
+            onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(selectedSectionId, mw)}
+            onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(selectedSectionId, h)}
+          />
+        )}
+      </EditorDrawer>
     </div>
   );
 }

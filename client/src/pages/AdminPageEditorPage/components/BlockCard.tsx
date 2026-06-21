@@ -1,8 +1,7 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@/components/AdminUI';
 import { PageBlockView } from '@/components/PageRenderer';
 import { blockRegistry } from '@/blocks/registry';
+import { BlockActionsDropdown } from './BlockActionsDropdown';
 import type { BlockType, PageBlock } from '@/types';
 
 export function BlockCard(_props: {
@@ -37,47 +36,92 @@ export function BlockCard(_props: {
   const isHero = block.type === 'hero';
 
   return (
-    <div className="page-block-card admin-card">
-      <div className="page-block-card-header">
-        <div>
-          <p className="eyebrow" style={{ margin: 0 }}>
-            {label}
-            {isHero && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.6 }}>(fixo)</span>}
-          </p>
-        </div>
-        <div className="admin-actions" style={{ gap: '0.35rem' }}>
-          {!isHero && <IconButton icon="arrow-up" label="Mover para cima" onClick={onMoveUp} disabled={disableMoveUp} />}
-          {!isHero && <IconButton icon="arrow-down" label="Mover para baixo" onClick={onMoveDown} disabled={disableMoveDown} />}
-          <IconButton icon="edit" label="Editar" tone="info" onClick={onEdit} />
-          {!isHero && <IconButton icon="globe" label="Mover coluna" onClick={onMoveColumn} />}
-          {!isHero && canAddSide && (
-            <button
-              type="button"
-              onClick={onAddSide}
-              className="icon-btn"
-              title="Adicionar ao lado"
-              style={{
-                padding: '0.35rem',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                borderRadius: '4px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background 0.15s'
-              }}
-            >
-              <FontAwesomeIcon icon={faPlus} />
-            </button>
-          )}
-          {!isHero && <IconButton icon="copy" label="Duplicar" onClick={onDuplicate} />}
-          {!isHero && <IconButton icon="trash" label="Remover" tone="danger" onClick={onDelete} />}
-        </div>
+    <div className="page-block-card admin-card" style={{ position: 'relative' }}>
+      {/* Badge de tipo - sempre visível */}
+      <div
+        className="block-type-badge"
+        style={{
+          position: 'absolute',
+          top: '6px',
+          left: '8px',
+          fontSize: '0.7rem',
+          opacity: 0.5,
+          fontWeight: 500,
+          textTransform: 'capitalize',
+          zIndex: 1,
+          pointerEvents: 'none'
+        }}
+      >
+        [{label}]
       </div>
+
+      {/* Barra de ações - aparece no hover */}
+      <div
+        className="block-actions-bar"
+        style={{
+          position: 'absolute',
+          top: '-36px',
+          left: 0,
+          right: 0,
+          background: '#f9f4ec',
+          border: '1px solid #e1e5eb',
+          borderBottom: 'none',
+          borderRadius: '8px 8px 0 0',
+          padding: '0.5rem 0.75rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          opacity: 0,
+          pointerEvents: 'none',
+          transition: 'opacity 150ms ease',
+          zIndex: 2
+        }}
+      >
+        {/* Primário: Editar */}
+        <IconButton icon="edit" label="Editar" tone="info" onClick={onEdit} />
+
+        {/* Secundários: Mover */}
+        {!isHero && (
+          <>
+            <IconButton
+              icon="arrow-up"
+              label="Mover para cima"
+              onClick={onMoveUp}
+              disabled={disableMoveUp}
+            />
+            <IconButton
+              icon="arrow-down"
+              label="Mover para baixo"
+              onClick={onMoveDown}
+              disabled={disableMoveDown}
+            />
+          </>
+        )}
+
+        {/* Dropdown com ações secundárias */}
+        {!isHero && (
+          <BlockActionsDropdown
+            onDuplicate={onDuplicate}
+            onMoveColumn={onMoveColumn}
+            onDelete={onDelete}
+            canAddSide={canAddSide}
+            onAddSide={onAddSide}
+          />
+        )}
+      </div>
+
+      {/* Conteúdo do bloco */}
       <div className="page-block-card-body">
         <PageBlockView block={block} />
       </div>
+
+      {/* Ativa hover state */}
+      <style>{`
+        .page-block-card:hover .block-actions-bar {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ConfirmModal, IconButton } from '@/components/AdminUI';
-import { canAddSideAtIndex, getBlockRowIndex } from '@/utils/pageLayoutHelpers';
+import { useState } from 'react';
+import { ConfirmModal } from '@/components/AdminUI';
+import { canAddSideAtIndex, getBlockRowIndex, getSectionColumnCount } from '@/utils/pageLayoutHelpers';
 import type { PageBlock, PageSection } from '@/types';
 import { BlockCard } from './BlockCard';
+import { SectionToolbar } from './SectionToolbar';
 
 function AddBlockButton(_props: { onClick: () => void; style?: React.CSSProperties; label?: string }) {
   const { onClick, style, label } = _props;
@@ -17,14 +18,10 @@ export function SectionEditor(_props: {
   section: PageSection;
   sectionIndex: number;
   totalSections: number;
-  onChangeSectionColumns: (columns: 1 | 2 | 3) => void;
-  onChangeSectionBackground: (background: 'none' | 'soft' | 'dark' | 'earthy') => void;
-  onChangeSectionPadding: (padding: 'normal' | 'compact' | 'large') => void;
-  onChangeSectionMaxWidth: (maxWidth: 'normal' | 'wide') => void;
-  onChangeSectionHeight: (height: 'normal' | 'tall') => void;
   onMoveSection: (direction: 'up' | 'down') => void;
   onRemoveSection: () => void;
   onDuplicateSection: () => void;
+  onConfigureSection: () => void;
   onAddBlock: (columnIndex: number, insertIndex: number) => void;
   onAddBlockSide: (columnIndex: number, rowIndex: number) => void;
   onEditBlock: (columnIndex: number, block: PageBlock, blockIndex: number) => void;
@@ -37,14 +34,10 @@ export function SectionEditor(_props: {
     section,
     sectionIndex,
     totalSections,
-    onChangeSectionColumns,
-    onChangeSectionBackground,
-    onChangeSectionPadding,
-    onChangeSectionMaxWidth,
-    onChangeSectionHeight,
     onMoveSection,
     onRemoveSection,
     onDuplicateSection,
+    onConfigureSection,
     onAddBlock,
     onAddBlockSide,
     onEditBlock,
@@ -55,11 +48,7 @@ export function SectionEditor(_props: {
   } = _props;
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
-  const padding = (section.settings?.density || section.settings?.padding || 'normal') as 'normal' | 'compact' | 'large';
-  const maxWidth = (section.settings?.width || section.settings?.maxWidth || 'normal') as 'normal' | 'wide';
-  const height = (section.settings?.height || 'normal') as 'normal' | 'tall';
-  const columnsCount = (section.settings?.columnsLayout as number) || section.columnsLayout || section.columns || 1;
-  const columnOptions = section.columns === 1 ? [1, 2, 3] : [2, 3];
+  const columnsCount = getSectionColumnCount(section);
   const rowCount =
     section.cols.reduce((max, col) => {
       col.blocks.forEach((block, index) => {
@@ -78,133 +67,26 @@ export function SectionEditor(_props: {
     return map;
   });
 
-  const isHeroSection = section.kind === 'hero';
-
   return (
-    <div className="page-section-editor admin-card" style={{ marginBottom: '1.5rem' }} data-bg={background}>
-      <div className="page-section-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <strong>{isHeroSection ? 'Hero (Secao Fixa)' : `Secao ${sectionIndex + 1}`}</strong>
-          {!isHeroSection && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ fontSize: '0.9rem', color: '#4b5563' }}>Colunas</span>
-              <div className="page-columns-toggle compact">
-                {columnOptions.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={section.columns === c ? 'active' : ''}
-                    onClick={() => onChangeSectionColumns(c as 1 | 2 | 3)}
-                  >
-                    {c} col{c > 1 ? 's' : ''}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {!isHeroSection && (
-            <div className="page-columns-toggle compact">
-              {[
-                { value: 'none', label: 'Sem fundo' },
-                { value: 'soft', label: 'Suave' },
-                { value: 'dark', label: 'Escuro' },
-                { value: 'earthy', label: 'Terroso' }
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={background === opt.value ? 'active' : ''}
-                  onClick={() => onChangeSectionBackground(opt.value as 'none' | 'soft' | 'dark' | 'earthy')}
-                  title={`Fundo: ${opt.label}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-          {!isHeroSection && (
-            <div className="page-columns-toggle compact">
-              {[
-                { value: 'compact', label: 'Compacto' },
-                { value: 'normal', label: 'Normal' }
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={padding === opt.value ? 'active' : ''}
-                  onClick={() => onChangeSectionPadding(opt.value as 'normal' | 'compact' | 'large')}
-                  title={`Espacamento: ${opt.label}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-          {!isHeroSection && (
-            <div className="page-columns-toggle compact">
-              {[
-                { value: 'normal', label: 'Altura Normal' },
-                { value: 'tall', label: 'Altura Alta' }
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={height === opt.value ? 'active' : ''}
-                  onClick={() => onChangeSectionHeight(opt.value as 'normal' | 'tall')}
-                  title={`Altura: ${opt.label}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-          {!isHeroSection && (
-            <div className="page-columns-toggle compact">
-              {[
-                { value: 'normal', label: 'Normal' },
-                { value: 'wide', label: 'Largo' }
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={maxWidth === opt.value ? 'active' : ''}
-                  onClick={() => onChangeSectionMaxWidth(opt.value as 'normal' | 'wide')}
-                  title={`Largura: ${opt.label}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="admin-actions" style={{ gap: '0.35rem' }}>
-          {!isHeroSection && (
-            <>
-              <IconButton
-                icon="arrow-up"
-                label="Mover secao para cima"
-                onClick={() => onMoveSection('up')}
-                disabled={sectionIndex === 0}
-              />
-              <IconButton
-                icon="arrow-down"
-                label="Mover secao para baixo"
-                onClick={() => onMoveSection('down')}
-                disabled={sectionIndex === totalSections - 1}
-              />
-              <IconButton icon="copy" label="Duplicar secao" onClick={onDuplicateSection} />
-              <IconButton icon="trash" label="Remover secao" tone="danger" onClick={() => setShowConfirmDelete(true)} />
-            </>
-          )}
-          {isHeroSection && (
-            <span className="muted small">Esta secao nao pode ser movida ou removida</span>
-          )}
-        </div>
-      </div>
+    <div
+      className="page-section-editor admin-card"
+      style={{ marginBottom: '1.5rem', position: 'relative', overflow: 'visible' }}
+      data-bg={background}
+    >
+      <SectionToolbar
+        section={section}
+        sectionIndex={sectionIndex}
+        totalSections={totalSections}
+        onMoveUp={() => onMoveSection('up')}
+        onMoveDown={() => onMoveSection('down')}
+        onSettings={onConfigureSection}
+        onDuplicate={onDuplicateSection}
+        onRemove={() => setShowConfirmDelete(true)}
+      />
 
       <div
         className="page-editor-columns"
-        style={{ gridTemplateColumns: `repeat(${section.settings?.columnsLayout ?? section.columnsLayout ?? section.columns}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${getSectionColumnCount(section)}, minmax(0, 1fr))` }}
       >
         {section.cols.map((col, colIndex) => (
           <div key={`header-${col.id}`} className="page-col-header" style={{ gridColumn: `${colIndex + 1} / span 1` }}>

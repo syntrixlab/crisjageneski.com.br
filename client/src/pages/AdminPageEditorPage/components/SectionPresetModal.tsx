@@ -1,3 +1,15 @@
+import type { ComponentProps } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faBullhorn,
+  faEnvelopeOpenText,
+  faFileLines,
+  faImage,
+  faLayerGroup,
+  faNewspaper,
+  faTableColumns,
+  faWandMagicSparkles
+} from '@fortawesome/free-solid-svg-icons';
 import { sectionPresets } from '@/utils/sectionPresets';
 import type { PageSection } from '@/types';
 
@@ -8,6 +20,17 @@ interface SectionPresetModalProps {
   onAddBlank: () => void;
   sections: PageSection[];
 }
+
+const presetIcons: Record<string, ComponentProps<typeof FontAwesomeIcon>['icon']> = {
+  'hero-2col': faTableColumns,
+  'hero-stacked': faImage,
+  'features-3col': faLayerGroup,
+  'cta-1col': faBullhorn,
+  'content-1col': faFileLines,
+  'form-2col': faEnvelopeOpenText,
+  'recent-posts': faNewspaper,
+  'services-4': faWandMagicSparkles
+};
 
 export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, sections }: SectionPresetModalProps) {
   if (!open) return null;
@@ -73,7 +96,9 @@ export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, 
                     }
                   }}
                 >
-                  <div style={{ fontSize: '2rem' }}>{preset.icon}</div>
+                  <div className="preset-card-icon" aria-hidden="true">
+                    <FontAwesomeIcon icon={presetIcons[preset.id] ?? faLayerGroup} />
+                  </div>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>
                     {preset.name}
                     {isDisabled && ' (já existe)'}

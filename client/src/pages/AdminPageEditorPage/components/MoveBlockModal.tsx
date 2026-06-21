@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal } from '@/components/AdminUI';
 import type { PageSection } from '@/types';
+import { getSectionColumnCount } from '@/utils/pageLayoutHelpers';
 import type { MoveModalState } from '../hooks/useBlockManager';
 
 export function MoveBlockModal(_props: {
@@ -16,9 +17,7 @@ export function MoveBlockModal(_props: {
     if (state) setTarget(state.columnIndex);
   }, [state?.columnIndex]);
 
-  const columns = section?.columns ?? 1;
-  const columnsLayout = section?.settings?.columnsLayout ?? section?.columnsLayout ?? columns ?? 1;
-  const colCount = Math.max(1, Math.min(columnsLayout, 3));
+  const colCount = section ? getSectionColumnCount(section) : 1;
 
   return (
     <Modal isOpen={!!state?.open} onClose={onClose} title="Mover bloco para coluna" description="Selecione a coluna de destino.">

@@ -1,26 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, type ComponentProps } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faBullhorn,
+  faCircleDot,
+  faFileLines,
+  faGrip,
+  faIdCard,
+  faImage,
+  faLayerGroup,
+  faLink,
+  faList,
+  faNewspaper,
+  faRectangleList,
+  faShareNodes,
+  faSquare,
+  faTableCellsLarge,
+  faWandMagicSparkles
+} from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { Modal } from '@/components/AdminUI';
 import { blockRegistry } from '@/blocks/registry';
-import { isHeroV1 } from '@/utils/heroMigration';
+import { validateBlockDraft } from '@/utils/validateBlockDraft';
 import type {
   PageBlock,
-  BlockType,
-  TextBlockData,
-  ImageBlockData,
-  ButtonBlockData,
-  CardBlockData,
-  CtaBlockData,
-  FormBlockData,
-  HeroBlockData,
-  HeroBlockDataV1,
-  HeroMediaMode,
-  MediaTextBlockData,
-  ServicesBlockData
+  BlockType
 } from '@/types';
 import type { BlockDraft, BlockModalState } from '../hooks/useBlockManager';
 
-const plainTextLength = (html: string) =>
-  html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim().length;
+const blockTypeIcons: Partial<Record<BlockType, ComponentProps<typeof FontAwesomeIcon>['icon']>> = {
+  text: faFileLines,
+  image: faImage,
+  button: faCircleDot,
+  span: faSquare,
+  pills: faList,
+  buttonGroup: faLink,
+  cta: faBullhorn,
+  'media-text': faTableCellsLarge,
+  cards: faLayerGroup,
+  form: faRectangleList,
+  hero: faWandMagicSparkles,
+  'recent-posts': faNewspaper,
+  'social-links': faShareNodes,
+  'whatsapp-cta': faWhatsapp,
+  'contact-info': faIdCard,
+  services: faGrip
+};
 
 const toBlockDraft = (block?: PageBlock): BlockDraft | null =>
   block
@@ -34,16 +58,6 @@ const toBlockDraft = (block?: PageBlock): BlockDraft | null =>
         updatedAt: block.updatedAt
       }
     : null;
-
-// Kept only for V1 hero validation fallback (registry hero default is V2 — different schema)
-const heroV1FallbackFourCards = {
-  medium: { title: 'Sessão', text: 'Texto', icon: null, imageId: null, url: null, alt: null },
-  small: [
-    { title: 'Equilíbrio emocional', text: 'Ferramentas práticas para o dia a dia.', icon: null, imageId: null, url: null, alt: null },
-    { title: 'Relações saudáveis', text: 'Comunicação e limites claros.', icon: null, imageId: null, url: null, alt: null },
-    { title: 'Autoconhecimento', text: 'Reconectar-se com quem você é.', icon: null, imageId: null, url: null, alt: null }
-  ]
-};
 
 export function BlockEditorModal(_props: {
   state: BlockModalState | null;
@@ -83,159 +97,16 @@ export function BlockEditorModal(_props: {
   };
 
   const handleSave = () => {
-    if (!draft || !selectedType) {
-      setError('Escolha um tipo de bloco.');
+    const validationError = validateBlockDraft(draft);
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    if (draft.type === 'text') {
-      const content = (draft.data as TextBlockData).contentHtml || '';
-      if (!plainTextLength(content)) {
-        setError('Preencha o conteúdo do texto.');
-        return;
-      }
-    }
-    if (draft.type === 'image') {
-      const data = draft.data as ImageBlockData;
-      if (!data.src) {
-        setError('Selecione ou envie uma imagem.');
-        return;
-      }
-    }
-    if (draft.type === 'button') {
-      const data = draft.data as ButtonBlockData;
-      if (!data.label.trim()) {
-        setError('Informe o texto do botão.');
-        return;
-      }
-      const link = data.href.trim();
-      const isValid =
-        /^https?:\/\//i.test(link) ||
-        link.startsWith('/') ||
-        /^mailto:/i.test(link) ||
-        /^tel:/i.test(link) ||
-        link.startsWith('#') ||
-        /^https?:\/\/wa\.me/i.test(link) ||
-        /^wa\.me/i.test(link) ||
-        /^\/\//.test(link);
-      if (!isValid) {
-        setError('Use http(s), mailto, tel, #ancora ou um caminho iniciando com /.');
-        return;
-      }
-    }
-    if (draft.type === 'cta') {
-      const data = draft.data as CtaBlockData;
-      if (!data.title?.trim()) {
-        setError('Informe o título do CTA.');
-        return;
-      }
-      if (!data.ctaLabel?.trim()) {
-        setError('Informe o texto do botão do CTA.');
-        return;
-      }
-      const link = (data.ctaHref ?? '').trim();
-      const isValid =
-        /^https?:\/\//i.test(link) ||
-        link.startsWith('/') ||
-        /^mailto:/i.test(link) ||
-        /^tel:/i.test(link) ||
-        link.startsWith('#') ||
-        /^https?:\/\/wa\.me/i.test(link) ||
-        /^wa\.me/i.test(link) ||
-        /^\/\//.test(link);
-      if (!isValid) {
-        setError('Use http(s), mailto, tel, #ancora ou um caminho iniciando com /.');
-        return;
-      }
-    }
-    if (draft.type === 'cards') {
-      const data = draft.data as CardBlockData;
-      if (data.items.length === 0) {
-        setError('Adicione pelo menos um card.');
-        return;
-      }
-      for (const item of data.items) {
-        if (!item.title.trim() || !item.text.trim()) {
-          setError('Todos os cards devem ter título e texto.');
-          return;
-        }
-        if (item.ctaHref && !/^https?:\/\//i.test(item.ctaHref.trim())) {
-          setError('URLs de CTA devem iniciar com http(s).');
-          return;
-        }
-      }
-    }
-    if (draft.type === 'services') {
-      const data = draft.data as ServicesBlockData;
-      if (!data.sectionTitle?.trim()) {
-        setError('Informe o título da seção de serviços.');
-        return;
-      }
-      if (!data.items || data.items.length === 0) {
-        setError('Adicione pelo menos um serviço.');
-        return;
-      }
-      for (const item of data.items) {
-        if (!item.title.trim() || !item.href.trim()) {
-          setError('Todos os serviços precisam de título e link.');
-          return;
-        }
-      }
-    }
-    if (draft.type === 'form') {
-      const data = draft.data as FormBlockData;
-      if (data.fields.length === 0) {
-        setError('Adicione pelo menos um campo ao formulário.');
-        return;
-      }
-      for (const field of data.fields) {
-        if (!field.label.trim()) {
-          setError('Todos os campos devem ter um rótulo.');
-          return;
-        }
-        if (field.type === 'select' && (!field.options || field.options.length === 0)) {
-          setError('Campos do tipo "select" devem ter opções.');
-          return;
-        }
-      }
-    }
-    if (draft.type === 'hero') {
-      const data = draft.data as HeroBlockData;
-      if (isHeroV1(data)) {
-        const mode: HeroMediaMode = ((data as HeroBlockDataV1).mediaMode as HeroMediaMode) ?? 'four_cards';
-        if (mode === 'single_image' && !(data as HeroBlockDataV1).singleImage?.url) {
-          setError('Selecione uma imagem para o modo "Somente imagem".');
-          return;
-        }
-        if (mode === 'four_cards' || mode === 'cards_only') {
-          const fc = (data as HeroBlockDataV1).fourCards ?? heroV1FallbackFourCards;
-          if (!fc.medium.title?.trim() || !fc.medium.text?.trim()) {
-            setError('O card médio precisa de título e texto.');
-            return;
-          }
-          const small = fc.small ?? heroV1FallbackFourCards.small;
-          if (small.some((c: { title?: string; text?: string }) => !c.title?.trim() || !c.text?.trim())) {
-            setError('Todos os 3 cards pequenos precisam de título e texto.');
-            return;
-          }
-        }
-      }
-    }
-    if (draft.type === 'media-text') {
-      const data = draft.data as MediaTextBlockData;
-      const plain = (data.contentHtml || '').replace(/<[^>]+>/g, '').trim();
-      if (!data.imageUrl?.trim()) {
-        setError('Selecione uma imagem para o bloco imagem + texto.');
-        return;
-      }
-      if (!plain) {
-        setError('Adicione texto no bloco imagem + texto.');
-        return;
-      }
-    }
+
     setError(null);
     const clampedDraft = {
-      ...draft,
-      colSpan: Math.max(1, Math.min(draft.colSpan ?? 1, columnCount))
+      ...draft!,
+      colSpan: Math.max(1, Math.min(draft!.colSpan ?? 1, columnCount))
     };
     onSave(clampedDraft);
   };
@@ -248,70 +119,80 @@ export function BlockEditorModal(_props: {
       description="Selecione o tipo e configure o conteúdo."
       width={860}
     >
-      {!selectedType && (
-        <div className="block-type-grid">
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('text')}>
-            <strong>Texto</strong>
-            <p className="muted small">Parágrafos, listas e títulos.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('image')}>
-            <strong>Imagem</strong>
-            <p className="muted small">Selecione da biblioteca ou envie nova.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('button')}>
-            <strong>Botão</strong>
-            <p className="muted small">Links externos com estilo.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('cta')}>
-            <strong>CTA</strong>
-            <p className="muted small">Título, texto e botão com imagem opcional.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('media-text')}>
-            <strong>Imagem + Texto</strong>
-            <p className="muted small">Imagem lateral com texto na lateral.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('cards')}>
-            <strong>Cards</strong>
-            <p className="muted small">Grade de recursos ou serviços.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('form')}>
-            <strong>Formulário</strong>
-            <p className="muted small">Captura de leads e contato.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('pills')}>
-            <strong>Pills</strong>
-            <p className="muted small">Tags ou badges inline.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('span')}>
-            <strong>Elemento</strong>
-            <p className="muted small">Barra de destaque ou texto discreto.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('buttonGroup')}>
-            <strong>Grupo de Botões</strong>
-            <p className="muted small">Até 2 botões lado a lado.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('recent-posts')}>
-            <strong>Conteúdos recentes</strong>
-            <p className="muted small">Lista automática de artigos.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('services')}>
-            <strong>Serviços</strong>
-            <p className="muted small">Seção com ícones fixos e CTA.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('social-links')}>
-            <strong>Redes Sociais</strong>
-            <p className="muted small">Links para redes sociais configuradas.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('whatsapp-cta')}>
-            <strong>WhatsApp</strong>
-            <p className="muted small">Botão de contato via WhatsApp.</p>
-          </button>
-          <button type="button" className="block-type-card" onClick={() => handleSelectType('contact-info')}>
-            <strong>Informações de Contato</strong>
-            <p className="muted small">Bloco unificado com título, WhatsApp e redes sociais.</p>
-          </button>
-        </div>
-      )}
+      {!selectedType && (() => {
+        const blockCategories: Array<{ category: string; blocks: Array<{ type: BlockType; description: string }> }> = [
+          {
+            category: 'Conteúdo',
+            blocks: [
+              { type: 'text', description: 'Parágrafos, listas e títulos.' },
+              { type: 'image', description: 'Selecione da biblioteca ou envie nova.' },
+              { type: 'cards', description: 'Grade de recursos ou serviços.' },
+              { type: 'pills', description: 'Tags ou badges inline.' },
+              { type: 'span', description: 'Barra de destaque ou texto discreto.' },
+              { type: 'buttonGroup', description: 'Até 2 botões lado a lado.' }
+            ]
+          },
+          {
+            category: 'Layout / Destaque',
+            blocks: [
+              { type: 'hero', description: 'Imagem de fundo com conteúdo sobreposto.' },
+              { type: 'cta', description: 'Título, texto e botão com imagem opcional.' },
+              { type: 'media-text', description: 'Imagem lateral com texto na lateral.' }
+            ]
+          },
+          {
+            category: 'Interação',
+            blocks: [
+              { type: 'form', description: 'Captura de leads e contato.' },
+              { type: 'whatsapp-cta', description: 'Botão de contato via WhatsApp.' },
+              { type: 'contact-info', description: 'Bloco unificado com título, WhatsApp e redes sociais.' },
+              { type: 'social-links', description: 'Links para redes sociais configuradas.' }
+            ]
+          },
+          {
+            category: 'Dinâmico',
+            blocks: [
+              { type: 'recent-posts', description: 'Lista automática de artigos.' },
+              { type: 'services', description: 'Seção com ícones fixos e CTA.' }
+            ]
+          }
+        ];
+
+        return (
+          <div style={{ display: 'grid', gap: '2rem' }}>
+            {blockCategories.map((cat) => (
+              <section key={cat.category}>
+                <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#4b5563' }}>
+                  {cat.category}
+                </h4>
+                <div className="block-type-grid">
+                  {cat.blocks.map((item) => {
+                    const config = blockRegistry[item.type];
+                    const icon = blockTypeIcons[item.type];
+                    return (
+                      <button
+                        key={item.type}
+                        type="button"
+                        className="block-type-card"
+                        onClick={() => handleSelectType(item.type)}
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '1rem' }}
+                      >
+                        {icon && (
+                          <div className="block-type-card-icon" aria-hidden="true">
+                            <FontAwesomeIcon icon={icon} />
+                          </div>
+                        )}
+                        <strong>{config?.label || item.type}</strong>
+                        <p className="muted small" style={{ margin: 0 }}>{item.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        );
+      })()}
 
       {selectedType && selectedType !== 'hero' && selectedType !== 'recent-posts' && selectedType !== 'services' && selectedType !== 'contact-info' && (
         <div style={{ marginBottom: '1rem' }}>

@@ -21,4 +21,5 @@ export interface BlockConfig<T = unknown> {
   defaultData: T;
   renderer: React.ComponentType<BlockRendererProps<T>>;
   form: React.ComponentType<BlockFormProps<T>>;
+  icon?: string; // Emoji ou símbolo para exibição no modal
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PageBlock, PageLayout, PageLayoutV2, PageSection } from '../types';
 import type { BlockType } from '../types';
-import { ensureLayoutV2 } from '../utils/pageLayoutHelpers';
+import { ensureLayoutV2, getSectionColumnCount } from '../utils/pageLayoutHelpers';
 import { calculateBlockSpan } from '../utils/columnSpan';
 import { organizeSectionBlocksIntoRows } from '../utils/blockGridHelpers';
 import { blockRegistry } from '@/blocks/registry';
@@ -124,7 +124,7 @@ function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageS
 
   const hasHero = section.cols.some((col) => col.blocks.some((b) => b.type === 'hero'));
   const containerClass = hasHero ? 'container container--flush' : 'container';
-  const columnCount = settings.columnsLayout ?? section.columnsLayout ?? section.columns ?? 2;
+  const columnCount = getSectionColumnCount(section);
   const effectiveColumns = hasHero ? 1 : columnCount;
 
   const shouldApplyContainer = (background === 'soft' || background === 'dark' || background === 'earthy') && !hasHero;

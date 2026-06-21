@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Modal } from '@/components/AdminUI';
+import { Modal, ConfirmModal } from '@/components/AdminUI';
 import { ImagePickerModal } from '@/components/ImagePickerModal';
 import { PageBlockView } from '@/components/PageRenderer';
 import { IconButton } from '@/components/AdminUI';
@@ -387,6 +387,7 @@ interface BlockListEditorProps {
 
 function BlockListEditor({ blocks, onChange, allowedTypes, emptyMessage = 'Nenhum bloco ainda. Clique em "Adicionar bloco" para começar.' }: BlockListEditorProps) {
   const [blockModal, setBlockModal] = useState<NestedBlockModalState | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const handleAddBlock = () => {
     setBlockModal({ open: true, mode: 'add' });
@@ -421,9 +422,7 @@ function BlockListEditor({ blocks, onChange, allowedTypes, emptyMessage = 'Nenhu
   };
 
   const handleDeleteBlock = (blockId: string) => {
-    if (confirm('Remover este bloco?')) {
-      onChange(blocks.filter((b) => b.id !== blockId));
-    }
+    setDeleteConfirm(blockId);
   };
 
   const handleDuplicateBlock = (blockId: string) => {
@@ -514,6 +513,20 @@ function BlockListEditor({ blocks, onChange, allowedTypes, emptyMessage = 'Nenhu
         onClose={() => setBlockModal(null)}
         onSave={handleSaveBlock}
         allowedTypes={allowedTypes}
+      />
+
+      <ConfirmModal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        title="Remover bloco"
+        description="Tem certeza que deseja remover este bloco?"
+        onConfirm={() => {
+          if (deleteConfirm) {
+            onChange(blocks.filter((b) => b.id !== deleteConfirm));
+            setDeleteConfirm(null);
+          }
+        }}
+        confirmLabel="Remover"
       />
     </div>
   );

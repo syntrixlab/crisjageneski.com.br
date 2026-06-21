@@ -1,8 +1,21 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faArrowLeft,
+  faCircleInfo,
+  faEllipsisVertical,
+  faEye,
+  faFileLines,
+  faFloppyDisk,
+  faGear,
+  faTriangleExclamation,
+  faUpload
+} from '@fortawesome/free-solid-svg-icons';
 import { ArticleStatusBadge } from '@/components/AdminUI';
 import type { PageForm } from '../hooks/usePageEditor';
 
-export function PageEditorToolbar(_props: {
+type PageEditorToolbarProps = {
   page: PageForm;
   isNew: boolean;
   busy: boolean;
@@ -17,38 +30,53 @@ export function PageEditorToolbar(_props: {
   onSaveDraft: () => void;
   onPublish: () => void;
   onMoveToDraft: () => void;
-}) {
-  const {
-    page,
-    isNew,
-    busy,
-    draftAlert,
-    formError,
-    hasUploading,
-    viewMode,
-    isHomePage,
-    backTo,
-    previewHref,
-    onViewModeChange,
-    onSaveDraft,
-    onPublish,
-    onMoveToDraft
-  } = _props;
+  onConfigurePage?: () => void;
+};
+
+export function PageEditorToolbar({
+  page,
+  isNew,
+  busy,
+  draftAlert,
+  formError,
+  hasUploading,
+  viewMode,
+  isHomePage,
+  backTo,
+  previewHref,
+  onViewModeChange,
+  onSaveDraft,
+  onPublish,
+  onMoveToDraft,
+  onConfigurePage
+}: PageEditorToolbarProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const status = page.status ?? 'draft';
   const previewUrl = previewHref ?? (page.slug ? `/p/${page.slug}` : '/');
   const backTarget = backTo ?? '/admin/pages';
+  const alerts = [
+    draftAlert,
+    formError,
+    hasUploading ? 'Finalize uploads antes de salvar.' : null
+  ].filter(Boolean) as string[];
+  const alertText = alerts.join(' | ');
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="editor-topbar compact">
       <div className="editor-topbar-left">
-        <Link to={backTarget} className="btn btn-ghost">
-          Voltar
+        <Link to={backTarget} className="btn btn-ghost editor-topbar-back">
+          <FontAwesomeIcon icon={faArrowLeft} />
+          <span>Voltar</span>
         </Link>
         <ArticleStatusBadge status={status} />
 
-        {/* Toggle Edição/Preview */}
-        <div className="view-mode-toggle">
+        <div className="view-mode-toggle" role="tablist" aria-label="Modo de visualização">
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === 'edit'}
             className={`view-mode-btn ${viewMode === 'edit' ? 'active' : ''}`}
             onClick={() => onViewModeChange('edit')}
           >
@@ -56,6 +84,8 @@ export function PageEditorToolbar(_props: {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === 'preview'}
             className={`view-mode-btn ${viewMode === 'preview' ? 'active' : ''}`}
             onClick={() => onViewModeChange('preview')}
           >
@@ -63,22 +93,39 @@ export function PageEditorToolbar(_props: {
           </button>
         </div>
 
-        {draftAlert && <span className="muted small">{draftAlert}</span>}
-        {formError && <span className="muted small tone-danger">{formError}</span>}
-        {hasUploading && <span className="muted small">Finalize uploads antes de salvar.</span>}
+        {alerts.length > 0 && (
+          <div
+            className={`editor-alert-chip ${formError ? 'is-error' : 'is-info'}`}
+            title={alertText}
+            aria-label={alertText}
+          >
+            <FontAwesomeIcon icon={formError ? faTriangleExclamation : faCircleInfo} />
+            <span>{alerts.length} aviso{alerts.length > 1 ? 's' : ''}</span>
+          </div>
+        )}
       </div>
-      <div className="editor-topbar-actions">
+
+      <div className="editor-topbar-actions editor-topbar-actions-desktop">
+        {onConfigurePage && (
+          <button className="btn btn-ghost" type="button" onClick={onConfigurePage} title="Configurar página">
+            <FontAwesomeIcon icon={faGear} />
+            <span>Página</span>
+          </button>
+        )}
         <button className="btn btn-outline" type="button" onClick={onSaveDraft} disabled={busy}>
-          {isHomePage ? 'Salvar home' : 'Salvar rascunho'}
+          <FontAwesomeIcon icon={faFloppyDisk} />
+          <span>{isHomePage ? 'Salvar home' : 'Salvar rascunho'}</span>
         </button>
         {!isHomePage &&
           (status === 'draft' ? (
             <button className="btn btn-primary" type="button" onClick={onPublish} disabled={busy || isNew}>
-              Publicar
+              <FontAwesomeIcon icon={faUpload} />
+              <span>Publicar</span>
             </button>
           ) : (
             <button className="btn btn-outline" type="button" onClick={onMoveToDraft} disabled={busy}>
-              Mover para rascunho
+              <FontAwesomeIcon icon={faFileLines} />
+              <span>Mover para rascunho</span>
             </button>
           ))}
         {(!isHomePage && status === 'published') || isHomePage ? (
@@ -88,9 +135,63 @@ export function PageEditorToolbar(_props: {
             onClick={() => window.open(previewUrl, '_blank')}
             disabled={!previewUrl}
           >
-            {isHomePage ? 'Ver site' : 'Visualizar'}
+            <FontAwesomeIcon icon={faEye} />
+            <span>{isHomePage ? 'Ver site' : 'Visualizar'}</span>
           </button>
         ) : null}
+      </div>
+
+      <div className="editor-topbar-actions editor-topbar-actions-mobile">
+        <button
+          className="btn btn-ghost"
+          type="button"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-expanded={mobileMenuOpen}
+          aria-label="Abrir menu de ações"
+          title="Menu"
+        >
+          <FontAwesomeIcon icon={faEllipsisVertical} />
+        </button>
+        {mobileMenuOpen && (
+          <div className="editor-mobile-menu">
+            {onConfigurePage && (
+              <button
+                type="button"
+                onClick={() => {
+                  onConfigurePage();
+                  closeMobileMenu();
+                }}
+              >
+                <FontAwesomeIcon icon={faGear} />
+                <span>Configurar página</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                onSaveDraft();
+                closeMobileMenu();
+              }}
+              disabled={busy}
+            >
+              <FontAwesomeIcon icon={faFloppyDisk} />
+              <span>{isHomePage ? 'Salvar home' : 'Salvar'}</span>
+            </button>
+            {!isHomePage && (
+              <button
+                type="button"
+                onClick={() => {
+                  status === 'draft' ? onPublish() : onMoveToDraft();
+                  closeMobileMenu();
+                }}
+                disabled={busy || (status === 'draft' && isNew)}
+              >
+                <FontAwesomeIcon icon={status === 'draft' ? faUpload : faFileLines} />
+                <span>{status === 'draft' ? 'Publicar' : 'Rascunho'}</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

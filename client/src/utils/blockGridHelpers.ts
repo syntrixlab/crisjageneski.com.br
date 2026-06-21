@@ -1,4 +1,5 @@
 import type { PageBlock, PageSection } from '../types';
+import { getSectionColumnCount } from './pageLayoutHelpers';
 
 /**
  * Helper to get block row index with fallback
@@ -20,7 +21,7 @@ export function organizeSectionBlocksIntoRows(section: PageSection): Array<{
   rowIndex: number;
   cells: Array<{ colIndex: number; block: PageBlock } | null>;
 }> {
-  const columnCount = section.settings?.columnsLayout ?? section.columnsLayout ?? section.columns ?? 2;
+  const columnCount = getSectionColumnCount(section);
   
   // Find the maximum row index across all columns
   let maxRowIndex = -1;

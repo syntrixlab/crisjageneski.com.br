@@ -5,6 +5,36 @@ import { normalizeBlocks } from './heroMigration';
 const isValidRowIndex = (value: unknown): value is number =>
   Number.isInteger(value) && Number(value) >= 0;
 
+/**
+ * Normalizes section settings by removing deprecated aliases
+ * Keeps canonical fields: background, padding, maxWidth
+ * Removes: backgroundStyle, density, width
+ */
+function normalizeSectionSettings(settings?: Record<string, any>) {
+  if (!settings) return {};
+
+  return {
+    ...(settings.height && { height: settings.height }),
+    ...(settings.columnsLayout && { columnsLayout: settings.columnsLayout }),
+    ...(settings.background && { background: settings.background }),
+    ...(settings.backgroundStyle && !settings.background && { background: settings.backgroundStyle }),
+    ...(settings.padding && { padding: settings.padding }),
+    ...(settings.density && !settings.padding && { padding: settings.density }),
+    ...(settings.maxWidth && { maxWidth: settings.maxWidth }),
+    ...(settings.width && !settings.maxWidth && { maxWidth: settings.width })
+  };
+}
+
+/**
+ * Gets the number of columns in a section, handling legacy fields
+ */
+export function getSectionColumnCount(section: PageSection): number {
+  return (section.settings?.columnsLayout as number) ||
+    (section.columnsLayout as number) ||
+    section.columns ||
+    2;
+}
+
 export function getBlockRowIndex(block: PageBlock, fallbackIndex: number): number {
   return isValidRowIndex(block.rowIndex) ? Number(block.rowIndex) : fallbackIndex;
 }
@@ -117,6 +147,7 @@ export function ensureLayoutV2(layout?: PageLayout): PageLayoutV2 {
     });
 
     const columnsLayout = columns >= 2 ? (columns as 2 | 3) : undefined;
+    const normalizedSettings = normalizeSectionSettings(section.settings);
 
     return {
       ...section,
@@ -124,11 +155,8 @@ export function ensureLayoutV2(layout?: PageLayout): PageLayoutV2 {
       columnsLayout,
       cols: cols.map((col) => ({ ...col, blocks: sortBlocksByRowIndex(col.blocks) })),
       settings: {
-        ...(section.settings ?? {}),
-        backgroundStyle: section.settings?.backgroundStyle ?? section.settings?.background,
-        density: section.settings?.density ?? section.settings?.padding,
-        width: section.settings?.width ?? section.settings?.maxWidth,
-        columnsLayout: section.settings?.columnsLayout ?? columnsLayout
+        ...normalizedSettings,
+        columnsLayout: normalizedSettings.columnsLayout ?? columnsLayout
       }
     };
   };

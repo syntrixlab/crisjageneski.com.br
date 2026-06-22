@@ -260,6 +260,28 @@ export function moveSection(layout: PageLayoutV2, sectionId: string, direction: 
 }
 
 /**
+ * Reordena as secoes conforme a ordem de ids fornecida.
+ * Ids ausentes da lista sao mantidos no fim, preservando a ordem relativa.
+ * Usado pelo painel organizador de secoes (drag-and-drop).
+ */
+export function reorderSectionsByIds(layout: PageLayoutV2, orderedIds: string[]): PageLayoutV2 {
+  const byId = new Map(layout.sections.map((sec) => [sec.id, sec]));
+  const ordered: PageSection[] = [];
+  for (const id of orderedIds) {
+    const sec = byId.get(id);
+    if (sec) {
+      ordered.push(sec);
+      byId.delete(id);
+    }
+  }
+  // Mantem quaisquer secoes nao citadas (seguranca) ao final, na ordem original
+  for (const sec of layout.sections) {
+    if (byId.has(sec.id)) ordered.push(sec);
+  }
+  return { ...layout, sections: ordered };
+}
+
+/**
  * Changes the number of columns in a section, preserving blocks
  */
 export function changeSectionColumns(layout: PageLayoutV2, sectionId: string, newColumns: 1 | 2 | 3): PageLayoutV2 {

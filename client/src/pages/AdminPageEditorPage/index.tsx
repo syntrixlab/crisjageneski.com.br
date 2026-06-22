@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { useBlocker, useParams } from 'react-router-dom';
 import { ConfirmModal } from '@/components/AdminUI';
 import { SeoHead } from '@/components/SeoHead';
 import { PageRendererCore } from '@/components/PageRenderer';
@@ -8,6 +8,8 @@ import { ValidationErrorsModal } from '@/components/ValidationComponents';
 import { usePageEditor } from './hooks/usePageEditor';
 import { useSectionManager } from './hooks/useSectionManager';
 import { useBlockManager } from './hooks/useBlockManager';
+import { usePageHistory } from './hooks/usePageHistory';
+import { useEditorShortcuts } from './hooks/useEditorShortcuts';
 import { PageEditorToolbar } from './components/PageEditorToolbar';
 import { SectionEditor } from './components/SectionEditor';
 import { BlockEditorModal } from './components/BlockEditorModal';
@@ -16,6 +18,22 @@ import { MoveBlockModal } from './components/MoveBlockModal';
 import { EditorDrawer } from './components/EditorDrawer';
 import { SectionSettingsPanel } from './components/SectionSettingsPanel';
 import { PageSettingsPanel } from './components/PageSettingsPanel';
+import { BlockInspector } from './components/BlockInspector';
+import { SectionOutlinePanel } from './components/SectionOutlinePanel';
+import { SegmentedControl } from '@/components/SegmentedControl';
+
+type EditorSelection =
+  | { kind: 'page' }
+  | { kind: 'section'; sectionId: string }
+  | { kind: 'block'; sectionId: string; columnIndex: number; blockId: string };
+
+// Blocos "section-like" (form rico/largo) editam no modal amplo, nao no painel lateral.
+const MODAL_EDIT_TYPES: ReadonlySet<string> = new Set([
+  'hero',
+  'recent-posts',
+  'services',
+  'contact-info'
+]);
 
 export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const { id } = useParams<{ id: string }>();
@@ -23,15 +41,61 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const {
     page, setPage, viewMode, setViewMode, formError, draftAlert,
     busyMutations, isNew, isHomePage, isLoadingPage, isPageError,
-    refetchPage, saveDraft, publish, handleMoveToDraft
+    refetchPage, saveDraft, publish, handleMoveToDraft, isDirty
   } = editor;
 
   const sections = useSectionManager(setPage, page.layout.sections);
   const blocks = useBlockManager(setPage, page.layout.sections);
   const { errors: validationErrors, fieldStates, markFieldTouched, validateForPublication } = usePageValidation(page);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<'page' | 'section' | null>(null);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<EditorSelection | null>(null);
+  const selectedBlockId = selection?.kind === 'block' ? selection.blockId : null;
+  const closeInspector = () => setSelection(null);
+  const [outlineOpen, setOutlineOpen] = useState(false);
+  const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const selectedSectionId = selection?.kind === 'section' ? selection.sectionId : null;
+
+  const history = usePageHistory({
+    layout: page.layout,
+    pageId: page.id,
+    applyLayout: (l) => setPage((prev) => ({ ...prev, layout: l }))
+  });
+  useEditorShortcuts({
+    onUndo: history.undo,
+    onRedo: history.redo,
+    onSave: () => {
+      void saveDraft();
+    }
+  });
+
+  const isDirtyRef = useRef(isDirty);
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirtyRef.current) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirtyRef.current && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  const handleSelectSectionFromOutline = (sectionId: string) => {
+    if (viewMode !== 'edit') setViewMode('edit');
+    setSelection({ kind: 'section', sectionId });
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`editor-section-${sectionId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   const busy = busyMutations || blocks.hasUploading;
 
@@ -74,7 +138,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         <div className="admin-card">
           <div className="admin-empty">
             <h3>Erro ao carregar a home</h3>
-            <p className="muted">Não foi possivel recuperar os blocos da pagina inicial.</p>
+            <p className="muted">Não foi possível recuperar os blocos da página inicial.</p>
             <button className="btn btn-primary" type="button" onClick={() => refetchPage()}>
               Tentar novamente
             </button>
@@ -113,7 +177,13 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         onSaveDraft={() => saveDraft()}
         onPublish={handlePublish}
         onMoveToDraft={handleMoveToDraft}
-        onConfigurePage={() => setDrawerMode('page')}
+        onConfigurePage={() => setSelection({ kind: 'page' })}
+        isDirty={isDirty}
+        onToggleOutline={() => setOutlineOpen((o) => !o)}
+        onUndo={history.undo}
+        onRedo={history.redo}
+        canUndo={history.canUndo}
+        canRedo={history.canRedo}
       />
 
       <div className="editor-body">
@@ -121,16 +191,30 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
           <div className="editor-main" style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
               {viewMode === 'preview' ? (
                 <div className="page-preview-wrapper">
+                  <div className="preview-device-bar">
+                    <SegmentedControl<'desktop' | 'tablet' | 'mobile'>
+                      ariaLabel="Dispositivo de visualização"
+                      value={device}
+                      options={[
+                        { value: 'desktop', label: 'Desktop' },
+                        { value: 'tablet', label: 'Tablet' },
+                        { value: 'mobile', label: 'Mobile' }
+                      ]}
+                      onChange={setDevice}
+                    />
+                  </div>
                   {page.layout.sections.length === 0 ? (
                     <div className="admin-empty">
                       <p>Nenhuma seção adicionada. Volte para o modo de edição para adicionar conteúdo.</p>
                     </div>
                   ) : (
-                    <PageRendererCore
-                      layout={page.layout}
-                      enableFormSubmit={false}
-                      pageSlug={isHomePage ? 'home' : page.slug || 'preview'}
-                    />
+                    <div className={`preview-frame device-${device}`}>
+                      <PageRendererCore
+                        layout={page.layout}
+                        enableFormSubmit={false}
+                        pageSlug={isHomePage ? 'home' : page.slug || 'preview'}
+                      />
+                    </div>
                   )}
                 </div>
               ) : (
@@ -141,26 +225,44 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                     </div>
                   )}
                   {page.layout.sections.map((section, sectionIndex) => (
+                    <Fragment key={section.id}>
                     <SectionEditor
-                      key={section.id}
                       section={section}
                       sectionIndex={sectionIndex}
                       totalSections={page.layout.sections.length}
                       onMoveSection={(dir) => sections.handleMoveSection(section.id, dir)}
                       onRemoveSection={() => sections.handleRemoveSection(section.id)}
                       onDuplicateSection={() => sections.handleDuplicateSection(section.id)}
-                      onConfigureSection={() => {
-                        setDrawerMode('section');
-                        setSelectedSectionId(section.id);
-                      }}
+                      onConfigureSection={() => setSelection({ kind: 'section', sectionId: section.id })}
+                      selectedBlockId={selectedBlockId}
                       onAddBlock={(colIndex, insertIndex) => blocks.handleOpenAddBlock(section.id, colIndex, insertIndex)}
                       onAddBlockSide={(colIndex, rowIndex) => blocks.handleAddBlockSide(section.id, colIndex, rowIndex)}
-                      onEditBlock={(colIndex, block, blockIndex) => blocks.handleOpenEditBlock(section.id, colIndex, block, blockIndex)}
+                      onEditBlock={(colIndex, block, blockIndex) => {
+                        if (MODAL_EDIT_TYPES.has(block.type)) {
+                          blocks.handleOpenEditBlock(section.id, colIndex, block, blockIndex);
+                        } else {
+                          setSelection({ kind: 'block', sectionId: section.id, columnIndex: colIndex, blockId: block.id });
+                        }
+                      }}
                       onMoveBlock={(colIndex, blockId, dir) => blocks.handleMoveBlock(section.id, colIndex, blockId, dir)}
                       onMoveBlockColumn={(colIndex, blockIndex, block) => blocks.handleOpenMoveModal(section.id, colIndex, blockIndex, block)}
                       onDeleteBlock={(colIndex, block) => blocks.setDeleteModal({ open: true, sectionId: section.id, columnIndex: colIndex, block })}
                       onDuplicateBlock={(colIndex, blockId) => blocks.handleDuplicateBlock(section.id, colIndex, blockId)}
+                      onToggleSectionHidden={() => sections.handleToggleSectionHidden(section.id)}
+                      onToggleBlockVisible={(colIndex, block) =>
+                        blocks.handleToggleBlockVisibility(section.id, colIndex, block.id)
+                      }
                     />
+                    <div className="section-inserter-row">
+                      <button
+                        type="button"
+                        className="section-inserter"
+                        onClick={() => sections.handleAddSection(section.id)}
+                      >
+                        + Inserir seção aqui
+                      </button>
+                    </div>
+                    </Fragment>
                   ))}
                   <div style={{ marginTop: '1.5rem' }}>
                     <button className="btn btn-outline" type="button" onClick={() => sections.handleAddSection()}>
@@ -201,14 +303,15 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         onClose={() => blocks.setDeleteModal(null)}
         title="Remover bloco"
         description="Tem certeza que deseja remover este bloco?"
-        onConfirm={() =>
-          blocks.deleteModal?.block &&
+        onConfirm={() => {
+          if (!blocks.deleteModal?.block) return;
+          if (selectedBlockId === blocks.deleteModal.block.id) closeInspector();
           blocks.handleDeleteBlock(
             blocks.deleteModal.sectionId,
             blocks.deleteModal.columnIndex,
             blocks.deleteModal.block.id
-          )
-        }
+          );
+        }}
         confirmLabel="Remover"
       />
 
@@ -219,14 +322,8 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         onGoToError={() => setShowValidationErrors(false)}
       />
 
-      <EditorDrawer
-        isOpen={drawerMode !== null}
-        onClose={() => {
-          setDrawerMode(null);
-          setSelectedSectionId(null);
-        }}
-      >
-        {drawerMode === 'page' && (
+      <EditorDrawer isOpen={selection !== null} onClose={closeInspector}>
+        {selection?.kind === 'page' && (
           <PageSettingsPanel
             page={page}
             setPage={setPage}
@@ -234,17 +331,78 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
             markFieldTouched={markFieldTouched}
           />
         )}
-        {drawerMode === 'section' && selectedSectionId && (
-          <SectionSettingsPanel
-            section={page.layout.sections.find((s) => s.id === selectedSectionId)!}
-            onChangeSectionColumns={(cols) => sections.handleChangeSectionColumns(selectedSectionId, cols)}
-            onChangeSectionBackground={(bg) => sections.handleChangeSectionBackground(selectedSectionId, bg)}
-            onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(selectedSectionId, pad)}
-            onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(selectedSectionId, mw)}
-            onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(selectedSectionId, h)}
-          />
-        )}
+        {selection?.kind === 'section' &&
+          (() => {
+            const section = page.layout.sections.find((s) => s.id === selection.sectionId);
+            if (!section) return null;
+            return (
+              <SectionSettingsPanel
+                section={section}
+                onChangeSectionColumns={(cols) => sections.handleChangeSectionColumns(selection.sectionId, cols)}
+                onChangeSectionBackground={(bg) => sections.handleChangeSectionBackground(selection.sectionId, bg)}
+                onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(selection.sectionId, pad)}
+                onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(selection.sectionId, mw)}
+                onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(selection.sectionId, h)}
+              />
+            );
+          })()}
+        {selection?.kind === 'block' &&
+          (() => {
+            const section = page.layout.sections.find((s) => s.id === selection.sectionId);
+            const block = section?.cols?.[selection.columnIndex]?.blocks.find((b) => b.id === selection.blockId);
+            if (!section || !block) {
+              return <p className="inspector-hint">Bloco nao encontrado. Selecione outro bloco no canvas.</p>;
+            }
+            const sectionColumnCount = Math.max(
+              1,
+              Math.min(
+                (section.settings?.columnsLayout as number) ||
+                  section.columnsLayout ||
+                  section.columns ||
+                  2,
+                3
+              )
+            );
+            return (
+              <BlockInspector
+                block={block}
+                columnCount={sectionColumnCount}
+                onChangeData={(data) =>
+                  blocks.handleUpdateBlockData(selection.sectionId, selection.columnIndex, selection.blockId, data)
+                }
+                onChangeColSpan={(span) =>
+                  blocks.handleUpdateBlockData(
+                    selection.sectionId,
+                    selection.columnIndex,
+                    selection.blockId,
+                    block.data,
+                    span
+                  )
+                }
+                onUploadingChange={blocks.setHasUploading}
+              />
+            );
+          })()}
       </EditorDrawer>
+
+      <SectionOutlinePanel
+        isOpen={outlineOpen}
+        sections={page.layout.sections}
+        selectedSectionId={selectedSectionId}
+        onClose={() => setOutlineOpen(false)}
+        onSelectSection={handleSelectSectionFromOutline}
+        onReorder={sections.handleReorderSections}
+      />
+
+      <ConfirmModal
+        isOpen={blocker.state === 'blocked'}
+        onClose={() => blocker.reset?.()}
+        title="Sair sem salvar?"
+        description="Você tem alterações não salvas que serão perdidas se sair agora."
+        onConfirm={() => blocker.proceed?.()}
+        confirmLabel="Sair sem salvar"
+        cancelLabel="Continuar editando"
+      />
     </div>
   );
 }

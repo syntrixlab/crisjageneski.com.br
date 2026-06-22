@@ -30,6 +30,7 @@ export type PageSection = {
     padding?: 'normal' | 'compact' | 'large';
     density?: 'compact' | 'normal' | 'large';
     height?: 'normal' | 'tall';
+    hidden?: boolean;
     maxWidth?: 'normal' | 'wide';
     width?: 'normal' | 'wide';
     columnsLayout?: 2 | 3;

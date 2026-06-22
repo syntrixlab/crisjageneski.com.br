@@ -77,6 +77,7 @@ describe('PageEditorToolbar', () => {
         onRemoveSection={vi.fn()}
         onDuplicateSection={vi.fn()}
         onConfigureSection={vi.fn()}
+        onToggleSectionHidden={vi.fn()}
         onAddBlock={vi.fn()}
         onAddBlockSide={vi.fn()}
         onEditBlock={vi.fn()}
@@ -84,6 +85,7 @@ describe('PageEditorToolbar', () => {
         onMoveBlockColumn={vi.fn()}
         onDeleteBlock={vi.fn()}
         onDuplicateBlock={vi.fn()}
+        onToggleBlockVisible={vi.fn()}
       />
     );
 

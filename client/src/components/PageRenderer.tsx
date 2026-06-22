@@ -103,6 +103,7 @@ export function PageRendererCore({ layout, className = '', enableFormSubmit = tr
 
 function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageSlug }: { section: PageSection; sectionIndex: number; enableFormSubmit?: boolean; pageSlug?: string }) {
   const settings = section.settings ?? {};
+  if (settings.hidden) return null;
   const background = (settings.backgroundStyle as string) || (settings.background as string) || 'none';
   const backgroundClass =
     background === 'soft'

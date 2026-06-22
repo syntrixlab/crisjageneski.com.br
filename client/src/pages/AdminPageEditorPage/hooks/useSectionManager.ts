@@ -6,7 +6,8 @@ import {
   moveSection,
   changeSectionColumns,
   duplicateSection,
-  createSection
+  createSection,
+  reorderSectionsByIds
 } from '@/utils/pageLayoutHelpers';
 import { createSectionFromPreset } from '@/utils/sectionPresets';
 import type { PageSection } from '@/types';
@@ -70,6 +71,24 @@ export function useSectionManager(
     const section = sections.find((s) => s.id === sectionId);
     if (section?.kind === 'hero') return;
     setPage((prev) => ({ ...prev, layout: moveSection(prev.layout, sectionId, direction) }));
+  };
+
+  const handleToggleSectionHidden = (sectionId: string) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: {
+        ...prev.layout,
+        sections: prev.layout.sections.map((sec) =>
+          sec.id === sectionId
+            ? { ...sec, settings: { ...sec.settings, hidden: !(sec.settings?.hidden ?? false) } }
+            : sec
+        )
+      }
+    }));
+  };
+
+  const handleReorderSections = (orderedIds: string[]) => {
+    setPage((prev) => ({ ...prev, layout: reorderSectionsByIds(prev.layout, orderedIds) }));
   };
 
   const handleChangeSectionColumns = (sectionId: string, columns: 1 | 2 | 3) => {
@@ -147,6 +166,8 @@ export function useSectionManager(
     handleRemoveSection,
     handleDuplicateSection,
     handleMoveSection,
+    handleReorderSections,
+    handleToggleSectionHidden,
     handleChangeSectionColumns,
     handleChangeSectionBackground,
     handleChangeSectionPadding,

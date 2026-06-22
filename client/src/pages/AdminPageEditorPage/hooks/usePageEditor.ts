@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ensureLayoutV2 } from '@/utils/pageLayoutHelpers';
 import { ensureHeroInSection } from '@/utils/heroMigration';
@@ -27,6 +27,9 @@ const emptyPage: PageForm = {
   layout: emptyLayout,
   status: 'draft'
 };
+
+const serializeForDirty = (p: PageForm) =>
+  JSON.stringify({ t: p.title, s: p.slug, d: p.description ?? '', l: p.layout });
 
 export const slugify = (value: string) =>
   value
@@ -57,6 +60,7 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
   const refetchPage = isHomePage ? homeQuery.refetch : pageQuery.refetch;
 
   const [page, setPage] = useState<PageForm>(emptyPage);
+  const savedSnapshotRef = useRef<string>(serializeForDirty(emptyPage));
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [formError, setFormError] = useState<string | null>(null);
   const [draftAlert, setDraftAlert] = useState<string | null>(null);
@@ -78,7 +82,7 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
           };
         }
       }
-      setPage({
+      const loaded: PageForm = {
         id: existingPage.id,
         title: existingPage.title,
         slug: isHomePage ? 'home' : existingPage.slug,
@@ -87,7 +91,9 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
         layout: finalLayout,
         status: isHomePage ? 'published' : existingPage.status ?? 'draft',
         publishedAt: existingPage.publishedAt ?? null
-      });
+      };
+      setPage(loaded);
+      savedSnapshotRef.current = serializeForDirty(loaded);
     }
   }, [existingPage?.id, isHomePage]);
 
@@ -130,6 +136,7 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
           layout: ensureLayoutV2(data.page.layout),
           status: data.page.status ?? 'draft'
         }));
+        savedSnapshotRef.current = serializeForDirty({ ...payload, layout: ensureLayoutV2(data.page.layout) });
         if (data.changedToDraft) {
           setDraftAlert('Esta página voltou para rascunho. Publique novamente para atualizar no site.');
         }
@@ -150,7 +157,7 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
     if (isNew || !page.id) {
       try {
         const data = await createMutation.mutateAsync(payload);
-        setPage({
+        const created: PageForm = {
           id: data.id,
           title: data.title,
           slug: data.slug,
@@ -158,8 +165,10 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
           layout: ensureLayoutV2(data.layout),
           status: data.status ?? 'draft',
           publishedAt: data.publishedAt ?? null
-        });
-        navigate(`/admin/pages/${data.id}/edit`, { replace: true });
+        };
+        setPage(created);
+        savedSnapshotRef.current = serializeForDirty(created);
+        setTimeout(() => navigate(`/admin/pages/${data.id}/edit`, { replace: true }), 0);
         return data;
       } catch (err) {
         handleMutationError(err, 'Falha ao salvar página.');
@@ -195,9 +204,12 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
     });
   };
 
+  const isDirty = serializeForDirty(page) !== savedSnapshotRef.current;
+
   return {
     page,
     setPage,
+    isDirty,
     viewMode,
     setViewMode,
     formError,

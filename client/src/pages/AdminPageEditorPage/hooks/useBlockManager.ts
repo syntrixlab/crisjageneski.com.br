@@ -126,6 +126,57 @@ export function useBlockManager(
     setBlockModal(null);
   };
 
+  // Edição ao vivo (inspector lateral): aplica data/colSpan imediatamente.
+  const handleUpdateBlockData = (
+    sectionId: string,
+    columnIndex: number,
+    blockId: string,
+    data: PageBlock['data'],
+    colSpanOverride?: number
+  ) => {
+    setPage((prev) => {
+      const section = prev.layout.sections.find((s) => s.id === sectionId);
+      const existing = section?.cols?.[columnIndex]?.blocks.find((b) => b.id === blockId);
+      if (!existing) return prev;
+      const maxSpan = Math.max(
+        1,
+        Math.min(
+          (section?.settings?.columnsLayout as number) ||
+            section?.columnsLayout ||
+            section?.columns ||
+            2,
+          3
+        )
+      );
+      const nextSpan = Math.max(1, Math.min(colSpanOverride ?? existing.colSpan ?? 1, maxSpan));
+      const updated = {
+        ...existing,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: data as any,
+        colSpan: nextSpan,
+        updatedAt: new Date().toISOString()
+      } as PageBlock;
+      return {
+        ...prev,
+        layout: updateBlockInSection(prev.layout, sectionId, columnIndex, blockId, updated)
+      };
+    });
+  };
+
+  const handleToggleBlockVisibility = (sectionId: string, columnIndex: number, blockId: string) => {
+    setPage((prev) => {
+      const section = prev.layout.sections.find((s) => s.id === sectionId);
+      const existing = section?.cols?.[columnIndex]?.blocks.find((b) => b.id === blockId);
+      if (!existing) return prev;
+      const nextVisible = existing.visible === false ? true : false;
+      const updated = { ...existing, visible: nextVisible } as PageBlock;
+      return {
+        ...prev,
+        layout: updateBlockInSection(prev.layout, sectionId, columnIndex, blockId, updated)
+      };
+    });
+  };
+
   const handleMoveBlock = (
     sectionId: string,
     columnIndex: number,
@@ -221,6 +272,8 @@ export function useBlockManager(
     handleOpenAddBlock,
     handleOpenEditBlock,
     handleSaveBlock,
+    handleUpdateBlockData,
+    handleToggleBlockVisibility,
     handleMoveBlock,
     handleOpenMoveModal,
     handleConfirmMoveColumn,

@@ -1,3 +1,5 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@/components/AdminUI';
 import type { PageSection } from '@/types';
 
@@ -8,6 +10,7 @@ export function SectionToolbar(_props: {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onSettings: () => void;
+  onToggleHidden: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
 }) {
@@ -18,11 +21,13 @@ export function SectionToolbar(_props: {
     onMoveUp,
     onMoveDown,
     onSettings,
+    onToggleHidden,
     onDuplicate,
     onRemove
   } = _props;
 
   const isHero = section.kind === 'hero';
+  const isHidden = section.settings?.hidden ?? false;
   const isFirst = sectionIndex === 0;
   const isLast = sectionIndex === totalSections - 1;
 
@@ -32,6 +37,11 @@ export function SectionToolbar(_props: {
         <strong style={{ fontSize: '0.9rem' }}>
           {isHero ? 'Hero (Seção Fixa)' : `Seção ${sectionIndex + 1}`}
         </strong>
+        {isHidden && (
+          <span className="section-hidden-badge">
+            <FontAwesomeIcon icon={faEyeSlash} /> Oculta
+          </span>
+        )}
 
         {!isHero && (
           <>
@@ -54,6 +64,11 @@ export function SectionToolbar(_props: {
               icon="edit"
               label="Configurar seção"
               onClick={onSettings}
+            />
+            <IconButton
+              icon={isHidden ? 'eye-off' : 'eye'}
+              label={isHidden ? 'Mostrar seção' : 'Ocultar seção'}
+              onClick={onToggleHidden}
             />
             <IconButton
               icon="copy"

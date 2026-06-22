@@ -1,13 +1,20 @@
 import type { PageSection } from '@/types';
 import { getSectionColumnCount } from '@/utils/pageLayoutHelpers';
+import { SegmentedControl } from '@/components/SegmentedControl';
+
+type Columns = 1 | 2 | 3;
+type Background = 'none' | 'soft' | 'dark' | 'earthy';
+type Padding = 'normal' | 'compact' | 'large';
+type MaxWidth = 'normal' | 'wide';
+type Height = 'normal' | 'tall';
 
 export function SectionSettingsPanel(_props: {
   section: PageSection;
-  onChangeSectionColumns: (columns: 1 | 2 | 3) => void;
-  onChangeSectionBackground: (background: 'none' | 'soft' | 'dark' | 'earthy') => void;
-  onChangeSectionPadding: (padding: 'normal' | 'compact' | 'large') => void;
-  onChangeSectionMaxWidth: (maxWidth: 'normal' | 'wide') => void;
-  onChangeSectionHeight: (height: 'normal' | 'tall') => void;
+  onChangeSectionColumns: (columns: Columns) => void;
+  onChangeSectionBackground: (background: Background) => void;
+  onChangeSectionPadding: (padding: Padding) => void;
+  onChangeSectionMaxWidth: (maxWidth: MaxWidth) => void;
+  onChangeSectionHeight: (height: Height) => void;
 }) {
   const {
     section,
@@ -18,147 +25,101 @@ export function SectionSettingsPanel(_props: {
     onChangeSectionHeight
   } = _props;
 
-  const background = (section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
-  const padding = (section.settings?.padding || 'normal') as 'normal' | 'compact' | 'large';
-  const maxWidth = (section.settings?.maxWidth || 'normal') as 'normal' | 'wide';
-  const height = (section.settings?.height || 'normal') as 'normal' | 'tall';
+  const background = (section.settings?.background || 'none') as Background;
+  const padding = (section.settings?.padding || 'normal') as Padding;
+  const maxWidth = (section.settings?.maxWidth || 'normal') as MaxWidth;
+  const height = (section.settings?.height || 'normal') as Height;
   const columnsCount = getSectionColumnCount(section);
   const isHero = section.kind === 'hero';
 
+  if (isHero) {
+    return (
+      <div className="section-settings-panel">
+        <h3 className="inspector-section-title">Configurações da Seção</h3>
+        <p className="inspector-hint">
+          A seção Hero é fixa e não pode ser reconfigurada por aqui.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="section-settings-panel">
-      <h3 style={{ marginBottom: '1rem', fontSize: '0.95rem', fontWeight: 600 }}>
-        Configurações da Seção
-      </h3>
+      <h3 className="inspector-section-title">Configurações da Seção</h3>
 
-      {!isHero && (
-        <>
-          {/* Columns */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 500, color: '#4b5563' }}>
-              Colunas
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {[1, 2, 3].map((c) => (
-                <label key={c} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input
-                    type="radio"
-                    name="columns"
-                    value={c}
-                    checked={columnsCount === c}
-                    onChange={() => onChangeSectionColumns(c as 1 | 2 | 3)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {c} coluna{c > 1 ? 's' : ''}
-                </label>
-              ))}
-            </div>
-          </div>
+      <div className="inspector-field">
+        <label className="inspector-label">Colunas</label>
+        <SegmentedControl<string>
+          block
+          ariaLabel="Colunas"
+          value={String(columnsCount)}
+          options={[
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' }
+          ]}
+          onChange={(v) => onChangeSectionColumns(Number(v) as Columns)}
+        />
+      </div>
 
-          {/* Background */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 500, color: '#4b5563' }}>
-              Fundo
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                { value: 'none', label: 'Nenhum' },
-                { value: 'soft', label: 'Suave' },
-                { value: 'dark', label: 'Escuro' },
-                { value: 'earthy', label: 'Terroso' }
-              ].map((opt) => (
-                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input
-                    type="radio"
-                    name="background"
-                    value={opt.value}
-                    checked={background === opt.value}
-                    onChange={() => onChangeSectionBackground(opt.value as 'none' | 'soft' | 'dark' | 'earthy')}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
+      <div className="inspector-field">
+        <label className="inspector-label">Fundo</label>
+        <SegmentedControl<Background>
+          block
+          ariaLabel="Fundo"
+          value={background}
+          options={[
+            { value: 'none', label: 'Nenhum' },
+            { value: 'soft', label: 'Suave' },
+            { value: 'dark', label: 'Escuro' },
+            { value: 'earthy', label: 'Terroso' }
+          ]}
+          onChange={onChangeSectionBackground}
+        />
+      </div>
 
-          {/* Padding / Density */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 500, color: '#4b5563' }}>
-              Espaçamento
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                { value: 'compact', label: 'Compacto' },
-                { value: 'normal', label: 'Normal' },
-                { value: 'large', label: 'Generoso' }
-              ].map((opt) => (
-                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input
-                    type="radio"
-                    name="padding"
-                    value={opt.value}
-                    checked={padding === opt.value}
-                    onChange={() => onChangeSectionPadding(opt.value as 'normal' | 'compact' | 'large')}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
+      <div className="inspector-field">
+        <label className="inspector-label">Espaçamento</label>
+        <SegmentedControl<Padding>
+          block
+          ariaLabel="Espaçamento"
+          value={padding}
+          options={[
+            { value: 'compact', label: 'Compacto' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'large', label: 'Generoso' }
+          ]}
+          onChange={onChangeSectionPadding}
+        />
+      </div>
 
-          {/* Height */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 500, color: '#4b5563' }}>
-              Altura
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                { value: 'normal', label: 'Normal' },
-                { value: 'tall', label: 'Alta' }
-              ].map((opt) => (
-                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input
-                    type="radio"
-                    name="height"
-                    value={opt.value}
-                    checked={height === opt.value}
-                    onChange={() => onChangeSectionHeight(opt.value as 'normal' | 'tall')}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
+      <div className="inspector-field">
+        <label className="inspector-label">Altura</label>
+        <SegmentedControl<Height>
+          block
+          ariaLabel="Altura"
+          value={height}
+          options={[
+            { value: 'normal', label: 'Normal' },
+            { value: 'tall', label: 'Alta' }
+          ]}
+          onChange={onChangeSectionHeight}
+        />
+      </div>
 
-          {/* Max Width */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 500, color: '#4b5563' }}>
-              Largura Máxima
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                { value: 'normal', label: 'Normal' },
-                { value: 'wide', label: 'Largo' }
-              ].map((opt) => (
-                <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  <input
-                    type="radio"
-                    name="maxWidth"
-                    value={opt.value}
-                    checked={maxWidth === opt.value}
-                    onChange={() => onChangeSectionMaxWidth(opt.value as 'normal' | 'wide')}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+      <div className="inspector-field">
+        <label className="inspector-label">Largura máxima</label>
+        <SegmentedControl<MaxWidth>
+          block
+          ariaLabel="Largura máxima"
+          value={maxWidth}
+          options={[
+            { value: 'normal', label: 'Normal' },
+            { value: 'wide', label: 'Largo' }
+          ]}
+          onChange={onChangeSectionMaxWidth}
+        />
+      </div>
     </div>
   );
 }

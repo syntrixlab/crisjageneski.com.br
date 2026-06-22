@@ -12,14 +12,10 @@ export function PageSettingsPanel(_props: {
 
   return (
     <div className="page-settings-panel">
-      <h3 style={{ marginBottom: '1rem', fontSize: '0.95rem', fontWeight: 600 }}>
-        Configurações da Página
-      </h3>
+      <h3 className="inspector-section-title">Configurações da Página</h3>
 
-      <div className="editor-field" style={{ marginBottom: '1rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 500 }}>
-          Título
-        </label>
+      <div className="inspector-field">
+        <label className="inspector-label">Título</label>
         <ValidationInput
           fieldId="page-title"
           hasError={fieldStates['page-title']?.hasError || false}
@@ -36,10 +32,8 @@ export function PageSettingsPanel(_props: {
         </ValidationInput>
       </div>
 
-      <div className="editor-field" style={{ marginBottom: '1rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 500 }}>
-          Slug
-        </label>
+      <div className="inspector-field">
+        <label className="inspector-label">Slug</label>
         <ValidationInput
           fieldId="page-slug"
           hasError={fieldStates['page-slug']?.hasError || false}
@@ -57,15 +51,13 @@ export function PageSettingsPanel(_props: {
             style={{ width: '100%' }}
           />
         </ValidationInput>
-        <p style={{ fontSize: '0.75rem', color: '#4b5563', marginTop: '0.4rem' }}>
+        <p className="inspector-hint">
           URLs públicas ficam em /p/slug. Use letras minúsculas e hifens.
         </p>
       </div>
 
-      <div className="editor-field" style={{ marginBottom: '1rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 500 }}>
-          Descrição
-        </label>
+      <div className="inspector-field">
+        <label className="inspector-label">Descrição</label>
         <textarea
           value={page.description ?? ''}
           onChange={(e) => setPage((prev) => ({ ...prev, description: e.target.value }))}

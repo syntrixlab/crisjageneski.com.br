@@ -40,7 +40,7 @@ export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" style={{ maxWidth: 'min(1100px, 95vw)', width: '100%' }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-card preset-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Escolha um Preset de Seção</h2>
           <button className="modal-close" onClick={onClose}>
@@ -49,15 +49,7 @@ export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, 
         </div>
 
         <div className="modal-body">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
-              gap: '1rem',
-              marginBottom: '1.5rem'
-            }}
-            className="preset-grid"
-          >
+          <div className="preset-grid">
             {sectionPresets.map((preset) => {
               // Desabilitar preset Hero se já existir uma seção Hero
               const isHeroPreset = preset.id === 'hero-2col' || preset.id === 'hero-stacked';
@@ -67,72 +59,25 @@ export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, 
                 <button
                   key={preset.id}
                   type="button"
+                  className="preset-card"
                   onClick={() => !isDisabled && onSelectPreset(preset.id)}
                   disabled={isDisabled}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '1rem',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    background: isDisabled ? '#f9fafb' : 'white',
-                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                    textAlign: 'center',
-                    opacity: isDisabled ? 0.5 : 1
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isDisabled) {
-                      e.currentTarget.style.borderColor = '#3b82f6';
-                      e.currentTarget.style.background = '#eff6ff';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isDisabled) {
-                      e.currentTarget.style.borderColor = '#e5e7eb';
-                      e.currentTarget.style.background = 'white';
-                    }
-                  }}
                 >
                   <div className="preset-card-icon" aria-hidden="true">
                     <FontAwesomeIcon icon={presetIcons[preset.id] ?? faLayerGroup} />
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>
+                  <div className="preset-card-title">
                     {preset.name}
                     {isDisabled && ' (já existe)'}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#6b7280', lineHeight: 1.4 }}>{preset.description}</div>
+                  <div className="preset-card-desc">{preset.description}</div>
                 </button>
               );
             })}
           </div>
 
-          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
-            <button
-              type="button"
-              onClick={onAddBlank}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px dashed #d1d5db',
-                borderRadius: '8px',
-                background: 'white',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                color: '#6b7280',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#9ca3af';
-                e.currentTarget.style.color = '#374151';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#d1d5db';
-                e.currentTarget.style.color = '#6b7280';
-              }}
-            >
+          <div className="preset-divider">
+            <button type="button" className="preset-blank-btn" onClick={onAddBlank}>
               + Seção em Branco (sem blocos)
             </button>
           </div>

@@ -9,6 +9,9 @@ import {
   faFileLines,
   faFloppyDisk,
   faGear,
+  faLayerGroup,
+  faRotateLeft,
+  faRotateRight,
   faTriangleExclamation,
   faUpload
 } from '@fortawesome/free-solid-svg-icons';
@@ -31,6 +34,12 @@ type PageEditorToolbarProps = {
   onPublish: () => void;
   onMoveToDraft: () => void;
   onConfigurePage?: () => void;
+  isDirty?: boolean;
+  onToggleOutline?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 };
 
 export function PageEditorToolbar({
@@ -48,7 +57,13 @@ export function PageEditorToolbar({
   onSaveDraft,
   onPublish,
   onMoveToDraft,
-  onConfigurePage
+  onConfigurePage,
+  isDirty,
+  onToggleOutline,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo
 }: PageEditorToolbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const status = page.status ?? 'draft';
@@ -93,6 +108,43 @@ export function PageEditorToolbar({
           </button>
         </div>
 
+        {onToggleOutline && (
+          <button
+            type="button"
+            className="btn btn-ghost editor-outline-btn"
+            onClick={onToggleOutline}
+            title="Organizar seções"
+          >
+            <FontAwesomeIcon icon={faLayerGroup} />
+            <span>Seções</span>
+          </button>
+        )}
+
+        {(onUndo || onRedo) && (
+          <div className="editor-undo-group">
+            <button
+              type="button"
+              className="btn btn-ghost editor-undo-btn"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="Desfazer (Ctrl+Z)"
+              aria-label="Desfazer"
+            >
+              <FontAwesomeIcon icon={faRotateLeft} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost editor-undo-btn"
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="Refazer (Ctrl+Shift+Z)"
+              aria-label="Refazer"
+            >
+              <FontAwesomeIcon icon={faRotateRight} />
+            </button>
+          </div>
+        )}
+
         {alerts.length > 0 && (
           <div
             className={`editor-alert-chip ${formError ? 'is-error' : 'is-info'}`}
@@ -102,6 +154,12 @@ export function PageEditorToolbar({
             <FontAwesomeIcon icon={formError ? faTriangleExclamation : faCircleInfo} />
             <span>{alerts.length} aviso{alerts.length > 1 ? 's' : ''}</span>
           </div>
+        )}
+
+        {isDirty && (
+          <span className="editor-dirty-chip" title="Há alterações não salvas">
+            Não salvo
+          </span>
         )}
       </div>
 

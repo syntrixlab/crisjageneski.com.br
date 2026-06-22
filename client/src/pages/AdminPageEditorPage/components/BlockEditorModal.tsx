@@ -72,11 +72,13 @@ export function BlockEditorModal(_props: {
   const [selectedType, setSelectedType] = useState<PageBlock['type'] | null>(initialDraft?.type ?? null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     setDraft(initialDraft);
     setSelectedType(initialDraft?.type ?? null);
     setError(null);
+    setQuery('');
   }, [state?.block?.id, state?.open]);
 
   useEffect(() => {
@@ -158,9 +160,32 @@ export function BlockEditorModal(_props: {
           }
         ];
 
+        const q = query.trim();
+        const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const filtered = blockCategories
+          .map((cat) => ({
+            category: cat.category,
+            blocks: cat.blocks.filter((item) => {
+              if (!q) return true;
+              const lbl = blockRegistry[item.type]?.label ?? item.type;
+              return norm(lbl).includes(norm(q)) || norm(item.description).includes(norm(q));
+            })
+          }))
+          .filter((cat) => cat.blocks.length > 0);
+
         return (
-          <div style={{ display: 'grid', gap: '2rem' }}>
-            {blockCategories.map((cat) => (
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            <input
+              type="search"
+              className="block-search-input"
+              placeholder="Buscar bloco..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {filtered.length === 0 && (
+              <p className="muted">Nenhum bloco encontrado para “{q}”.</p>
+            )}
+            {filtered.map((cat) => (
               <section key={cat.category}>
                 <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#4b5563' }}>
                   {cat.category}

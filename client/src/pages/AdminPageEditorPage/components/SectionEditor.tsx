@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ConfirmModal } from '@/components/AdminUI';
 import { canAddSideAtIndex, getBlockRowIndex, getSectionColumnCount } from '@/utils/pageLayoutHelpers';
 import type { PageBlock, PageSection } from '@/types';
-import { BlockCard } from './BlockCard';
+import { EditableBlock } from './EditableBlock';
 import { SectionToolbar } from './SectionToolbar';
 
 function AddBlockButton(_props: { onClick: () => void; style?: React.CSSProperties; label?: string }) {
@@ -22,6 +22,8 @@ export function SectionEditor(_props: {
   onRemoveSection: () => void;
   onDuplicateSection: () => void;
   onConfigureSection: () => void;
+  onToggleSectionHidden: () => void;
+  selectedBlockId?: string | null;
   onAddBlock: (columnIndex: number, insertIndex: number) => void;
   onAddBlockSide: (columnIndex: number, rowIndex: number) => void;
   onEditBlock: (columnIndex: number, block: PageBlock, blockIndex: number) => void;
@@ -29,6 +31,7 @@ export function SectionEditor(_props: {
   onMoveBlockColumn: (columnIndex: number, blockIndex: number, block: PageBlock) => void;
   onDeleteBlock: (columnIndex: number, block: PageBlock) => void;
   onDuplicateBlock: (columnIndex: number, blockId: string) => void;
+  onToggleBlockVisible: (columnIndex: number, block: PageBlock) => void;
 }) {
   const {
     section,
@@ -38,16 +41,20 @@ export function SectionEditor(_props: {
     onRemoveSection,
     onDuplicateSection,
     onConfigureSection,
+    onToggleSectionHidden,
+    selectedBlockId,
     onAddBlock,
     onAddBlockSide,
     onEditBlock,
     onMoveBlock,
     onMoveBlockColumn,
     onDeleteBlock,
-    onDuplicateBlock
+    onDuplicateBlock,
+    onToggleBlockVisible
   } = _props;
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
+  const isSectionHidden = section.settings?.hidden ?? false;
   const columnsCount = getSectionColumnCount(section);
   const rowCount =
     section.cols.reduce((max, col) => {
@@ -69,7 +76,8 @@ export function SectionEditor(_props: {
 
   return (
     <div
-      className="page-section-editor admin-card"
+      id={`editor-section-${section.id}`}
+      className={`page-section-editor admin-card${isSectionHidden ? ' is-hidden' : ''}`}
       style={{ marginBottom: '1.5rem', position: 'relative', overflow: 'visible' }}
       data-bg={background}
     >
@@ -80,6 +88,7 @@ export function SectionEditor(_props: {
         onMoveUp={() => onMoveSection('up')}
         onMoveDown={() => onMoveSection('down')}
         onSettings={onConfigureSection}
+        onToggleHidden={onToggleSectionHidden}
         onDuplicate={onDuplicateSection}
         onRemove={() => setShowConfirmDelete(true)}
       />
@@ -88,17 +97,16 @@ export function SectionEditor(_props: {
         className="page-editor-columns"
         style={{ gridTemplateColumns: `repeat(${getSectionColumnCount(section)}, minmax(0, 1fr))` }}
       >
-        {section.cols.map((col, colIndex) => (
-          <div key={`header-${col.id}`} className="page-col-header" style={{ gridColumn: `${colIndex + 1} / span 1` }}>
-            <strong>Coluna {colIndex + 1}</strong>
-          </div>
-        ))}
+        {columnsCount > 1 &&
+          section.cols.map((col, colIndex) => (
+            <div key={`header-${col.id}`} className="page-col-header" style={{ gridColumn: `${colIndex + 1} / span 1` }}>
+              <strong>Coluna {colIndex + 1}</strong>
+            </div>
+          ))}
 
         {Array.from({ length: rowCount }).map((_, rowIndex) => {
-          // Verificar quantas colunas têm blocos nesta linha
           const blocksInRow = section.cols.map((_, colIndex) => columnRows[colIndex].get(rowIndex)).filter(Boolean);
 
-          // Se a linha está completamente vazia, renderizar 1 botão full-width
           if (blocksInRow.length === 0) {
             return (
               <div
@@ -114,12 +122,10 @@ export function SectionEditor(_props: {
             );
           }
 
-          // Renderizar blocos e slots vazios
           return section.cols.map((col, colIndex) => {
             const entry = columnRows[colIndex].get(rowIndex);
 
             if (!entry) {
-              // Slot vazio em linha parcialmente preenchida
               return (
                 <div
                   key={`empty-${col.id}-${rowIndex}`}
@@ -151,14 +157,16 @@ export function SectionEditor(_props: {
                   gridRow: rowIndex + 1
                 }}
               >
-                <BlockCard
+                <EditableBlock
                   block={block}
-                  onEdit={() => onEditBlock(colIndex, block, blockIndex)}
+                  isSelected={selectedBlockId === block.id}
+                  onSelect={() => onEditBlock(colIndex, block, blockIndex)}
                   onDelete={() => !isLocked && onDeleteBlock(colIndex, block)}
                   onDuplicate={() => onDuplicateBlock(colIndex, block.id)}
                   onMoveUp={() => !isLocked && onMoveBlock(colIndex, block.id, 'up')}
                   onMoveDown={() => !isLocked && onMoveBlock(colIndex, block.id, 'down')}
                   onMoveColumn={() => onMoveBlockColumn(colIndex, blockIndex, block)}
+                  onToggleVisible={() => onToggleBlockVisible(colIndex, block)}
                   onAddSide={() => onAddBlockSide(colIndex, rowIndex)}
                   canAddSide={canAddSide}
                   disableMoveUp={isLocked || rowIndex === 0}
@@ -180,7 +188,6 @@ export function SectionEditor(_props: {
             </div>
           ))}
 
-        {/* Botão de adicionar no final - apenas 1 full-width se houver múltiplas colunas */}
         {columnsCount > 1 ? (
           <AddBlockButton
             key="add-end-fullwidth"

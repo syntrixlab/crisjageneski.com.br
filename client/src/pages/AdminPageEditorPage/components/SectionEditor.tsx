@@ -19,6 +19,7 @@ import {
 import { ConfirmModal } from '@/components/AdminUI';
 import { canAddSideAtIndex, sortBlocksByRowIndex } from '@/utils/pageLayoutHelpers';
 import { getSectionColumnCount } from '@/utils/pageLayoutHelpers';
+import { buildBgStyle, sectionSettingsToBgConfig } from '@/utils/backgroundHelpers';
 import type { PageBlock, PageSection } from '@/types';
 import { EditableBlock } from './EditableBlock';
 import { SectionToolbar } from './SectionToolbar';
@@ -83,9 +84,17 @@ export function SectionEditor(_props: {
 
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
-  const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
   const isSectionHidden = section.settings?.hidden ?? false;
-  const customBg = section.settings?.backgroundColor;
+
+  // Novo sistema de fundo
+  const hasNewBgSystem = !!section.settings?.backgroundMode;
+  const bgConfig = sectionSettingsToBgConfig(section.settings ?? {});
+  const { wrapperStyle: sectionBgStyle, overlayStyle: sectionBgOverlay } = buildBgStyle(bgConfig);
+
+  // Legado: data-bg para classes CSS de preset (soft/dark/earthy)
+  const legacyBg = !hasNewBgSystem
+    ? (section.settings?.backgroundStyle || section.settings?.background || undefined)
+    : undefined;
   const gapMapEditor: Record<string, string> = { sm: '0.75rem', md: '1rem', lg: '2rem' };
   const editorGap = section.settings?.columnGap ? gapMapEditor[section.settings.columnGap] : '1rem';
   const alignMapEditor: Record<string, string> = { top: 'flex-start', center: 'flex-start', bottom: 'flex-start' };
@@ -136,9 +145,12 @@ export function SectionEditor(_props: {
     <div
       id={`editor-section-${section.id}`}
       className={`page-section-editor admin-card${isSectionHidden ? ' is-hidden' : ''}`}
-      style={{ marginBottom: '1.5rem', position: 'relative', overflow: 'visible', ...(customBg ? { background: customBg } : {}) }}
-      data-bg={background}
+      style={{ marginBottom: '1.5rem', position: 'relative', overflow: 'visible', ...sectionBgStyle }}
+      data-bg={legacyBg}
     >
+      {sectionBgOverlay && (
+        <div style={{ ...sectionBgOverlay, zIndex: 0 }} aria-hidden />
+      )}
       <SectionToolbar
         section={section}
         sectionIndex={sectionIndex}

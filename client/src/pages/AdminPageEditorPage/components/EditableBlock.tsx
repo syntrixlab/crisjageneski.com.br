@@ -4,6 +4,7 @@ import { IconButton } from '@/components/AdminUI';
 import { PageBlockView } from '@/components/PageRenderer';
 import { blockRegistry } from '@/blocks/registry';
 import { BlockActionsDropdown } from './BlockActionsDropdown';
+import { buildBgStyle } from '@/utils/backgroundHelpers';
 import type { BlockType, PageBlock } from '@/types';
 
 export function EditableBlock(_props: {
@@ -41,6 +42,12 @@ export function EditableBlock(_props: {
   const isHero = block.type === 'hero';
   const isHidden = block.visible === false;
 
+  const bg = block.blockBackground;
+  const hasBg = bg && (bg.mode === 'color' || bg.mode === 'image');
+  const { wrapperStyle: blockBgStyle, overlayStyle: blockBgOverlay } = hasBg
+    ? buildBgStyle(bg)
+    : { wrapperStyle: {}, overlayStyle: undefined };
+
   return (
     <div
       className={`editable-block${isSelected ? ' is-selected' : ''}${isHidden ? ' is-hidden' : ''}`}
@@ -75,7 +82,8 @@ export function EditableBlock(_props: {
         )}
       </div>
 
-      <div className="editable-block-body">
+      <div className="editable-block-body" style={blockBgStyle}>
+        {blockBgOverlay && <div style={{ ...blockBgOverlay, zIndex: 0 }} aria-hidden />}
         <PageBlockView block={block} enableFormSubmit={false} />
       </div>
 

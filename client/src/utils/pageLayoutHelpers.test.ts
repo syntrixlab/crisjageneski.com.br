@@ -12,7 +12,7 @@ function makeLayout(colBlocks: PageBlock[][]): PageLayoutV2 {
     sections: [
       {
         id: 'sec1',
-        columns: colBlocks.length,
+        columns: colBlocks.length as 1 | 2 | 3,
         cols: colBlocks.map((blocks, i) => ({ id: `col${i}`, blocks })),
         settings: {}
       }

@@ -27,7 +27,6 @@ export function PageSettingsPanel(_props: {
             onChange={(e) => setPage((prev) => ({ ...prev, title: e.target.value }))}
             onBlur={() => markFieldTouched('page-title')}
             placeholder="Título da página"
-            style={{ width: '100%' }}
           />
         </ValidationInput>
       </div>
@@ -48,7 +47,6 @@ export function PageSettingsPanel(_props: {
               setPage((prev) => ({ ...prev, slug: slugify(e.target.value) }));
             }}
             placeholder="ex: sobre, contato, servicos"
-            style={{ width: '100%' }}
           />
         </ValidationInput>
         <p className="inspector-hint">
@@ -64,7 +62,6 @@ export function PageSettingsPanel(_props: {
           onBlur={() => markFieldTouched('page-description')}
           rows={3}
           placeholder="Descrição para SEO e redes sociais"
-          style={{ width: '100%' }}
         />
         <CharCounter text={page.description || ''} limit={300} />
       </div>

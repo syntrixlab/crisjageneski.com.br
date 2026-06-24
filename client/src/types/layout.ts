@@ -18,6 +18,13 @@ export type PageLayoutV1 = {
   cols: Array<{ id?: string; blocks: PageBlock[] }>;
 };
 
+export type BackgroundImageConfig = {
+  mediaId: string;
+  url: string;
+  overlayOpacity?: number;
+  overlayColor?: 'dark' | 'light';
+};
+
 export type PageSection = {
   id: string;
   kind?: 'normal' | 'hero';
@@ -34,6 +41,8 @@ export type PageSection = {
     name?: string;
     anchorId?: string;
     backgroundColor?: string;
+    backgroundMode?: 'none' | 'color' | 'image';
+    backgroundImage?: BackgroundImageConfig;
     columnGap?: 'sm' | 'md' | 'lg';
     verticalAlign?: 'top' | 'center' | 'bottom';
     maxWidth?: 'normal' | 'wide';

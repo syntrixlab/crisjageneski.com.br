@@ -1,3 +1,5 @@
+import type { BackgroundImageConfig } from './layout';
+
 export type TextBlockData = {
   contentHtml: string;
   width?: 'normal' | 'wide';
@@ -250,22 +252,28 @@ export type HeroBlockDataV2 = {
 
 export type HeroBlockData = HeroBlockDataV1 | HeroBlockDataV2;
 
+export type BlockBackground = {
+  mode: 'none' | 'color' | 'image';
+  color?: string;
+  image?: BackgroundImageConfig;
+};
+
 export type PageBlock =
-  | { id: string; type: 'text';          colSpan?: number; rowIndex?: number; data: TextBlockData;        isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'image';         colSpan?: number; rowIndex?: number; data: ImageBlockData;       isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'button';        colSpan?: number; rowIndex?: number; data: ButtonBlockData;      isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'cards';         colSpan?: number; rowIndex?: number; data: CardBlockData;        isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'form';          colSpan?: number; rowIndex?: number; data: FormBlockData;        isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'hero';          colSpan?: number; rowIndex?: number; data: HeroBlockData;        isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'pills';         colSpan?: number; rowIndex?: number; data: PillsBlockData;       isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'span';          colSpan?: number; rowIndex?: number; data: SpanBlockData;        isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'buttonGroup';   colSpan?: number; rowIndex?: number; data: ButtonGroupBlockData; isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'recent-posts';  colSpan?: number; rowIndex?: number; data: RecentPostsBlockData; isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'social-links';  colSpan?: number; rowIndex?: number; data: SocialLinksBlockData; isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'whatsapp-cta';  colSpan?: number; rowIndex?: number; data: WhatsAppCtaBlockData; isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'contact-info';  colSpan?: number; rowIndex?: number; data: ContactInfoBlockData; isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'services';      colSpan?: number; rowIndex?: number; data: ServicesBlockData;    isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'cta';           colSpan?: number; rowIndex?: number; data: CtaBlockData;         isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string }
-  | { id: string; type: 'media-text';    colSpan?: number; rowIndex?: number; data: MediaTextBlockData;   isLocked?: boolean; visible?: boolean; createdAt?: string; updatedAt?: string };
+  | { id: string; type: 'text';          colSpan?: number; rowIndex?: number; data: TextBlockData;        isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'image';         colSpan?: number; rowIndex?: number; data: ImageBlockData;       isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'button';        colSpan?: number; rowIndex?: number; data: ButtonBlockData;      isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'cards';         colSpan?: number; rowIndex?: number; data: CardBlockData;        isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'form';          colSpan?: number; rowIndex?: number; data: FormBlockData;        isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'hero';          colSpan?: number; rowIndex?: number; data: HeroBlockData;        isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'pills';         colSpan?: number; rowIndex?: number; data: PillsBlockData;       isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'span';          colSpan?: number; rowIndex?: number; data: SpanBlockData;        isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'buttonGroup';   colSpan?: number; rowIndex?: number; data: ButtonGroupBlockData; isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'recent-posts';  colSpan?: number; rowIndex?: number; data: RecentPostsBlockData; isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'social-links';  colSpan?: number; rowIndex?: number; data: SocialLinksBlockData; isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'whatsapp-cta';  colSpan?: number; rowIndex?: number; data: WhatsAppCtaBlockData; isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'contact-info';  colSpan?: number; rowIndex?: number; data: ContactInfoBlockData; isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'services';      colSpan?: number; rowIndex?: number; data: ServicesBlockData;    isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'cta';           colSpan?: number; rowIndex?: number; data: CtaBlockData;         isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string }
+  | { id: string; type: 'media-text';    colSpan?: number; rowIndex?: number; data: MediaTextBlockData;   isLocked?: boolean; visible?: boolean; blockBackground?: BlockBackground; createdAt?: string; updatedAt?: string };
 
 export type BlockType = PageBlock['type'];

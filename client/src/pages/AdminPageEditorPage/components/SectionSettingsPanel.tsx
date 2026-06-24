@@ -1,10 +1,11 @@
 import type { PageSection } from '@/types';
 import { getSectionColumnCount } from '@/utils/pageLayoutHelpers';
 import { SegmentedControl } from '@/components/SegmentedControl';
-import { ColorSwatchPicker } from '@/components/StyleControls';
+import { BackgroundPicker } from '@/components/StyleControls';
+import { sectionSettingsToBgConfig } from '@/utils/backgroundHelpers';
+import type { BackgroundConfig } from '@/utils/backgroundHelpers';
 
 type Columns = 1 | 2 | 3;
-type Background = 'none' | 'soft' | 'dark' | 'earthy';
 type Padding = 'normal' | 'compact' | 'large';
 type MaxWidth = 'normal' | 'wide';
 type Height = 'normal' | 'tall';
@@ -12,7 +13,6 @@ type Height = 'normal' | 'tall';
 export function SectionSettingsPanel(_props: {
   section: PageSection;
   onChangeSectionColumns: (columns: Columns) => void;
-  onChangeSectionBackground: (background: Background) => void;
   onChangeSectionPadding: (padding: Padding) => void;
   onChangeSectionMaxWidth: (maxWidth: MaxWidth) => void;
   onChangeSectionHeight: (height: Height) => void;
@@ -21,24 +21,31 @@ export function SectionSettingsPanel(_props: {
   const {
     section,
     onChangeSectionColumns,
-    onChangeSectionBackground,
     onChangeSectionPadding,
     onChangeSectionMaxWidth,
     onChangeSectionHeight,
     onUpdateSettings
   } = _props;
 
-  const background = (section.settings?.background || 'none') as Background;
   const padding = (section.settings?.padding || 'normal') as Padding;
   const maxWidth = (section.settings?.maxWidth || 'normal') as MaxWidth;
   const height = (section.settings?.height || 'normal') as Height;
   const columnsCount = getSectionColumnCount(section);
   const name = section.settings?.name ?? '';
   const anchorId = section.settings?.anchorId ?? '';
-  const backgroundColor = section.settings?.backgroundColor ?? '';
   const columnGap = (section.settings?.columnGap ?? 'md') as 'sm' | 'md' | 'lg';
   const verticalAlign = (section.settings?.verticalAlign ?? 'top') as 'top' | 'center' | 'bottom';
   const isHero = section.kind === 'hero';
+
+  const bgConfig: BackgroundConfig = sectionSettingsToBgConfig(section.settings ?? {});
+
+  const handleBgChange = (bg: BackgroundConfig) => {
+    onUpdateSettings({
+      backgroundMode: bg.mode,
+      backgroundColor: bg.color,
+      backgroundImage: bg.image
+    });
+  };
 
   if (isHero) {
     return (
@@ -72,18 +79,7 @@ export function SectionSettingsPanel(_props: {
 
       <div className="inspector-field">
         <label className="inspector-label">Fundo</label>
-        <SegmentedControl<Background>
-          block
-          ariaLabel="Fundo"
-          value={background}
-          options={[
-            { value: 'none', label: 'Nenhum' },
-            { value: 'soft', label: 'Suave' },
-            { value: 'dark', label: 'Escuro' },
-            { value: 'earthy', label: 'Terroso' }
-          ]}
-          onChange={onChangeSectionBackground}
-        />
+        <BackgroundPicker value={bgConfig} onChange={handleBgChange} />
       </div>
 
       <div className="inspector-field">
@@ -141,15 +137,6 @@ export function SectionSettingsPanel(_props: {
       </div>
 
       <div className="inspector-field">
-        <label className="inspector-label">Cor de fundo personalizada</label>
-        <ColorSwatchPicker
-          value={backgroundColor || undefined}
-          onChange={(color) => onUpdateSettings({ backgroundColor: color })}
-        />
-        <p className="inspector-hint">Sobrepõe o fundo predefinido acima.</p>
-      </div>
-
-      <div className="inspector-field">
         <label className="inspector-label">Espaço entre colunas</label>
         <SegmentedControl<'sm' | 'md' | 'lg'>
           block
@@ -184,7 +171,9 @@ export function SectionSettingsPanel(_props: {
         <input
           type="text"
           value={anchorId}
-          onChange={(e) => onUpdateSettings({ anchorId: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '') })}
+          onChange={(e) =>
+            onUpdateSettings({ anchorId: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '') })
+          }
           placeholder="ex: sobre"
         />
         <p className="inspector-hint">Permite link direto até esta seção: /p/slug#ancora</p>

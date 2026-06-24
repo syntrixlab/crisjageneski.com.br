@@ -397,7 +397,6 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
               <SectionSettingsPanel
                 section={section}
                 onChangeSectionColumns={(cols) => sections.handleChangeSectionColumns(selection.sectionId, cols)}
-                onChangeSectionBackground={(bg) => sections.handleChangeSectionBackground(selection.sectionId, bg)}
                 onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(selection.sectionId, pad)}
                 onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(selection.sectionId, mw)}
                 onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(selection.sectionId, h)}

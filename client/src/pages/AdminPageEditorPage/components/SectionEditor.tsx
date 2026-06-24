@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
   closestCenter,
-  type DragEndEvent
+  type DragEndEvent,
+  type DragStartEvent
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -22,6 +24,8 @@ import { EditableBlock } from './EditableBlock';
 import { SectionToolbar } from './SectionToolbar';
 import { SortableBlock } from './SortableBlock';
 import type { SectionDragHandle } from './SortableSection';
+import { blockRegistry } from '@/blocks/registry';
+import type { BlockType } from '@/types';
 
 function AddBlockButton(_props: { onClick: () => void; style?: React.CSSProperties; label?: string }) {
   const { onClick, style, label } = _props;
@@ -78,6 +82,7 @@ export function SectionEditor(_props: {
   } = _props;
 
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
   const isSectionHidden = section.settings?.hidden ?? false;
   const customBg = section.settings?.backgroundColor;
@@ -92,7 +97,12 @@ export function SectionEditor(_props: {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const handleBlockDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
+
   const handleBlockDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const activeId = String(active.id);
@@ -145,7 +155,9 @@ export function SectionEditor(_props: {
       <DndContext
         sensors={blockSensors}
         collisionDetection={closestCenter}
+        onDragStart={handleBlockDragStart}
         onDragEnd={handleBlockDragEnd}
+        onDragCancel={() => setActiveDragId(null)}
       >
         <div
           className="page-editor-columns"
@@ -212,6 +224,14 @@ export function SectionEditor(_props: {
             );
           })}
         </div>
+
+        <DragOverlay dropAnimation={null}>
+          {activeDragId ? (() => {
+            const activeBlock = section.cols.flatMap((c) => c.blocks).find((b) => b.id === activeDragId);
+            const label = activeBlock ? (blockRegistry[activeBlock.type as BlockType]?.label ?? activeBlock.type) : '';
+            return <div className="block-drag-overlay">{label}</div>;
+          })() : null}
+        </DragOverlay>
       </DndContext>
 
       <ConfirmModal

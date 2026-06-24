@@ -10011,3 +10011,20 @@ body, p, span, .body-text, .text {
 
 .section-dragging { opacity: 0.65; }
 .section-dragging .page-section-editor { box-shadow: 0 10px 30px rgba(31, 45, 22, 0.18); }
+
+/* ----- DnD de blocos (T2.3/T2.4/T2.5) ----- */
+.block-drag-overlay {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  background: var(--color-forest);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(31, 45, 22, 0.25);
+  cursor: grabbing;
+  pointer-events: none;
+  white-space: nowrap;
+}

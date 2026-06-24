@@ -1,9 +1,26 @@
 import { useState } from 'react';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove
+} from '@dnd-kit/sortable';
 import { ConfirmModal } from '@/components/AdminUI';
-import { canAddSideAtIndex, getBlockRowIndex, getSectionColumnCount } from '@/utils/pageLayoutHelpers';
+import { canAddSideAtIndex, sortBlocksByRowIndex } from '@/utils/pageLayoutHelpers';
+import { getSectionColumnCount } from '@/utils/pageLayoutHelpers';
 import type { PageBlock, PageSection } from '@/types';
 import { EditableBlock } from './EditableBlock';
 import { SectionToolbar } from './SectionToolbar';
+import { SortableBlock } from './SortableBlock';
 import type { SectionDragHandle } from './SortableSection';
 
 function AddBlockButton(_props: { onClick: () => void; style?: React.CSSProperties; label?: string }) {
@@ -33,6 +50,7 @@ export function SectionEditor(_props: {
   onDeleteBlock: (columnIndex: number, block: PageBlock) => void;
   onDuplicateBlock: (columnIndex: number, blockId: string) => void;
   onToggleBlockVisible: (columnIndex: number, block: PageBlock) => void;
+  onReorderBlocksInColumn: (columnIndex: number, orderedBlockIds: string[]) => void;
   dragHandle?: SectionDragHandle;
 }) {
   const {
@@ -53,34 +71,44 @@ export function SectionEditor(_props: {
     onDeleteBlock,
     onDuplicateBlock,
     onToggleBlockVisible,
+    onReorderBlocksInColumn,
     dragHandle
   } = _props;
+
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
   const isSectionHidden = section.settings?.hidden ?? false;
   const customBg = section.settings?.backgroundColor;
   const gapMapEditor: Record<string, string> = { sm: '0.75rem', md: '1rem', lg: '2rem' };
   const editorGap = section.settings?.columnGap ? gapMapEditor[section.settings.columnGap] : '1rem';
-  const alignMapEditor: Record<string, string> = { top: 'start', center: 'center', bottom: 'end' };
-  const editorAlign = section.settings?.verticalAlign ? alignMapEditor[section.settings.verticalAlign] : 'start';
+  const alignMapEditor: Record<string, string> = { top: 'flex-start', center: 'flex-start', bottom: 'flex-start' };
+  const editorAlign = section.settings?.verticalAlign ? alignMapEditor[section.settings.verticalAlign] : 'flex-start';
   const columnsCount = getSectionColumnCount(section);
-  const rowCount =
-    section.cols.reduce((max, col) => {
-      col.blocks.forEach((block, index) => {
-        max = Math.max(max, getBlockRowIndex(block, index));
-      });
-      return max;
-    }, -1) + 1;
-  const columnRows = section.cols.map((col) => {
-    const map = new Map<number, { block: PageBlock; blockIndex: number }>();
-    col.blocks.forEach((block, index) => {
-      const rowIndex = getBlockRowIndex(block, index);
-      if (!map.has(rowIndex)) {
-        map.set(rowIndex, { block, blockIndex: index });
+
+  const blockSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleBlockDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    for (let colIdx = 0; colIdx < section.cols.length; colIdx++) {
+      const sorted = sortBlocksByRowIndex(section.cols[colIdx].blocks);
+      const blockIds = sorted.map((b) => b.id);
+      const activeIdx = blockIds.indexOf(activeId);
+      if (activeIdx < 0) continue;
+      const overIdx = blockIds.indexOf(overId);
+      if (overIdx >= 0) {
+        const newOrder = arrayMove(blockIds, activeIdx, overIdx);
+        onReorderBlocksInColumn(colIdx, newOrder);
       }
-    });
-    return map;
-  });
+      break;
+    }
+  };
 
   return (
     <div
@@ -102,116 +130,78 @@ export function SectionEditor(_props: {
         dragHandle={dragHandle}
       />
 
-      <div
-        className="page-editor-columns"
-        style={{ gridTemplateColumns: `repeat(${getSectionColumnCount(section)}, minmax(0, 1fr))`, gap: editorGap, alignItems: editorAlign }}
+      <DndContext
+        sensors={blockSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleBlockDragEnd}
       >
-        {columnsCount > 1 &&
-          section.cols.map((col, colIndex) => (
-            <div key={`header-${col.id}`} className="page-col-header" style={{ gridColumn: `${colIndex + 1} / span 1` }}>
-              <strong>Coluna {colIndex + 1}</strong>
-            </div>
-          ))}
-
-        {Array.from({ length: rowCount }).map((_, rowIndex) => {
-          const blocksInRow = section.cols.map((_, colIndex) => columnRows[colIndex].get(rowIndex)).filter(Boolean);
-
-          if (blocksInRow.length === 0) {
+        <div
+          className="page-editor-columns"
+          style={{
+            gridTemplateColumns: `repeat(${columnsCount}, minmax(0, 1fr))`,
+            gap: editorGap,
+            alignItems: editorAlign
+          }}
+        >
+          {section.cols.map((col, colIndex) => {
+            const sortedBlocks = sortBlocksByRowIndex(col.blocks);
             return (
-              <div
-                key={`empty-row-${rowIndex}`}
-                className="page-block-wrapper"
-                style={{ gridColumn: '1 / -1', gridRow: rowIndex + 1 }}
-              >
-                <AddBlockButton
-                  onClick={() => onAddBlock(0, rowIndex)}
-                  label="+ Adicionar bloco (linha vazia)"
-                />
-              </div>
-            );
-          }
+              <div key={col.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: 0 }}>
+                {columnsCount > 1 && (
+                  <div className="page-col-header">
+                    <strong>Coluna {colIndex + 1}</strong>
+                  </div>
+                )}
 
-          return section.cols.map((col, colIndex) => {
-            const entry = columnRows[colIndex].get(rowIndex);
-
-            if (!entry) {
-              return (
-                <div
-                  key={`empty-${col.id}-${rowIndex}`}
-                  className="page-block-wrapper"
-                  style={{ gridColumn: `${colIndex + 1} / span 1`, gridRow: rowIndex + 1 }}
+                <SortableContext
+                  items={sortedBlocks.map((b) => b.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <AddBlockButton onClick={() => onAddBlock(colIndex, rowIndex)} />
-                </div>
-              );
-            }
+                  {sortedBlocks.map((block, blockIdx) => {
+                    const isLocked = block.isLocked || block.type === 'hero';
+                    const canAddSide = canAddSideAtIndex({
+                      columns: section.cols,
+                      fromColumnIndex: colIndex,
+                      fromIndex: blockIdx,
+                      direction: 'right'
+                    });
+                    return (
+                      <SortableBlock key={block.id} id={block.id} disabled={isLocked}>
+                        <div className="page-block-wrapper">
+                          <EditableBlock
+                            block={block}
+                            isSelected={selectedBlockId === block.id}
+                            onSelect={() => onEditBlock(colIndex, block, blockIdx)}
+                            onDelete={() => !isLocked && onDeleteBlock(colIndex, block)}
+                            onDuplicate={() => onDuplicateBlock(colIndex, block.id)}
+                            onMoveUp={() => !isLocked && onMoveBlock(colIndex, block.id, 'up')}
+                            onMoveDown={() => !isLocked && onMoveBlock(colIndex, block.id, 'down')}
+                            onMoveColumn={() => onMoveBlockColumn(colIndex, blockIdx, block)}
+                            onToggleVisible={() => onToggleBlockVisible(colIndex, block)}
+                            onAddSide={() => onAddBlockSide(colIndex, blockIdx)}
+                            canAddSide={canAddSide}
+                            disableMoveUp={isLocked || blockIdx === 0}
+                            disableMoveDown={isLocked || blockIdx === sortedBlocks.length - 1}
+                          />
+                        </div>
+                      </SortableBlock>
+                    );
+                  })}
+                </SortableContext>
 
-            const { block, blockIndex } = entry;
-            const isLocked = block.isLocked || block.type === 'hero';
-            const isFullWidth = block.type === 'hero' || block.type === 'recent-posts' || block.type === 'services';
-            const span = isFullWidth ? columnsCount : Math.min(block.colSpan ?? 1, columnsCount);
-            const canAddSide = canAddSideAtIndex({
-              columns: section.cols,
-              fromColumnIndex: colIndex,
-              fromIndex: rowIndex,
-              direction: 'right'
-            });
+                {sortedBlocks.length === 0 && (
+                  <div className="admin-empty" style={{ fontSize: '0.85rem' }}>
+                    Sem blocos nesta coluna.
+                  </div>
+                )}
 
-            return (
-              <div
-                key={block.id}
-                className="page-block-wrapper"
-                style={{
-                  gridColumn: isFullWidth ? '1 / -1' : `${colIndex + 1} / span ${span}`,
-                  gridRow: rowIndex + 1
-                }}
-              >
-                <EditableBlock
-                  block={block}
-                  isSelected={selectedBlockId === block.id}
-                  onSelect={() => onEditBlock(colIndex, block, blockIndex)}
-                  onDelete={() => !isLocked && onDeleteBlock(colIndex, block)}
-                  onDuplicate={() => onDuplicateBlock(colIndex, block.id)}
-                  onMoveUp={() => !isLocked && onMoveBlock(colIndex, block.id, 'up')}
-                  onMoveDown={() => !isLocked && onMoveBlock(colIndex, block.id, 'down')}
-                  onMoveColumn={() => onMoveBlockColumn(colIndex, blockIndex, block)}
-                  onToggleVisible={() => onToggleBlockVisible(colIndex, block)}
-                  onAddSide={() => onAddBlockSide(colIndex, rowIndex)}
-                  canAddSide={canAddSide}
-                  disableMoveUp={isLocked || rowIndex === 0}
-                  disableMoveDown={isLocked || rowIndex === rowCount - 1}
-                />
+                <AddBlockButton onClick={() => onAddBlock(colIndex, sortedBlocks.length)} />
               </div>
             );
-          });
-        })}
+          })}
+        </div>
+      </DndContext>
 
-        {rowCount === 0 &&
-          section.cols.map((col, colIndex) => (
-            <div
-              key={`empty-${col.id}`}
-              className="admin-empty"
-              style={{ gridColumn: `${colIndex + 1} / span 1`, gridRow: 1 }}
-            >
-              Sem blocos nesta coluna.
-            </div>
-          ))}
-
-        {columnsCount > 1 ? (
-          <AddBlockButton
-            key="add-end-fullwidth"
-            onClick={() => onAddBlock(0, rowCount)}
-            style={{ gridColumn: '1 / -1', gridRow: rowCount + 1 }}
-            label="+ Adicionar bloco (nova linha)"
-          />
-        ) : (
-          <AddBlockButton
-            key="add-end-single"
-            onClick={() => onAddBlock(0, rowCount)}
-            style={{ gridColumn: '1 / span 1', gridRow: rowCount + 1 }}
-          />
-        )}
-      </div>
       <ConfirmModal
         isOpen={showConfirmDelete}
         onClose={() => setShowConfirmDelete(false)}

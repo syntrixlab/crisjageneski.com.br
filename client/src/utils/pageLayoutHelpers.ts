@@ -39,7 +39,7 @@ export function getBlockRowIndex(block: PageBlock, fallbackIndex: number): numbe
   return isValidRowIndex(block.rowIndex) ? Number(block.rowIndex) : fallbackIndex;
 }
 
-const sortBlocksByRowIndex = (blocks: PageBlock[]): PageBlock[] =>
+export const sortBlocksByRowIndex = (blocks: PageBlock[]): PageBlock[] =>
   blocks
     .map((block, index) => ({
       block,
@@ -575,6 +575,36 @@ export function resolveSideTargetColumnIndex(_props: {
     return 1;
   }
   return null;
+}
+
+/**
+ * Reorders blocks in a column based on an ordered list of block IDs.
+ * Assigns rowIndex 0, 1, 2... based on the new order.
+ */
+export function reorderBlocksInColumn(
+  layout: PageLayoutV2,
+  sectionId: string,
+  columnIndex: number,
+  orderedBlockIds: string[]
+): PageLayoutV2 {
+  const sections = layout.sections.map((section) => {
+    if (section.id !== sectionId) return section;
+    const cols = section.cols.map((col, colIdx) => {
+      if (colIdx !== columnIndex) return col;
+      const blockMap = new Map(col.blocks.map((b) => [b.id, b]));
+      const reordered = orderedBlockIds.flatMap((id, rowIndex) => {
+        const block = blockMap.get(id);
+        return block ? [{ ...block, rowIndex }] : [];
+      });
+      const usedIds = new Set(orderedBlockIds);
+      const rest = col.blocks
+        .filter((b) => !usedIds.has(b.id))
+        .map((b, i) => ({ ...b, rowIndex: reordered.length + i }));
+      return { ...col, blocks: sortBlocksByRowIndex([...reordered, ...rest]) };
+    });
+    return { ...section, cols };
+  });
+  return { ...layout, sections };
 }
 
 export function canAddSideAtIndex(_props: {

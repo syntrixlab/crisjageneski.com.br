@@ -86,6 +86,7 @@ describe('PageEditorToolbar', () => {
         onDeleteBlock={vi.fn()}
         onDuplicateBlock={vi.fn()}
         onToggleBlockVisible={vi.fn()}
+        onReorderBlocksInColumn={vi.fn()}
       />
     );
 

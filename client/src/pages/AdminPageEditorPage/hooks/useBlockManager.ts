@@ -7,6 +7,7 @@ import {
   updateBlockInSection,
   moveBlockInColumn,
   moveBlockToColumn,
+  reorderBlocksInColumn,
   duplicateBlock,
   canAddSideAtIndex,
   resolveSideTargetColumnIndex
@@ -260,6 +261,17 @@ export function useBlockManager(
     }));
   };
 
+  const handleReorderBlocksInColumn = (
+    sectionId: string,
+    columnIndex: number,
+    orderedBlockIds: string[]
+  ) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: reorderBlocksInColumn(prev.layout, sectionId, columnIndex, orderedBlockIds)
+    }));
+  };
+
   return {
     blockModal,
     setBlockModal,
@@ -279,6 +291,7 @@ export function useBlockManager(
     handleConfirmMoveColumn,
     handleDeleteBlock,
     handleAddBlockSide,
-    handleDuplicateBlock
+    handleDuplicateBlock,
+    handleReorderBlocksInColumn
   };
 }

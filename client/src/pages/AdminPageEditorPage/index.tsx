@@ -299,6 +299,9 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       onToggleBlockVisible={(colIndex, block) =>
                         blocks.handleToggleBlockVisibility(section.id, colIndex, block.id)
                       }
+                      onReorderBlocksInColumn={(colIndex, orderedIds) =>
+                        blocks.handleReorderBlocksInColumn(section.id, colIndex, orderedIds)
+                      }
                       dragHandle={{ attributes, listeners }}
                     />
                       )}

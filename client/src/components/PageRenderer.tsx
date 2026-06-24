@@ -6,6 +6,7 @@ import { calculateBlockSpan } from '../utils/columnSpan';
 import { organizeSectionBlocksIntoRows } from '../utils/blockGridHelpers';
 import { blockRegistry } from '@/blocks/registry';
 import { BlockErrorBoundary } from './BlockErrorBoundary';
+import { buildBgStyle, sectionSettingsToBgConfig } from '@/utils/backgroundHelpers';
 
 type BlockPosition = {
   block: PageBlock;
@@ -104,15 +105,22 @@ export function PageRendererCore({ layout, className = '', enableFormSubmit = tr
 function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageSlug }: { section: PageSection; sectionIndex: number; enableFormSubmit?: boolean; pageSlug?: string }) {
   const settings = section.settings ?? {};
   if (settings.hidden) return null;
-  const background = (settings.backgroundStyle as string) || (settings.background as string) || 'none';
-  const backgroundClass =
-    background === 'soft'
-      ? 'section-bg-soft'
-      : background === 'dark'
-        ? 'section-bg-dark'
-        : background === 'earthy'
-          ? 'section-bg-earthy'
-          : 'section-bg-none';
+
+  // Novo sistema de fundo
+  const hasNewBgSystem = !!settings.backgroundMode;
+  const bgConfig = sectionSettingsToBgConfig(settings);
+  const { wrapperStyle: newBgStyle, overlayStyle: sectionOverlayStyle } = buildBgStyle(bgConfig);
+
+  // Legado: classes para presets soft/dark/earthy (mantido para retrocompatibilidade)
+  const legacyBackground = (settings.backgroundStyle as string) || (settings.background as string) || 'none';
+  const legacyBgClass = !hasNewBgSystem
+    ? (legacyBackground === 'soft' ? 'section-bg-soft'
+      : legacyBackground === 'dark' ? 'section-bg-dark'
+      : legacyBackground === 'earthy' ? 'section-bg-earthy'
+      : 'section-bg-none')
+    : '';
+
+  const sectionStyle = hasNewBgSystem ? newBgStyle : undefined;
 
   const density = (settings.density as string) || (settings.padding as string) || 'normal';
   const paddingClass = `section-padding-${density}`;
@@ -127,14 +135,13 @@ function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageS
   const columnGapValue = settings.columnGap ? gapMap[settings.columnGap] : 'var(--space-6)';
   const alignMap: Record<string, string> = { top: 'start', center: 'center', bottom: 'end' };
   const verticalAlignValue = settings.verticalAlign ? alignMap[settings.verticalAlign] : 'start';
-  const sectionStyle = settings.backgroundColor ? { background: settings.backgroundColor } : undefined;
 
   const hasHero = section.cols.some((col) => col.blocks.some((b) => b.type === 'hero'));
   const containerClass = hasHero ? 'container container--flush' : 'container';
   const columnCount = getSectionColumnCount(section);
   const effectiveColumns = hasHero ? 1 : columnCount;
 
-  const shouldApplyContainer = (background === 'soft' || background === 'dark' || background === 'earthy') && !hasHero;
+  const shouldApplyContainer = (legacyBackground === 'soft' || legacyBackground === 'dark' || legacyBackground === 'earthy') && !hasHero;
   const sectionContainerClass = shouldApplyContainer ? 'section-container' : '';
 
   const rows = organizeSectionBlocksIntoRows(section);
@@ -161,10 +168,11 @@ function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageS
   return (
     <section
       id={settings.anchorId || undefined}
-      className={`page-public-section ${backgroundClass} ${paddingClass} ${maxWidthClass} ${heightClass}`.trim()}
+      className={`page-public-section ${legacyBgClass} ${paddingClass} ${maxWidthClass} ${heightClass}`.trim()}
       data-section-index={sectionIndex}
-      style={sectionStyle}
+      style={sectionOverlayStyle ? { ...sectionStyle, position: 'relative' } : sectionStyle}
     >
+      {sectionOverlayStyle && <div style={sectionOverlayStyle} aria-hidden />}
       <div className={containerClass}>
         <div
           className={`page-public-grid ${sectionContainerClass} cols-${effectiveColumns}`.trim()}
@@ -228,7 +236,13 @@ export function PageBlockView({ block, enableFormSubmit = true, pageSlug }: { bl
     );
   };
 
-  return (
+  const bg = block.blockBackground;
+  const hasBg = bg && (bg.mode === 'color' || bg.mode === 'image');
+  const { wrapperStyle: blockBgWrapper, overlayStyle: blockBgOverlay } = hasBg
+    ? buildBgStyle(bg)
+    : { wrapperStyle: {}, overlayStyle: undefined };
+
+  const content = (
     <BlockErrorBoundary>
       <Renderer
         data={block.data}
@@ -239,4 +253,17 @@ export function PageBlockView({ block, enableFormSubmit = true, pageSlug }: { bl
       />
     </BlockErrorBoundary>
   );
+
+  if (hasBg) {
+    return (
+      <div className="block-bg-wrapper" style={blockBgWrapper}>
+        {blockBgOverlay && <div style={blockBgOverlay} aria-hidden />}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return content;
 }

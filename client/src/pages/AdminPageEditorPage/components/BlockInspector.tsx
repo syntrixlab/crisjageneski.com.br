@@ -1,7 +1,9 @@
 import React from 'react';
 import { blockRegistry } from '@/blocks/registry';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { BackgroundPicker } from '@/components/StyleControls';
 import type { BlockType, PageBlock } from '@/types';
+import type { BackgroundConfig } from '@/utils/backgroundHelpers';
 
 // Blocos que sempre ocupam a largura total da seção — sem controle de colunas.
 const FULL_WIDTH_TYPES: ReadonlySet<string> = new Set(['hero', 'recent-posts', 'services', 'contact-info']);
@@ -12,8 +14,9 @@ export function BlockInspector(_props: {
   onChangeData: (data: PageBlock['data']) => void;
   onChangeColSpan: (colSpan: number) => void;
   onUploadingChange?: (uploading: boolean) => void;
+  onChangeBlockBackground: (bg: BackgroundConfig) => void;
 }) {
-  const { block, columnCount, onChangeData, onChangeColSpan, onUploadingChange } = _props;
+  const { block, columnCount, onChangeData, onChangeColSpan, onUploadingChange, onChangeBlockBackground } = _props;
   const config = blockRegistry[block.type as BlockType];
 
   if (!config) {
@@ -58,6 +61,14 @@ export function BlockInspector(_props: {
           value={block.data}
           onChange={(data) => onChangeData(data as PageBlock['data'])}
           onUploadingChange={onUploadingChange}
+        />
+      </div>
+
+      <div className="inspector-field">
+        <label className="inspector-label">Fundo do bloco</label>
+        <BackgroundPicker
+          value={block.blockBackground ?? { mode: 'none' }}
+          onChange={onChangeBlockBackground}
         />
       </div>
     </div>

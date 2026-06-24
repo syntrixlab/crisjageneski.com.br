@@ -438,6 +438,14 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                   )
                 }
                 onUploadingChange={blocks.setHasUploading}
+                onChangeBlockBackground={(bg) =>
+                  blocks.handleUpdateBlockBackground(
+                    selection.sectionId,
+                    selection.columnIndex,
+                    selection.blockId,
+                    bg
+                  )
+                }
               />
             );
           })()}

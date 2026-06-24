@@ -286,6 +286,39 @@ export function useBlockManager(
     }));
   };
 
+  const handleUpdateBlockBackground = (
+    sectionId: string,
+    columnIndex: number,
+    blockId: string,
+    blockBackground: import('@/utils/backgroundHelpers').BackgroundConfig
+  ) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: {
+        ...prev.layout,
+        sections: prev.layout.sections.map((sec) =>
+          sec.id !== sectionId
+            ? sec
+            : {
+                ...sec,
+                cols: sec.cols.map((col, idx) =>
+                  idx !== columnIndex
+                    ? col
+                    : {
+                        ...col,
+                        blocks: col.blocks.map((b) =>
+                          b.id !== blockId
+                            ? b
+                            : { ...b, blockBackground, updatedAt: new Date().toISOString() }
+                        )
+                      }
+                )
+              }
+        )
+      }
+    }));
+  };
+
   return {
     blockModal,
     setBlockModal,
@@ -307,6 +340,7 @@ export function useBlockManager(
     handleAddBlockSide,
     handleDuplicateBlock,
     handleReorderBlocksInColumn,
-    handleMoveBlockToColumnAt
+    handleMoveBlockToColumnAt,
+    handleUpdateBlockBackground
   };
 }

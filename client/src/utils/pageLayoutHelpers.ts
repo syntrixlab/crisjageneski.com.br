@@ -5,23 +5,24 @@ import { normalizeBlocks } from './heroMigration';
 const isValidRowIndex = (value: unknown): value is number =>
   Number.isInteger(value) && Number(value) >= 0;
 
+type SectionSettings = NonNullable<import('../types').PageSection['settings']>;
+
 /**
- * Normalizes section settings by removing deprecated aliases
- * Keeps canonical fields: background, padding, maxWidth
- * Removes: backgroundStyle, density, width
+ * Normalizes section settings by resolving deprecated aliases into canonical fields.
+ * Preserves ALL fields (backgroundColor, columnGap, verticalAlign, anchorId, name, hidden…).
+ * Aliases resolved and removed: backgroundStyle → background, density → padding, width → maxWidth.
  */
-function normalizeSectionSettings(settings?: Record<string, any>) {
+function normalizeSectionSettings(settings?: SectionSettings): SectionSettings {
   if (!settings) return {};
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { backgroundStyle, density, width, ...rest } = settings;
+
   return {
-    ...(settings.height && { height: settings.height }),
-    ...(settings.columnsLayout && { columnsLayout: settings.columnsLayout }),
-    ...(settings.background && { background: settings.background }),
-    ...(settings.backgroundStyle && !settings.background && { background: settings.backgroundStyle }),
-    ...(settings.padding && { padding: settings.padding }),
-    ...(settings.density && !settings.padding && { padding: settings.density }),
-    ...(settings.maxWidth && { maxWidth: settings.maxWidth }),
-    ...(settings.width && !settings.maxWidth && { maxWidth: settings.width })
+    ...rest,
+    ...(!rest.background && backgroundStyle ? { background: backgroundStyle } : {}),
+    ...(!rest.padding && density ? { padding: density } : {}),
+    ...(!rest.maxWidth && width ? { maxWidth: width } : {})
   };
 }
 

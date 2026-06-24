@@ -10144,3 +10144,55 @@ body, p, span, .body-text, .text {
   accent-color: var(--color-forest);
   cursor: pointer;
 }
+
+/* ----- BackgroundPicker ----- */
+.background-picker { display: flex; flex-direction: column; gap: 0.75rem; }
+.background-picker-section { padding-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+
+.background-picker-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border: 2px solid var(--color-lines);
+  border-radius: 10px;
+  background: var(--color-shell);
+  cursor: pointer;
+  transition: border-color 150ms ease;
+  width: 100%;
+  text-align: left;
+}
+.background-picker-preview:hover { border-color: var(--color-forest); }
+
+.background-picker-thumb {
+  width: 56px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.background-picker-empty {
+  width: 56px;
+  height: 40px;
+  border-radius: 6px;
+  background: var(--color-lines);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--color-forest);
+}
+
+.background-picker-change-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-forest);
+}
+
+.block-bg-wrapper {
+  position: relative;
+  border-radius: inherit;
+  overflow: hidden;
+}

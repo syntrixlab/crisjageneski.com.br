@@ -41,7 +41,10 @@ export const SITE_THEME_PRESETS: Record<SiteThemePreset, SiteTheme> = {
   }
 };
 
-export const DEFAULT_SITE_THEME: SiteTheme = SITE_THEME_PRESETS['terra-oliva'];
+export const DEFAULT_SITE_THEME: SiteTheme = {
+  ...SITE_THEME_PRESETS['terra-oliva'],
+  typography: { headingFont: null, bodyFont: null }
+};
 
 const presetKeys = Object.keys(SITE_THEME_PRESETS) as SiteThemePreset[];
 const hexColorPattern = /^#[0-9a-fA-F]{6}$/;

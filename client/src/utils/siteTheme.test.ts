@@ -24,7 +24,8 @@ describe('siteTheme', () => {
         text: '#102030',
         primary: '#235c9f',
         accent: '#7a9cc6'
-      }
+      },
+      typography: { headingFont: null, bodyFont: null }
     });
   });
 

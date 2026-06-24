@@ -1,6 +1,7 @@
 import type { PageSection } from '@/types';
 import { getSectionColumnCount } from '@/utils/pageLayoutHelpers';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { ColorSwatchPicker } from '@/components/StyleControls';
 
 type Columns = 1 | 2 | 3;
 type Background = 'none' | 'soft' | 'dark' | 'earthy';
@@ -141,22 +142,10 @@ export function SectionSettingsPanel(_props: {
 
       <div className="inspector-field">
         <label className="inspector-label">Cor de fundo personalizada</label>
-        <div className="inspector-color-row">
-          <input
-            type="color"
-            value={backgroundColor || '#ffffff'}
-            onChange={(e) => onUpdateSettings({ backgroundColor: e.target.value })}
-          />
-          {backgroundColor && (
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={() => onUpdateSettings({ backgroundColor: undefined })}
-            >
-              Remover
-            </button>
-          )}
-        </div>
+        <ColorSwatchPicker
+          value={backgroundColor || undefined}
+          onChange={(color) => onUpdateSettings({ backgroundColor: color })}
+        />
         <p className="inspector-hint">Sobrepõe o fundo predefinido acima.</p>
       </div>
 

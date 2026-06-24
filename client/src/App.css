@@ -5248,7 +5248,7 @@ figure[data-type="image"] {
   display: grid;
   place-items: center;
   padding: 1rem;
-  z-index: 50;
+  z-index: 1100;
 }
 
 .admin-modal {
@@ -7960,7 +7960,7 @@ figure.page-public-image figcaption {
   display: grid;
   place-items: center;
   padding: 1rem;
-  z-index: 50;
+  z-index: 1100;
 }
 
 .modal {

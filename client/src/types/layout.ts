@@ -31,6 +31,11 @@ export type PageSection = {
     density?: 'compact' | 'normal' | 'large';
     height?: 'normal' | 'tall';
     hidden?: boolean;
+    name?: string;
+    anchorId?: string;
+    backgroundColor?: string;
+    columnGap?: 'sm' | 'md' | 'lg';
+    verticalAlign?: 'top' | 'center' | 'bottom';
     maxWidth?: 'normal' | 'wide';
     width?: 'normal' | 'wide';
     columnsLayout?: 2 | 3;

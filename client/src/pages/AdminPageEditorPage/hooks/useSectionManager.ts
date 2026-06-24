@@ -73,6 +73,21 @@ export function useSectionManager(
     setPage((prev) => ({ ...prev, layout: moveSection(prev.layout, sectionId, direction) }));
   };
 
+  const handleUpdateSectionSettings = (
+    sectionId: string,
+    patch: Partial<NonNullable<PageSection['settings']>>
+  ) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: {
+        ...prev.layout,
+        sections: prev.layout.sections.map((sec) =>
+          sec.id === sectionId ? { ...sec, settings: { ...sec.settings, ...patch } } : sec
+        )
+      }
+    }));
+  };
+
   const handleToggleSectionHidden = (sectionId: string) => {
     setPage((prev) => ({
       ...prev,
@@ -168,6 +183,7 @@ export function useSectionManager(
     handleMoveSection,
     handleReorderSections,
     handleToggleSectionHidden,
+    handleUpdateSectionSettings,
     handleChangeSectionColumns,
     handleChangeSectionBackground,
     handleChangeSectionPadding,

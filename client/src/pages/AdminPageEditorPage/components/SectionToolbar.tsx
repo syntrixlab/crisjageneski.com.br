@@ -1,7 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faEyeSlash, faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { IconButton } from '@/components/AdminUI';
 import type { PageSection } from '@/types';
+import type { SectionDragHandle } from './SortableSection';
 
 export function SectionToolbar(_props: {
   section: PageSection;
@@ -13,6 +14,7 @@ export function SectionToolbar(_props: {
   onToggleHidden: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
+  dragHandle?: SectionDragHandle;
 }) {
   const {
     section,
@@ -23,7 +25,8 @@ export function SectionToolbar(_props: {
     onSettings,
     onToggleHidden,
     onDuplicate,
-    onRemove
+    onRemove,
+    dragHandle
   } = _props;
 
   const isHero = section.kind === 'hero';
@@ -34,8 +37,20 @@ export function SectionToolbar(_props: {
   return (
     <div className="section-toolbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {!isHero && dragHandle && (
+          <button
+            type="button"
+            className="section-drag-handle"
+            aria-label="Arrastar para reordenar seção"
+            title="Arrastar para reordenar"
+            {...dragHandle.attributes}
+            {...dragHandle.listeners}
+          >
+            <FontAwesomeIcon icon={faGripVertical} />
+          </button>
+        )}
         <strong style={{ fontSize: '0.9rem' }}>
-          {isHero ? 'Hero (Seção Fixa)' : `Seção ${sectionIndex + 1}`}
+          {isHero ? 'Hero (Seção Fixa)' : section.settings?.name?.trim() || `Seção ${sectionIndex + 1}`}
         </strong>
         {isHidden && (
           <span className="section-hidden-badge">

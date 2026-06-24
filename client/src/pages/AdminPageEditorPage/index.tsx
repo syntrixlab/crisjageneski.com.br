@@ -1,5 +1,20 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useBlocker, useParams } from 'react-router-dom';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove
+} from '@dnd-kit/sortable';
 import { ConfirmModal } from '@/components/AdminUI';
 import { SeoHead } from '@/components/SeoHead';
 import { PageRendererCore } from '@/components/PageRenderer';
@@ -20,6 +35,7 @@ import { SectionSettingsPanel } from './components/SectionSettingsPanel';
 import { PageSettingsPanel } from './components/PageSettingsPanel';
 import { BlockInspector } from './components/BlockInspector';
 import { SectionOutlinePanel } from './components/SectionOutlinePanel';
+import { SortableSection } from './components/SortableSection';
 import { SegmentedControl } from '@/components/SegmentedControl';
 
 type EditorSelection =
@@ -67,6 +83,26 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
       void saveDraft();
     }
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = page.layout.sections.map((s) => s.id);
+    const from = ids.indexOf(String(active.id));
+    const to = ids.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+    const reordered = arrayMove(ids, from, to);
+    // Hero(s) sempre fixos no topo, preservando a ordem relativa.
+    const heroIds = page.layout.sections.filter((s) => s.kind === 'hero').map((s) => s.id);
+    const heroSet = new Set(heroIds);
+    const finalIds = [...heroIds, ...reordered.filter((id) => !heroSet.has(id))];
+    sections.handleReorderSections(finalIds);
+  };
 
   const isDirtyRef = useRef(isDirty);
   useEffect(() => {
@@ -224,8 +260,19 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       <p>Nenhuma seção adicionada. Clique em "+ Adicionar seção" para começar.</p>
                     </div>
                   )}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleSectionDragEnd}
+                  >
+                    <SortableContext
+                      items={page.layout.sections.map((s) => s.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
                   {page.layout.sections.map((section, sectionIndex) => (
                     <Fragment key={section.id}>
+                    <SortableSection id={section.id} disabled={section.kind === 'hero'}>
+                      {({ attributes, listeners }) => (
                     <SectionEditor
                       section={section}
                       sectionIndex={sectionIndex}
@@ -252,7 +299,10 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       onToggleBlockVisible={(colIndex, block) =>
                         blocks.handleToggleBlockVisibility(section.id, colIndex, block.id)
                       }
+                      dragHandle={{ attributes, listeners }}
                     />
+                      )}
+                    </SortableSection>
                     <div className="section-inserter-row">
                       <button
                         type="button"
@@ -264,6 +314,8 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                     </div>
                     </Fragment>
                   ))}
+                    </SortableContext>
+                  </DndContext>
                   <div style={{ marginTop: '1.5rem' }}>
                     <button className="btn btn-outline" type="button" onClick={() => sections.handleAddSection()}>
                       + Adicionar seção
@@ -343,6 +395,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                 onChangeSectionPadding={(pad) => sections.handleChangeSectionPadding(selection.sectionId, pad)}
                 onChangeSectionMaxWidth={(mw) => sections.handleChangeSectionMaxWidth(selection.sectionId, mw)}
                 onChangeSectionHeight={(h) => sections.handleChangeSectionHeight(selection.sectionId, h)}
+                onUpdateSettings={(patch) => sections.handleUpdateSectionSettings(selection.sectionId, patch)}
               />
             );
           })()}

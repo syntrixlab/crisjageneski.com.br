@@ -71,7 +71,7 @@ export function SectionOutlinePanel(_props: {
               {sections.map((section, index) => {
                 const isHero = section.kind === 'hero';
                 const isSelected = section.id === selectedSectionId;
-                const label = isHero ? 'Hero' : `Seção ${index + 1}`;
+                const label = section.settings?.name?.trim() || (isHero ? 'Hero' : `Seção ${index + 1}`);
                 const cols = getSectionColumnCount(section);
                 const blockCount = sectionBlockCount(section);
                 const rowClass = [

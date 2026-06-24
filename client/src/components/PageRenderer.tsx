@@ -123,6 +123,12 @@ function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageS
   const height = (settings.height as string) || 'normal';
   const heightClass = height === 'tall' ? 'section-height-tall' : '';
 
+  const gapMap: Record<string, string> = { sm: '0.75rem', md: '1.5rem', lg: '2.5rem' };
+  const columnGapValue = settings.columnGap ? gapMap[settings.columnGap] : 'var(--space-6)';
+  const alignMap: Record<string, string> = { top: 'start', center: 'center', bottom: 'end' };
+  const verticalAlignValue = settings.verticalAlign ? alignMap[settings.verticalAlign] : 'start';
+  const sectionStyle = settings.backgroundColor ? { background: settings.backgroundColor } : undefined;
+
   const hasHero = section.cols.some((col) => col.blocks.some((b) => b.type === 'hero'));
   const containerClass = hasHero ? 'container container--flush' : 'container';
   const columnCount = getSectionColumnCount(section);
@@ -153,15 +159,20 @@ function SectionRenderer({ section, sectionIndex, enableFormSubmit = true, pageS
   });
 
   return (
-    <section className={`page-public-section ${backgroundClass} ${paddingClass} ${maxWidthClass} ${heightClass}`.trim()} data-section-index={sectionIndex}>
+    <section
+      id={settings.anchorId || undefined}
+      className={`page-public-section ${backgroundClass} ${paddingClass} ${maxWidthClass} ${heightClass}`.trim()}
+      data-section-index={sectionIndex}
+      style={sectionStyle}
+    >
       <div className={containerClass}>
         <div
           className={`page-public-grid ${sectionContainerClass} cols-${effectiveColumns}`.trim()}
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${effectiveColumns}, minmax(0, 1fr))`,
-            gap: 'var(--space-6)',
-            alignItems: 'start',
+            gap: columnGapValue,
+            alignItems: verticalAlignValue,
             gridAutoRows: 'auto'
           }}
         >

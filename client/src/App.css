@@ -9951,6 +9951,18 @@ body, p, span, .body-text, .text {
 
 /* ----- Estados ocultos (bloco/secao) ----- */
 .page-section-editor.is-hidden { opacity: 0.55; }
+.inspector-color-row { display: flex; align-items: center; gap: 0.6rem; }
+.inspector-color-row input[type="color"] {
+  width: 46px;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--color-lines);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  cursor: pointer;
+}
+.inspector-color-row .btn { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
 .editor-dirty-chip {
   display: inline-flex;
   align-items: center;
@@ -9977,3 +9989,25 @@ body, p, span, .body-text, .text {
 }
 
 
+
+/* ----- DnD de seções (T2.2) ----- */
+.section-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--color-forest);
+  opacity: 0.7;
+  cursor: grab;
+  border-radius: 6px;
+  touch-action: none;
+}
+.section-drag-handle:hover { opacity: 1; background: var(--color-paper); }
+.section-drag-handle:active { cursor: grabbing; }
+.section-drag-handle:focus-visible { outline: 2px solid var(--color-forest); outline-offset: 1px; }
+
+.section-dragging { opacity: 0.65; }
+.section-dragging .page-section-editor { box-shadow: 0 10px 30px rgba(31, 45, 22, 0.18); }

@@ -4,6 +4,7 @@ import { canAddSideAtIndex, getBlockRowIndex, getSectionColumnCount } from '@/ut
 import type { PageBlock, PageSection } from '@/types';
 import { EditableBlock } from './EditableBlock';
 import { SectionToolbar } from './SectionToolbar';
+import type { SectionDragHandle } from './SortableSection';
 
 function AddBlockButton(_props: { onClick: () => void; style?: React.CSSProperties; label?: string }) {
   const { onClick, style, label } = _props;
@@ -32,6 +33,7 @@ export function SectionEditor(_props: {
   onDeleteBlock: (columnIndex: number, block: PageBlock) => void;
   onDuplicateBlock: (columnIndex: number, blockId: string) => void;
   onToggleBlockVisible: (columnIndex: number, block: PageBlock) => void;
+  dragHandle?: SectionDragHandle;
 }) {
   const {
     section,
@@ -50,11 +52,17 @@ export function SectionEditor(_props: {
     onMoveBlockColumn,
     onDeleteBlock,
     onDuplicateBlock,
-    onToggleBlockVisible
+    onToggleBlockVisible,
+    dragHandle
   } = _props;
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const background = (section.settings?.backgroundStyle || section.settings?.background || 'none') as 'none' | 'soft' | 'dark' | 'earthy';
   const isSectionHidden = section.settings?.hidden ?? false;
+  const customBg = section.settings?.backgroundColor;
+  const gapMapEditor: Record<string, string> = { sm: '0.75rem', md: '1rem', lg: '2rem' };
+  const editorGap = section.settings?.columnGap ? gapMapEditor[section.settings.columnGap] : '1rem';
+  const alignMapEditor: Record<string, string> = { top: 'start', center: 'center', bottom: 'end' };
+  const editorAlign = section.settings?.verticalAlign ? alignMapEditor[section.settings.verticalAlign] : 'start';
   const columnsCount = getSectionColumnCount(section);
   const rowCount =
     section.cols.reduce((max, col) => {
@@ -78,7 +86,7 @@ export function SectionEditor(_props: {
     <div
       id={`editor-section-${section.id}`}
       className={`page-section-editor admin-card${isSectionHidden ? ' is-hidden' : ''}`}
-      style={{ marginBottom: '1.5rem', position: 'relative', overflow: 'visible' }}
+      style={{ marginBottom: '1.5rem', position: 'relative', overflow: 'visible', ...(customBg ? { background: customBg } : {}) }}
       data-bg={background}
     >
       <SectionToolbar
@@ -91,11 +99,12 @@ export function SectionEditor(_props: {
         onToggleHidden={onToggleSectionHidden}
         onDuplicate={onDuplicateSection}
         onRemove={() => setShowConfirmDelete(true)}
+        dragHandle={dragHandle}
       />
 
       <div
         className="page-editor-columns"
-        style={{ gridTemplateColumns: `repeat(${getSectionColumnCount(section)}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${getSectionColumnCount(section)}, minmax(0, 1fr))`, gap: editorGap, alignItems: editorAlign }}
       >
         {columnsCount > 1 &&
           section.cols.map((col, colIndex) => (

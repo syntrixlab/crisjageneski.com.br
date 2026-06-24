@@ -15,6 +15,7 @@ export function SectionSettingsPanel(_props: {
   onChangeSectionPadding: (padding: Padding) => void;
   onChangeSectionMaxWidth: (maxWidth: MaxWidth) => void;
   onChangeSectionHeight: (height: Height) => void;
+  onUpdateSettings: (patch: Partial<NonNullable<PageSection['settings']>>) => void;
 }) {
   const {
     section,
@@ -22,7 +23,8 @@ export function SectionSettingsPanel(_props: {
     onChangeSectionBackground,
     onChangeSectionPadding,
     onChangeSectionMaxWidth,
-    onChangeSectionHeight
+    onChangeSectionHeight,
+    onUpdateSettings
   } = _props;
 
   const background = (section.settings?.background || 'none') as Background;
@@ -30,6 +32,11 @@ export function SectionSettingsPanel(_props: {
   const maxWidth = (section.settings?.maxWidth || 'normal') as MaxWidth;
   const height = (section.settings?.height || 'normal') as Height;
   const columnsCount = getSectionColumnCount(section);
+  const name = section.settings?.name ?? '';
+  const anchorId = section.settings?.anchorId ?? '';
+  const backgroundColor = section.settings?.backgroundColor ?? '';
+  const columnGap = (section.settings?.columnGap ?? 'md') as 'sm' | 'md' | 'lg';
+  const verticalAlign = (section.settings?.verticalAlign ?? 'top') as 'top' | 'center' | 'bottom';
   const isHero = section.kind === 'hero';
 
   if (isHero) {
@@ -119,6 +126,79 @@ export function SectionSettingsPanel(_props: {
           ]}
           onChange={onChangeSectionMaxWidth}
         />
+      </div>
+
+      <div className="inspector-field">
+        <label className="inspector-label">Nome da seção (interno)</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => onUpdateSettings({ name: e.target.value })}
+          placeholder="Ex: Sobre, Serviços..."
+        />
+        <p className="inspector-hint">Aparece só no editor e no organizador, não no site.</p>
+      </div>
+
+      <div className="inspector-field">
+        <label className="inspector-label">Cor de fundo personalizada</label>
+        <div className="inspector-color-row">
+          <input
+            type="color"
+            value={backgroundColor || '#ffffff'}
+            onChange={(e) => onUpdateSettings({ backgroundColor: e.target.value })}
+          />
+          {backgroundColor && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => onUpdateSettings({ backgroundColor: undefined })}
+            >
+              Remover
+            </button>
+          )}
+        </div>
+        <p className="inspector-hint">Sobrepõe o fundo predefinido acima.</p>
+      </div>
+
+      <div className="inspector-field">
+        <label className="inspector-label">Espaço entre colunas</label>
+        <SegmentedControl<'sm' | 'md' | 'lg'>
+          block
+          ariaLabel="Espaço entre colunas"
+          value={columnGap}
+          options={[
+            { value: 'sm', label: 'Pequeno' },
+            { value: 'md', label: 'Médio' },
+            { value: 'lg', label: 'Grande' }
+          ]}
+          onChange={(v) => onUpdateSettings({ columnGap: v })}
+        />
+      </div>
+
+      <div className="inspector-field">
+        <label className="inspector-label">Alinhamento vertical</label>
+        <SegmentedControl<'top' | 'center' | 'bottom'>
+          block
+          ariaLabel="Alinhamento vertical"
+          value={verticalAlign}
+          options={[
+            { value: 'top', label: 'Topo' },
+            { value: 'center', label: 'Centro' },
+            { value: 'bottom', label: 'Base' }
+          ]}
+          onChange={(v) => onUpdateSettings({ verticalAlign: v })}
+        />
+      </div>
+
+      <div className="inspector-field">
+        <label className="inspector-label">Âncora (id para links)</label>
+        <input
+          type="text"
+          value={anchorId}
+          onChange={(e) => onUpdateSettings({ anchorId: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '') })}
+          placeholder="ex: sobre"
+        />
+        <p className="inspector-hint">Permite link direto até esta seção: /p/slug#ancora</p>
       </div>
     </div>
   );

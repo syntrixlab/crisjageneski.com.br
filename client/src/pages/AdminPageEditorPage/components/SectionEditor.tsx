@@ -51,6 +51,7 @@ export function SectionEditor(_props: {
   onDuplicateBlock: (columnIndex: number, blockId: string) => void;
   onToggleBlockVisible: (columnIndex: number, block: PageBlock) => void;
   onReorderBlocksInColumn: (columnIndex: number, orderedBlockIds: string[]) => void;
+  onMoveBlockToColumnAt: (fromColumnIndex: number, toColumnIndex: number, blockId: string, toIndex: number) => void;
   dragHandle?: SectionDragHandle;
 }) {
   const {
@@ -72,6 +73,7 @@ export function SectionEditor(_props: {
     onDuplicateBlock,
     onToggleBlockVisible,
     onReorderBlocksInColumn,
+    onMoveBlockToColumnAt,
     dragHandle
   } = _props;
 
@@ -96,17 +98,27 @@ export function SectionEditor(_props: {
     const activeId = String(active.id);
     const overId = String(over.id);
 
+    let activeColIndex = -1;
+    let overColIndex = -1;
+    let activeOrder: string[] = [];
+    let overOrder: string[] = [];
+
     for (let colIdx = 0; colIdx < section.cols.length; colIdx++) {
       const sorted = sortBlocksByRowIndex(section.cols[colIdx].blocks);
       const blockIds = sorted.map((b) => b.id);
-      const activeIdx = blockIds.indexOf(activeId);
-      if (activeIdx < 0) continue;
-      const overIdx = blockIds.indexOf(overId);
-      if (overIdx >= 0) {
-        const newOrder = arrayMove(blockIds, activeIdx, overIdx);
-        onReorderBlocksInColumn(colIdx, newOrder);
-      }
-      break;
+      if (blockIds.includes(activeId)) { activeColIndex = colIdx; activeOrder = blockIds; }
+      if (blockIds.includes(overId)) { overColIndex = colIdx; overOrder = blockIds; }
+    }
+
+    if (activeColIndex < 0) return;
+
+    if (activeColIndex === overColIndex) {
+      const from = activeOrder.indexOf(activeId);
+      const to = activeOrder.indexOf(overId);
+      if (from >= 0 && to >= 0) onReorderBlocksInColumn(activeColIndex, arrayMove(activeOrder, from, to));
+    } else if (overColIndex >= 0) {
+      const toIndex = overOrder.indexOf(overId);
+      onMoveBlockToColumnAt(activeColIndex, overColIndex, activeId, toIndex);
     }
   };
 

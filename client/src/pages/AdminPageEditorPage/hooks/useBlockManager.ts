@@ -7,6 +7,7 @@ import {
   updateBlockInSection,
   moveBlockInColumn,
   moveBlockToColumn,
+  moveBlockToColumnAt,
   reorderBlocksInColumn,
   duplicateBlock,
   canAddSideAtIndex,
@@ -272,6 +273,19 @@ export function useBlockManager(
     }));
   };
 
+  const handleMoveBlockToColumnAt = (
+    sectionId: string,
+    fromColumnIndex: number,
+    toColumnIndex: number,
+    blockId: string,
+    toIndex: number
+  ) => {
+    setPage((prev) => ({
+      ...prev,
+      layout: moveBlockToColumnAt(prev.layout, sectionId, fromColumnIndex, toColumnIndex, blockId, toIndex)
+    }));
+  };
+
   return {
     blockModal,
     setBlockModal,
@@ -292,6 +306,7 @@ export function useBlockManager(
     handleDeleteBlock,
     handleAddBlockSide,
     handleDuplicateBlock,
-    handleReorderBlocksInColumn
+    handleReorderBlocksInColumn,
+    handleMoveBlockToColumnAt
   };
 }

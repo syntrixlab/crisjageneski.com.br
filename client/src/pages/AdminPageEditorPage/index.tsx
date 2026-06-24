@@ -302,6 +302,9 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
                       onReorderBlocksInColumn={(colIndex, orderedIds) =>
                         blocks.handleReorderBlocksInColumn(section.id, colIndex, orderedIds)
                       }
+                      onMoveBlockToColumnAt={(fromCol, toCol, blockId, toIdx) =>
+                        blocks.handleMoveBlockToColumnAt(section.id, fromCol, toCol, blockId, toIdx)
+                      }
                       dragHandle={{ attributes, listeners }}
                     />
                       )}

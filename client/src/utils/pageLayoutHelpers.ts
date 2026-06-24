@@ -578,6 +578,56 @@ export function resolveSideTargetColumnIndex(_props: {
 }
 
 /**
+ * Moves a block from one column to another, inserting it at a specific
+ * position (before the block at toIndex in the target column).
+ */
+export function moveBlockToColumnAt(
+  layout: PageLayoutV2,
+  sectionId: string,
+  fromColumnIndex: number,
+  toColumnIndex: number,
+  blockId: string,
+  toIndex: number
+): PageLayoutV2 {
+  const sections = layout.sections.map((section) => {
+    if (section.id !== sectionId) return section;
+
+    const fromCol = section.cols[fromColumnIndex];
+    if (!fromCol) return section;
+    const block = fromCol.blocks.find((b) => b.id === blockId);
+    if (!block) return section;
+    const clampedBlock = {
+      ...block,
+      colSpan: Math.min(Math.max(block.colSpan ?? 1, 1), section.columns)
+    };
+
+    const cols = section.cols.map((col, colIndex) => {
+      if (colIndex === fromColumnIndex) {
+        const reindexed = col.blocks
+          .filter((b) => b.id !== blockId)
+          .map((b, i) => ({ ...b, rowIndex: i }));
+        return { ...col, blocks: sortBlocksByRowIndex(reindexed) };
+      }
+      if (colIndex === toColumnIndex) {
+        const ordered = sortBlocksByRowIndex(col.blocks);
+        const clamped = Math.max(0, Math.min(toIndex, ordered.length));
+        const inserted = [
+          ...ordered.slice(0, clamped),
+          clampedBlock,
+          ...ordered.slice(clamped)
+        ].map((b, i) => ({ ...b, rowIndex: i }));
+        return { ...col, blocks: sortBlocksByRowIndex(inserted) };
+      }
+      return col;
+    });
+
+    return { ...section, cols };
+  });
+
+  return { ...layout, sections };
+}
+
+/**
  * Reorders blocks in a column based on an ordered list of block IDs.
  * Assigns rowIndex 0, 1, 2... based on the new order.
  */

@@ -71,6 +71,7 @@ export function SectionOutlinePanel(_props: {
               {sections.map((section, index) => {
                 const isHero = section.kind === 'hero';
                 const isSelected = section.id === selectedSectionId;
+                const isHidden = section.settings?.hidden ?? false;
                 const label = section.settings?.name?.trim() || (isHero ? 'Hero' : `Seção ${index + 1}`);
                 const cols = getSectionColumnCount(section);
                 const blockCount = sectionBlockCount(section);
@@ -78,6 +79,7 @@ export function SectionOutlinePanel(_props: {
                   'outline-row',
                   isSelected ? 'is-selected' : '',
                   isHero ? 'is-pinned' : '',
+                  isHidden ? 'is-hidden' : '',
                   overId === section.id && dragId ? 'is-over' : '',
                   dragId === section.id ? 'is-dragging' : ''
                 ]
@@ -106,7 +108,10 @@ export function SectionOutlinePanel(_props: {
                       <FontAwesomeIcon icon={isHero ? faLock : faGripVertical} />
                     </span>
                     <span className="outline-row-main">
-                      <span className="outline-row-label">{label}</span>
+                      <span className="outline-row-label">
+                        {label}
+                        {isHidden && <span className="outline-hidden-badge">oculta</span>}
+                      </span>
                       <span className="outline-row-meta">
                         {cols} col{cols > 1 ? 's' : ''} · {blockCount} bloco{blockCount === 1 ? '' : 's'}
                       </span>

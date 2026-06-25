@@ -9870,6 +9870,7 @@ body, p, span, .body-text, .text {
 .outline-row:hover { border-color: var(--color-forest); }
 .outline-row.is-selected { border-color: var(--color-forest); background: var(--color-paper); }
 .outline-row.is-pinned { cursor: default; opacity: 0.95; }
+.outline-row.is-hidden { opacity: 0.55; }
 .outline-row.is-dragging { opacity: 0.4; }
 .outline-row.is-over { border-color: var(--color-terracotta); box-shadow: 0 -2px 0 var(--color-terracotta) inset; }
 
@@ -9882,8 +9883,19 @@ body, p, span, .body-text, .text {
 .outline-row.is-pinned .outline-grip { cursor: default; opacity: 0.5; }
 
 .outline-row-main { display: flex; flex-direction: column; min-width: 0; }
-.outline-row-label { font-weight: 600; font-size: 0.85rem; color: var(--color-deep); }
+.outline-row-label { font-weight: 600; font-size: 0.85rem; color: var(--color-deep); display: flex; align-items: center; gap: 0.4rem; }
 .outline-row-meta { font-size: 0.7rem; color: var(--color-forest); opacity: 0.8; }
+
+.outline-hidden-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-terracotta);
+  background: color-mix(in srgb, var(--color-terracotta) 12%, transparent);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
 
 /* ----- Busca no seletor de blocos ----- */
 .block-search-input {

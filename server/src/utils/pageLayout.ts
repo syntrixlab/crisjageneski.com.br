@@ -210,7 +210,9 @@ const pillsBlockSchema = baseBlockSchema.extend({
 const spanBlockSchema = baseBlockSchema.extend({
   type: z.literal('span'),
   data: z.object({
-    kind: z.enum(['accent-bar', 'divider', 'spacer']).optional()
+    // 'divider'/'spacer' mantidos por compatibilidade com dados antigos.
+    kind: z.enum(['accent-bar', 'muted-text', 'divider', 'spacer']).optional(),
+    text: z.string().optional().nullable()
   })
 });
 
@@ -628,7 +630,8 @@ export type PillsBlockData = {
 };
 
 export type SpanBlockData = {
-  kind?: 'accent-bar' | 'divider' | 'spacer';
+  kind?: 'accent-bar' | 'muted-text' | 'divider' | 'spacer';
+  text?: string | null;
 };
 
 export type RecentPostsBlockData = {
@@ -1257,11 +1260,13 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
       };
     }
     case 'span': {
+      const kind = base.data.kind ?? 'accent-bar';
       return {
         ...common,
         type: 'span',
         data: {
-          kind: base.data.kind ?? 'divider'
+          kind,
+          text: kind === 'muted-text' ? (base.data.text?.trim() || null) : null
         }
       };
     }

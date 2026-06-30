@@ -4,7 +4,6 @@ import {
   faBullhorn,
   faEnvelopeOpenText,
   faFileLines,
-  faImage,
   faLayerGroup,
   faNewspaper,
   faTableColumns,
@@ -23,7 +22,6 @@ interface SectionPresetModalProps {
 
 const presetIcons: Record<string, ComponentProps<typeof FontAwesomeIcon>['icon']> = {
   'hero-2col': faTableColumns,
-  'hero-stacked': faImage,
   'features-3col': faLayerGroup,
   'cta-1col': faBullhorn,
   'content-1col': faFileLines,
@@ -52,7 +50,7 @@ export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, 
           <div className="preset-grid">
             {sectionPresets.map((preset) => {
               // Desabilitar preset Hero se já existir uma seção Hero
-              const isHeroPreset = preset.id === 'hero-2col' || preset.id === 'hero-stacked';
+              const isHeroPreset = preset.id === 'hero-2col';
               const isDisabled = isHeroPreset && hasHeroSection;
 
               return (

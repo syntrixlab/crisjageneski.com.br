@@ -8317,9 +8317,16 @@ figure.page-public-image figcaption {
   display: block;
   width: 80px;
   height: 4px;
-  background: var(--color-clay);
+  /* Cor primária do tema (acompanha o tema configurado no admin). */
+  background: var(--color-terracotta);
   border-radius: 2px;
   margin: 0.5rem 0;
+}
+
+/* Texto discreto do bloco "Elemento": segue a cor de texto do tema
+   (antes herdava o .muted hardcoded #1f2d16, que puxava p/ verde). */
+.muted.span-muted-text {
+  color: rgba(var(--theme-text-rgb, 31, 45, 22), 0.72);
 }
 
 /* Button Group Block */
@@ -9754,6 +9761,100 @@ body, p, span, .body-text, .text {
 .hero-media img {
   transform: none !important;
   will-change: auto;
+}
+
+/* ============================================================
+   ===== HERO V2 (bloco composto: split / stacked) =====
+   Layout próprio — antes herdava .hero (grid min-height 520-680)
+   + .hero-card (flex column), o que empilhava texto/imagem e
+   deixava a mídia gigante. Aqui definimos o layout correto.
+   ============================================================ */
+.hero.hero--v2 {
+  /* Bloco único e integrado — sem a moldura branca do .hero-card,
+     sem o grid/min-height do .hero base. */
+  display: block;
+  padding: 0;
+  min-height: 0;
+  align-items: initial;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-l);
+  box-shadow: 0 20px 48px rgba(31, 45, 22, 0.12);
+  overflow: hidden;
+}
+
+/* ----- Split: texto e imagem encostados, ocupando metades ----- */
+.hero-body--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  padding: 0;
+}
+
+.hero-content--split {
+  display: grid;
+  gap: var(--space-3);
+  align-content: center;
+  padding: clamp(2rem, 4.5vw, 3.75rem);
+  min-width: 0;
+  /* Fundo transparente por padrão — o usuário define via BackgroundPicker (cor/imagem). */
+  background: transparent;
+}
+
+.hero-media-column {
+  display: flex;
+  min-width: 0;
+}
+
+.hero-media-column .hero-media {
+  width: 100%;
+  height: 100%;
+  /* a altura escolhida (SM/MD/LG/XL) vira piso; teto evita estourar a tela */
+  min-height: var(--hero-media-height, clamp(320px, 38vw, 520px));
+  max-height: min(72vh, 620px);
+  border-radius: 0;
+  /* sangra até a borda do bloco, sem cantos soltos no meio */
+}
+
+/* ----- Stacked: imagem em cima, texto embaixo (também flush) ----- */
+.hero.hero--v2.hero--stacked {
+  display: block;
+}
+
+.hero--stacked .hero-media,
+.hero--stacked .hero-media--stacked {
+  width: 100%;
+  height: var(--hero-media-height, clamp(300px, 40vw, 520px));
+  max-height: min(60vh, 560px);
+  border-radius: 0;
+}
+
+.hero-body--stacked {
+  padding: clamp(2rem, 4.5vw, 3.5rem);
+  /* Fundo transparente por padrão — definido pelo usuário via BackgroundPicker. */
+  background: transparent;
+}
+
+.hero-content--stacked {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* ----- Responsivo: colapsa para 1 coluna, imagem no topo ----- */
+@media (max-width: 860px) {
+  .hero-body--split {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-media-column {
+    order: -1;
+  }
+
+  .hero-media-column .hero-media {
+    min-height: clamp(240px, 60vw, 360px);
+    height: clamp(240px, 60vw, 360px);
+  }
 }
 
 /* ============================================================

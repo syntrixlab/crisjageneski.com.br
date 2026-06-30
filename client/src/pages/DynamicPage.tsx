@@ -28,11 +28,9 @@ export function DynamicPage() {
   return (
     <section className="section-block">
       <div className="container" style={{ display: 'grid', gap: '1.25rem' }}>
+        {/* title/description ficam só no SEO; o conteúdo visível é definido pelos blocos,
+            espelhando o que o builder mostra (sem cabeçalho de página duplicado). */}
         <SeoHead title={page.title} description={page.description ?? page.title} />
-        <div className="section-title">
-          <h1 style={{ margin: 0 }}>{page.title}</h1>
-          {page.description && <p>{page.description}</p>}
-        </div>
         <PageRenderer layout={page.layout} pageSlug={page.slug || slug} />
       </div>
     </section>

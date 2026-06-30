@@ -94,7 +94,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
               <div className="hero-media-placeholder">Sem imagem</div>
             </div>
           )}
-          <div className="hero-body hero-body--stacked hero-overlay-bg">
+          <div className="hero-body hero-body--stacked">
             <div className="hero-content hero-content--stacked">
               {/* span necessário para o key do React; display:contents evita quebra de layout — substituição de PageBlockView sem importar registry */}
               {(heroV2.left ?? []).map((childBlock) => (
@@ -111,7 +111,7 @@ export function HeroRenderer({ data, pageSlug: _pageSlug, enableFormSubmit: _ena
     return (
       <div className="hero hero--v2 hero-card hero--split">
         <div className="hero-body hero-body--split">
-          <div className="hero-content hero-content--split hero-overlay-bg">
+          <div className="hero-content hero-content--split">
             {/* span necessário para o key do React; display:contents evita quebra de layout — substituição de PageBlockView sem importar registry */}
             {(heroV2.left ?? []).map((childBlock) => (
               <span key={childBlock.id} style={{ display: 'contents' }}>

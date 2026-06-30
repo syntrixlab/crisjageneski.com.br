@@ -61,7 +61,7 @@ export function RteImageModal({ imageManager, captureSelection }: Props) {
               <label>Texto alternativo da imagem</label>
               <input
                 className="rte-input"
-                placeholder="Descreva a imagem (opcional)"
+                placeholder="Descreva a imagem para acessibilidade"
                 value={uploadAlt}
                 onChange={(e) => setUploadAlt(e.target.value)}
               />

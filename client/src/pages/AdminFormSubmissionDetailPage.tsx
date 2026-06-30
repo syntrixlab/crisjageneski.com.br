@@ -9,6 +9,7 @@ import {
   faCircleExclamation,
   faClipboard,
   faDatabase,
+  faEnvelope,
   faExternalLink,
   faFileLines,
   faHashtag,
@@ -118,6 +119,12 @@ export function AdminFormSubmissionDetailPage() {
     return `55${digits}`;
   };
 
+  const normalizeEmail = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null;
+    const email = value.trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+  };
+
   const getLikelyFieldValue = (names: string[]) => {
     if (!data?.data) return null;
     const entry = Object.entries(data.data).find(([key]) =>
@@ -126,10 +133,56 @@ export function AdminFormSubmissionDetailPage() {
     return entry?.[1] ?? null;
   };
 
+  const getValueByFieldType = (type: string) => {
+    if (!data?.data) return null;
+    const entry = Object.entries(data.data).find(([key]) => fieldLabelMap[key]?.type === type);
+    return entry?.[1] ?? null;
+  };
+
+  // Renderiza o botão de ação (WhatsApp/e-mail) de um campo conforme o tipo definido no formulário.
+  // Faz fallback para a detecção pelo valor quando o schema do campo não está disponível.
+  const renderFieldAction = (key: string, value: FormValue): React.ReactElement | null => {
+    const fieldType = fieldLabelMap[key]?.type;
+    const phone = normalizePhone(value);
+    const email = normalizeEmail(value);
+    const isPhone = fieldType === 'tel' || (!fieldType && !!phone && !email);
+    const isEmail = fieldType === 'email' || (!fieldType && !!email);
+
+    if (isPhone && phone) {
+      return (
+        <a
+          className="btn btn-sm submission-field-action submission-field-action-whatsapp"
+          href={`https://wa.me/${phone}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <FontAwesomeIcon icon={faWhatsapp} />
+          WhatsApp
+        </a>
+      );
+    }
+
+    if (isEmail && email) {
+      return (
+        <a
+          className="btn btn-sm submission-field-action submission-field-action-email"
+          href={`mailto:${email}`}
+        >
+          <FontAwesomeIcon icon={faEnvelope} />
+          Enviar e-mail
+        </a>
+      );
+    }
+
+    return null;
+  };
+
   const leadName = String(getLikelyFieldValue(['nome', 'name']) || data?.summary || 'Resposta recebida');
   const leadMessage = String(getLikelyFieldValue(['mensagem', 'message', 'observacao', 'comentario']) || data?.summary || '');
-  const leadPhone = normalizePhone(getLikelyFieldValue(['telefone', 'phone', 'whatsapp', 'celular']));
+  const leadPhone = normalizePhone(getValueByFieldType('tel') ?? getLikelyFieldValue(['telefone', 'phone', 'whatsapp', 'celular']));
+  const leadEmail = normalizeEmail(getValueByFieldType('email') ?? getLikelyFieldValue(['email', 'e-mail']));
   const whatsappLink = leadPhone ? `https://wa.me/${leadPhone}` : null;
+  const mailtoLink = leadEmail ? `mailto:${leadEmail}` : null;
 
   const renderValue = (value: FormValue): React.ReactElement => {
     if (value === null || value === undefined || value === '') {
@@ -230,13 +283,19 @@ export function AdminFormSubmissionDetailPage() {
         <div className="submission-detail-actions">
           {whatsappLink && (
             <a
-              className="btn btn-outline submission-detail-whatsapp"
+              className="btn btn-outline"
               href={whatsappLink}
               target="_blank"
               rel="noreferrer"
             >
               <FontAwesomeIcon icon={faWhatsapp} />
               WhatsApp
+            </a>
+          )}
+          {mailtoLink && (
+            <a className="btn btn-outline" href={mailtoLink}>
+              <FontAwesomeIcon icon={faEnvelope} />
+              Enviar e-mail
             </a>
           )}
           <button className="btn btn-outline" onClick={handleCopy}>
@@ -298,6 +357,7 @@ export function AdminFormSubmissionDetailPage() {
               <article className="submission-detail-field" key={key}>
                 <span>{formatFieldLabel(key)}</span>
                 <div>{renderValue(value as FormValue)}</div>
+                {renderFieldAction(key, value as FormValue)}
               </article>
             ))}
           </div>

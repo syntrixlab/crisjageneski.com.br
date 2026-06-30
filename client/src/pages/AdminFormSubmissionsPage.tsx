@@ -7,6 +7,7 @@ import {
   faChevronLeft,
   faChevronRight,
   faCircleExclamation,
+  faEnvelope,
   faEye,
   faFilter,
   faInbox,
@@ -146,13 +147,32 @@ export function AdminFormSubmissionsPage() {
     };
   };
 
+  const normalizeEmail = (value?: string | null): string | null => {
+    const email = (value || '').trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+  };
+
+  const findFieldByType = (submission: FormSubmission, type: string): string | null => {
+    const found = submission.resolvedFields?.find((f) => f.type === type);
+    if (found?.value != null && String(found.value).trim()) return String(found.value).trim();
+    return null;
+  };
+
   const derivePhone = (submission: FormSubmission) => {
+    const byType = findFieldByType(submission, 'tel');
     const fallbackRaw = fallbackFromResolved(submission, ['telefone', 'whatsapp', 'celular', 'fone', 'phone']).value;
     const phoneNormalized =
+      normalizePhone(byType || undefined) ||
       submission.leadPhoneNormalized ||
       normalizePhone(submission.leadPhone || undefined) ||
       normalizePhone(fallbackRaw || undefined);
     return phoneNormalized;
+  };
+
+  const deriveEmail = (submission: FormSubmission) => {
+    const byType = findFieldByType(submission, 'email');
+    const fallbackRaw = fallbackFromResolved(submission, ['email', 'e-mail']).value;
+    return normalizeEmail(byType) || normalizeEmail(fallbackRaw);
   };
 
   return (
@@ -303,6 +323,7 @@ export function AdminFormSubmissionsPage() {
                   {data.submissions.map((submission) => {
                     const phoneNormalized = derivePhone(submission);
                     const waLink = phoneNormalized ? getWhatsAppLink(phoneNormalized) : null;
+                    const email = deriveEmail(submission);
                     const { leadName, leadMessage } = deriveLeadInfo(submission);
 
                     return (
@@ -350,6 +371,15 @@ export function AdminFormSubmissionsPage() {
                               disabled={!waLink}
                             >
                               <FontAwesomeIcon icon={faWhatsapp} />
+                            </button>
+                            <button
+                              className="submission-action submission-action-email"
+                              aria-label={email ? 'Enviar e-mail' : 'E-mail não informado'}
+                              title={email ? 'Enviar e-mail' : 'E-mail não informado'}
+                              onClick={() => email && window.open(`mailto:${email}`, '_self')}
+                              disabled={!email}
+                            >
+                              <FontAwesomeIcon icon={faEnvelope} />
                             </button>
                             <Link
                               to={`/admin/form-submissions/${submission.id}`}

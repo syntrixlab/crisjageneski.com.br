@@ -16,6 +16,7 @@ import {
   arrayMove
 } from '@dnd-kit/sortable';
 import { ConfirmModal } from '@/components/AdminUI';
+import { toast } from '@/components/Toast';
 import { SeoHead } from '@/components/SeoHead';
 import { PageRendererCore } from '@/components/PageRenderer';
 import { usePageValidation } from '@/hooks/usePageValidation';
@@ -71,6 +72,35 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const selectedSectionId = selection?.kind === 'section' ? selection.sectionId : null;
 
+  // Surface save errors (incl. server-side, ex.: hero sem imagem) as toasts.
+  const lastSaveErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (formError && formError !== lastSaveErrorRef.current) {
+      lastSaveErrorRef.current = formError;
+      toast.error('Não foi possível salvar', { message: formError });
+    }
+    if (!formError) lastSaveErrorRef.current = null;
+  }, [formError]);
+
+  const handleSaveDraft = async () => {
+    // Avisa sobre pendências da página (campos, imagens quebradas, etc.)
+    const seen = new Set<string>();
+    validationErrors.forEach((err) => {
+      const key = `${err.field}:${err.message}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      toast.warning(err.field, { message: err.message });
+    });
+    try {
+      const result = await saveDraft();
+      if (result) {
+        toast.success(isHomePage ? 'Home salva com sucesso' : 'Rascunho salvo');
+      }
+    } catch {
+      // Erro já tratado pelo efeito de formError acima.
+    }
+  };
+
   const history = usePageHistory({
     layout: page.layout,
     pageId: page.id,
@@ -80,7 +110,7 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
     onUndo: history.undo,
     onRedo: history.redo,
     onSave: () => {
-      void saveDraft();
+      void handleSaveDraft();
     }
   });
 
@@ -206,11 +236,12 @@ export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {
         busy={busy}
         draftAlert={draftAlert}
         formError={formError}
+        validationMessages={validationErrors.map((err) => err.message)}
         hasUploading={blocks.hasUploading}
         viewMode={viewMode}
         isHomePage={isHomePage}
         onViewModeChange={setViewMode}
-        onSaveDraft={() => saveDraft()}
+        onSaveDraft={() => handleSaveDraft()}
         onPublish={handlePublish}
         onMoveToDraft={handleMoveToDraft}
         onConfigurePage={() => setSelection({ kind: 'page' })}

@@ -39,10 +39,23 @@ api.interceptors.response.use(
       return Promise.reject(new Error('NOT_FOUND'));
     }
 
-    // 400/422: Erro de validacao - passar mensagem do servidor
+    // 400/422: Erro de validacao - passar mensagem detalhada do servidor
     if (error.response?.status === 400 || error.response?.status === 422) {
-      const message = error.response?.data?.message || 'Dados invalidos.';
-      console.error('Validation error details:', error.response?.data);
+      const data = error.response?.data;
+      const errObj = data?.error ?? {};
+      let message: string = errObj.message || data?.message || 'Dados invalidos.';
+      // Quando o servidor envia issues de validação (Zod), detalhar campo a campo.
+      const issues = errObj.issues;
+      if (issues) {
+        const details = [
+          ...(issues.formErrors ?? []),
+          ...Object.values((issues.fieldErrors ?? {}) as Record<string, string[]>).flat()
+        ].filter(Boolean) as string[];
+        if (details.length) {
+          message = details.join(' • ');
+        }
+      }
+      console.error('Validation error details:', data);
       return Promise.reject(new Error(message));
     }
 

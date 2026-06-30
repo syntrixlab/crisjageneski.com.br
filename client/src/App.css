@@ -5201,6 +5201,7 @@ figure[data-type="image"] {
 }
 
 .editor-alert-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -5210,6 +5211,55 @@ figure[data-type="image"] {
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1;
+  cursor: help;
+}
+
+.editor-alert-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  min-width: 240px;
+  max-width: 340px;
+  padding: 0.75rem 0.9rem;
+  background: var(--color-paper, #fff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms;
+  pointer-events: none;
+}
+
+.editor-alert-chip:hover .editor-alert-popover,
+.editor-alert-chip:focus-visible .editor-alert-popover,
+.editor-alert-chip:focus-within .editor-alert-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.editor-alert-popover-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-deep, #2b2330);
+}
+
+.editor-alert-popover ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.editor-alert-popover li {
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #5a525f;
 }
 
 .editor-alert-chip.is-info {
@@ -7535,7 +7585,10 @@ figure.page-public-image figcaption {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3.5rem 2rem;
+  padding: 1rem 0;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
 .page-public-form .form-success-message {

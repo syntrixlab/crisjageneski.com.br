@@ -103,8 +103,10 @@ export function usePageEditor(id: string | undefined, pageKey?: string) {
   const unpublishMutation = useUnpublishPage();
 
   const handleMutationError = (err: unknown, fallback: string) => {
-    const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
-    setFormError(msg ?? fallback);
+    const responseMsg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+    // O interceptor do axios já normaliza erros de validação em err.message.
+    const directMsg = err instanceof Error && err.message && err.message !== 'NOT_FOUND' ? err.message : undefined;
+    setFormError(responseMsg ?? directMsg ?? fallback);
   };
 
   const busyMutations =

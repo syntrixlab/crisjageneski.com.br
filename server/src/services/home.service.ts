@@ -2,7 +2,7 @@ import { Page, PageStatus, Prisma } from '@prisma/client';
 import { cacheKeys, cacheProvider, cacheTTL } from '../config/cache';
 import { HttpError } from '../utils/errors';
 import { PageRepository } from '../repositories/page.repository';
-import { ensureHeroAtTop, normalizePageLayout, type PageLayoutV2 } from '../utils/pageLayout';
+import { ensureHeroAtTop, normalizePageLayout, validateHeroLayout, type PageLayoutV2 } from '../utils/pageLayout';
 
 const repository = new PageRepository();
 
@@ -94,7 +94,10 @@ export class HomeService {
     }
 
     const now = new Date().toISOString();
-    const nextLayout = this.normalizeHomeLayout(payload.layout ?? existing.layout, now);    
+    if (payload.layout !== undefined) {
+      validateHeroLayout(payload.layout);
+    }
+    const nextLayout = this.normalizeHomeLayout(payload.layout ?? existing.layout, now);
     // [DEBUG B2] Log Hero APÓS normalização no backend
     const heroSection = nextLayout.sections?.find((s: any) => s.kind === 'hero' || s.cols?.some((c: any) => c.blocks?.some((b: any) => b.type === 'hero')));
     if (heroSection) {

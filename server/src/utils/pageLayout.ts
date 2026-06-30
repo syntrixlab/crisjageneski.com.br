@@ -435,6 +435,43 @@ export const pageBlockSchema = z.discriminatedUnion('type', [
   heroBlockSchema
 ]);
 
+/**
+ * Validação semântica amigável do bloco Hero, executada ANTES do parse do Zod
+ * para devolver mensagens claras ao editor (em vez de erros de schema crípticos).
+ */
+export function validateHeroLayout(layout: unknown): void {
+  const anyLayout = layout as any;
+  const sections = anyLayout?.sections;
+  if (!Array.isArray(sections)) return;
+
+  for (const section of sections) {
+    for (const col of section?.cols ?? []) {
+      for (const block of col?.blocks ?? []) {
+        if (block?.type !== 'hero') continue;
+        const data = block.data ?? {};
+        if (data.version !== 2) continue;
+
+        const variant = data.rightVariant;
+        const needsImage = variant === 'image-only' || variant === 'cards-with-image';
+        if (!needsImage) continue;
+
+        const right = Array.isArray(data.right) ? data.right : [];
+        const hasValidImage = right.some(
+          (b: any) =>
+            b?.type === 'image' && typeof b?.data?.src === 'string' && b.data.src.trim().length > 0
+        );
+
+        if (!hasValidImage) {
+          throw new HttpError(
+            400,
+            'O Hero está configurado para exibir uma imagem na coluna direita, mas nenhuma imagem foi adicionada. Envie uma imagem na coluna direita do Hero ou altere o layout para "apenas cards" antes de salvar.'
+          );
+        }
+      }
+    }
+  }
+}
+
 // V1 Layout Schema (legacy)
 const pageLayoutSchemaV1 = z.object({
   version: z.literal(1),

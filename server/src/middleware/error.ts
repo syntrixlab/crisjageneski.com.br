@@ -8,10 +8,15 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
   if (err instanceof ZodError) {
     // Log detalhes completos do erro de validação
     console.error('[Zod Validation Error]', JSON.stringify(err.issues, null, 2));
+    // Monta uma mensagem legível com campo + motivo de cada problema.
+    const readable = err.issues.slice(0, 6).map((issue) => {
+      const path = issue.path.filter((p) => typeof p === 'string').join(' › ');
+      return path ? `${path}: ${issue.message}` : issue.message;
+    });
     return res.status(400).json({
       data: null,
       error: {
-        message: 'Validation failed',
+        message: readable.length ? readable.join(' • ') : 'Não foi possível validar os dados enviados.',
         issues: err.flatten()
       }
     });

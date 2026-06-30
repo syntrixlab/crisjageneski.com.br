@@ -2,7 +2,7 @@ import { Page, PageStatus, Prisma } from '@prisma/client';
 import { cacheKeys, cacheProvider, cacheTTL } from '../config/cache';
 import { HttpError } from '../utils/errors';
 import { PageRepository } from '../repositories/page.repository';
-import { normalizePageLayout } from '../utils/pageLayout';
+import { normalizePageLayout, validateHeroLayout } from '../utils/pageLayout';
 
 const repository = new PageRepository();
 
@@ -56,6 +56,7 @@ export class PageService {
   }
 
   async create(payload: PageInput): Promise<Page> {
+    validateHeroLayout(payload.layout);
     const layout = normalizePageLayout(payload.layout);
     const status: PageStatus = payload.status ?? PageStatus.draft;
     const publishedAt = status === PageStatus.published ? payload.publishedAt ?? new Date() : null;
@@ -107,6 +108,9 @@ export class PageService {
         ? payload.publishedAt ?? existing.publishedAt ?? new Date()
         : payload.publishedAt ?? (statusBefore === PageStatus.published && hasContentChange ? existing.publishedAt : null);
 
+    if (payload.layout !== undefined) {
+      validateHeroLayout(payload.layout);
+    }
     const layout = payload.layout !== undefined ? normalizePageLayout(payload.layout) : undefined;
 
     const updated = await repository.update(id, {

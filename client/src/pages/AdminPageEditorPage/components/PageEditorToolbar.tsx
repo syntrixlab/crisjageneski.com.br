@@ -24,6 +24,7 @@ type PageEditorToolbarProps = {
   busy: boolean;
   draftAlert: string | null;
   formError: string | null;
+  validationMessages?: string[];
   hasUploading: boolean;
   viewMode: 'edit' | 'preview';
   isHomePage?: boolean;
@@ -48,6 +49,7 @@ export function PageEditorToolbar({
   busy,
   draftAlert,
   formError,
+  validationMessages,
   hasUploading,
   viewMode,
   isHomePage,
@@ -69,12 +71,16 @@ export function PageEditorToolbar({
   const status = page.status ?? 'draft';
   const previewUrl = previewHref ?? (page.slug ? `/p/${page.slug}` : '/');
   const backTarget = backTo ?? '/admin/pages';
-  const alerts = [
-    draftAlert,
-    formError,
-    hasUploading ? 'Finalize uploads antes de salvar.' : null
-  ].filter(Boolean) as string[];
-  const alertText = alerts.join(' | ');
+  const alerts = Array.from(
+    new Set(
+      [
+        draftAlert,
+        formError,
+        hasUploading ? 'Finalize uploads antes de salvar.' : null,
+        ...(validationMessages ?? [])
+      ].filter(Boolean) as string[]
+    )
+  );
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -148,11 +154,22 @@ export function PageEditorToolbar({
         {alerts.length > 0 && (
           <div
             className={`editor-alert-chip ${formError ? 'is-error' : 'is-info'}`}
-            title={alertText}
-            aria-label={alertText}
+            tabIndex={0}
+            role="button"
+            aria-label={`${alerts.length} aviso${alerts.length > 1 ? 's' : ''}: ${alerts.join('. ')}`}
           >
             <FontAwesomeIcon icon={formError ? faTriangleExclamation : faCircleInfo} />
             <span>{alerts.length} aviso{alerts.length > 1 ? 's' : ''}</span>
+            <div className="editor-alert-popover" role="tooltip">
+              <p className="editor-alert-popover-title">
+                {formError ? 'Não foi possível salvar' : 'Pendências da página'}
+              </p>
+              <ul>
+                {alerts.map((msg, index) => (
+                  <li key={index}>{msg}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 

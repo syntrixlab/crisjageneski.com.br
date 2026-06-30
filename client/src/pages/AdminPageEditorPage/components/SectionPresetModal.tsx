@@ -9,6 +9,7 @@ import {
   faTableColumns,
   faWandMagicSparkles
 } from '@fortawesome/free-solid-svg-icons';
+import { Modal } from '@/components/AdminUI';
 import { sectionPresets } from '@/utils/sectionPresets';
 import type { PageSection } from '@/types';
 
@@ -31,56 +32,52 @@ const presetIcons: Record<string, ComponentProps<typeof FontAwesomeIcon>['icon']
 };
 
 export function SectionPresetModal({ open, onClose, onSelectPreset, onAddBlank, sections }: SectionPresetModalProps) {
-  if (!open) return null;
-
   // Verificar se já existe uma seção Hero
   const hasHeroSection = sections.some((s) => s.kind === 'hero');
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card preset-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Escolha um Preset de Seção</h2>
-          <button className="modal-close" onClick={onClose}>
-            ×
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Escolha um Preset de Seção"
+      description="Selecione um modelo pronto para começar."
+      width={860}
+    >
+      <div style={{ display: 'grid', gap: '1.5rem' }}>
+        <div className="block-type-grid">
+          {sectionPresets.map((preset) => {
+            // Desabilitar preset Hero se já existir uma seção Hero
+            const isHeroPreset = preset.id === 'hero-2col';
+            const isDisabled = isHeroPreset && hasHeroSection;
+
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                className="block-type-card"
+                onClick={() => !isDisabled && onSelectPreset(preset.id)}
+                disabled={isDisabled}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '1rem' }}
+              >
+                <div className="block-type-card-icon" aria-hidden="true">
+                  <FontAwesomeIcon icon={presetIcons[preset.id] ?? faLayerGroup} />
+                </div>
+                <strong>
+                  {preset.name}
+                  {isDisabled && ' (já existe)'}
+                </strong>
+                <p className="muted small" style={{ margin: 0 }}>{preset.description}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="preset-divider">
+          <button type="button" className="preset-blank-btn" onClick={onAddBlank}>
+            + Seção em Branco (sem blocos)
           </button>
         </div>
-
-        <div className="modal-body">
-          <div className="preset-grid">
-            {sectionPresets.map((preset) => {
-              // Desabilitar preset Hero se já existir uma seção Hero
-              const isHeroPreset = preset.id === 'hero-2col';
-              const isDisabled = isHeroPreset && hasHeroSection;
-
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  className="preset-card"
-                  onClick={() => !isDisabled && onSelectPreset(preset.id)}
-                  disabled={isDisabled}
-                >
-                  <div className="preset-card-icon" aria-hidden="true">
-                    <FontAwesomeIcon icon={presetIcons[preset.id] ?? faLayerGroup} />
-                  </div>
-                  <div className="preset-card-title">
-                    {preset.name}
-                    {isDisabled && ' (já existe)'}
-                  </div>
-                  <div className="preset-card-desc">{preset.description}</div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="preset-divider">
-            <button type="button" className="preset-blank-btn" onClick={onAddBlank}>
-              + Seção em Branco (sem blocos)
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

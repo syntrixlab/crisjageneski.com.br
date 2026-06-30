@@ -5937,8 +5937,13 @@ figure[data-type="image"] {
   cursor: pointer;
 }
 
-.block-type-card:hover {
+.block-type-card:hover:not(:disabled) {
   background: #f4efe2;
+}
+
+.block-type-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .page-image-preview img {

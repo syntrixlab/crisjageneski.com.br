@@ -3,7 +3,7 @@ import { ConfirmModal, Modal } from '../components/AdminUI';
 import { useDeleteMedia, useMedia, useUpdateMedia, useUploadMedia } from '../hooks/queries/useMedia';
 import { SeoHead } from '../components/SeoHead';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faUpload, faMagnifyingGlass, faTag, faTimes, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faUpload, faMagnifyingGlass, faTag, faTimes, faPencil, faTrash, faArrowUpFromBracket, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { toast } from '../components/Toast';
 import type { Media } from '../types';
 
@@ -207,8 +207,22 @@ function EditModal({ item, onClose }: { item: Media; onClose: () => void }) {
 
         <div className="form-field">
           <label>Substituir arquivo</label>
-          <input type="file" accept="image/*"
-            onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) setFile(f); }} />
+          <label className={`media-file-picker${file ? ' has-file' : ''}`}>
+            <input type="file" accept="image/*" className="media-file-picker-input"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) setFile(f); }} />
+            <span className="media-file-picker-icon">
+              <FontAwesomeIcon icon={file ? faCircleCheck : faArrowUpFromBracket} />
+            </span>
+            <span className="media-file-picker-text">
+              <span className="media-file-picker-title">
+                {file ? 'Imagem selecionada' : 'Escolher nova imagem'}
+              </span>
+              <span className="media-file-picker-sub">
+                {file ? file.name : 'Clique para procurar · PNG, JPG ou WEBP'}
+              </span>
+            </span>
+            <span className="media-file-picker-action">{file ? 'Trocar' : 'Procurar'}</span>
+          </label>
         </div>
 
         <div className="form-field">
@@ -218,7 +232,7 @@ function EditModal({ item, onClose }: { item: Media; onClose: () => void }) {
 
         <div className="form-field">
           <label htmlFor="me-alt">Texto alternativo (alt)</label>
-          <input id="me-alt" value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="Descreva a imagem" />
+          <input id="me-alt" value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="Descreva a imagem para acessibilidade" />
         </div>
 
         <div className="form-field">

@@ -215,6 +215,12 @@ export type ServicesBlockData = {
   sectionTitle: string;
   items: ServicesBlockItem[];
   buttonLabel?: string;
+  /** Cor do texto (título e descrição de cada item): 'default' = cor padrão do tema; 'custom' = cor escolhida */
+  textColorMode?: 'default' | 'custom';
+  textColor?: string | null;
+  /** Cor do botão "Saiba mais": 'default' = cor padrão do tema; 'custom' = cor escolhida */
+  buttonColorMode?: 'default' | 'custom';
+  buttonColor?: string | null;
 };
 
 export type CtaBlockData = {

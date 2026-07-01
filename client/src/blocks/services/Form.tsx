@@ -4,6 +4,7 @@ import type { BlockFormProps } from '@/blocks/_shared/types';
 import { LinkPicker, type LinkPickerValue } from '@/components/LinkPicker';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp, faArrowDown, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ColorField, getPrimaryHex } from '@/blocks/_shared/ColorField';
 
 const MAX_ITEMS = 4; // Limite fixo de 4 itens
 const MAX_DESCRIPTION = 160;
@@ -29,6 +30,7 @@ const normalizeLinkValue = (item: { href: string; linkMode?: 'page' | 'manual'; 
 };
 
 export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockData>) {
+  const primaryHex = getPrimaryHex();
   const items = value.items ?? [];
 
   const handleAddItem = () => {
@@ -81,6 +83,24 @@ export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockDa
             placeholder="Saiba mais"
           />
         </div>
+
+        <ColorField
+          label="Cor do texto"
+          mode={value.textColorMode ?? 'default'}
+          color={value.textColor}
+          fallbackHex="#1f2d16"
+          defaultHint="Usa a cor de texto padrão do tema (título e descrição de cada item)."
+          onChange={(next) => onChange({ ...value, textColorMode: next.mode, textColor: next.color })}
+        />
+
+        <ColorField
+          label="Cor do botão"
+          mode={value.buttonColorMode ?? 'default'}
+          color={value.buttonColor}
+          fallbackHex={primaryHex}
+          defaultHint="Usa a cor padrão do site."
+          onChange={(next) => onChange({ ...value, buttonColorMode: next.mode, buttonColor: next.color })}
+        />
 
         <div className="editor-field" style={{ gridColumn: '1 / -1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { BlockRendererProps } from '../_shared/types';
 import type { ServicesBlockData } from './schema';
 
@@ -6,8 +7,14 @@ export function ServicesRenderer({ data }: BlockRendererProps<ServicesBlockData>
   const buttonLabel = (data.buttonLabel ?? 'Saiba mais').toString().trim() || 'Saiba mais';
   const items = Array.isArray(data.items) ? data.items : [];
 
+  // Cor do texto (título/descrição dos itens) e do botão: 'default' = cores do tema; 'custom' = cor escolhida.
+  const sectionStyle: CSSProperties = {
+    ...(data.textColorMode === 'custom' && data.textColor ? { '--services-text-color': data.textColor } : {}),
+    ...(data.buttonColorMode === 'custom' && data.buttonColor ? { '--services-button-color': data.buttonColor } : {})
+  } as CSSProperties;
+
   return (
-    <div className="services-section">
+    <div className="services-section" style={sectionStyle}>
       <div className="services-header">
         <h2>{sectionTitle}</h2>
         <span className="services-accent" aria-hidden="true" />

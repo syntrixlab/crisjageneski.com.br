@@ -4762,7 +4762,7 @@ figure[data-type="image"] {
 
 .services-section .service-card__title {
   margin: 0;
-  color: var(--services-title-color);
+  color: var(--services-text-color, var(--services-title-color));
   font-size: var(--services-title-size);
   font-family: var(--services-title-font-family);
   font-weight: var(--services-title-font-weight);
@@ -4771,7 +4771,7 @@ figure[data-type="image"] {
 
 .service-description {
   margin: 0;
-  color: var(--color-forest);
+  color: var(--services-text-color, var(--color-forest));
   font-size: 0.8rem;
   line-height: 1.6;
 }
@@ -4790,6 +4790,13 @@ figure[data-type="image"] {
 
 .services-cta {
   margin-top: auto;
+  border-color: var(--services-button-color, var(--color-forest));
+  color: var(--services-button-color, var(--color-deep));
+}
+
+.services-cta:hover {
+  border-color: var(--services-button-color, var(--color-terracotta-strong));
+  color: var(--services-button-color, var(--color-terracotta));
 }
 
 .article-card {

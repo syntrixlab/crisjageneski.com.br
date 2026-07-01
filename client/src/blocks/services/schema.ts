@@ -4,5 +4,9 @@ import type { ServicesBlockData } from '@/types';
 export const servicesDefault: ServicesBlockData = {
   sectionTitle: 'Serviços',
   items: [],
-  buttonLabel: 'Saiba mais'
+  buttonLabel: 'Saiba mais',
+  textColorMode: 'default',
+  textColor: null,
+  buttonColorMode: 'default',
+  buttonColor: null
 };

@@ -142,7 +142,15 @@ const cardBlockSchema = baseBlockSchema.extend({
     subtitle: z.string().optional().nullable(),
     items: z.array(cardItemSchema).min(1).max(12),
     layout: z.enum(['auto', '2', '3', '4']).default('auto'),
-    variant: z.enum(['feature', 'simple', 'borderless', 'earthy']).default('feature')
+    // 'earthy' mantido para compatibilidade; normalizado para 'feature'.
+    variant: z.enum(['feature', 'simple', 'borderless', 'earthy']).default('feature'),
+    borderColorMode: z.enum(['default', 'custom']).optional(),
+    borderColor: z.string().optional().nullable(),
+    cardColorMode: z.enum(['default', 'custom']).optional(),
+    cardColor: z.string().optional().nullable(),
+    textColorMode: z.enum(['light', 'dark', 'custom']).optional(),
+    titleColor: z.string().optional().nullable(),
+    textColor: z.string().optional().nullable()
   })
 });
 
@@ -578,7 +586,14 @@ export type CardBlockData = {
   subtitle?: string | null;
   items: CardItem[];
   layout: 'auto' | '2' | '3' | '4';
-  variant: 'feature' | 'simple' | 'borderless' | 'earthy';
+  variant: 'feature' | 'simple' | 'borderless';
+  borderColorMode?: 'default' | 'custom';
+  borderColor?: string | null;
+  cardColorMode?: 'default' | 'custom';
+  cardColor?: string | null;
+  textColorMode?: 'light' | 'dark' | 'custom';
+  titleColor?: string | null;
+  textColor?: string | null;
 };
 
 export type FormField = {
@@ -1307,6 +1322,9 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
           ctaHref
         };
       });
+      const borderColorMode = base.data.borderColorMode ?? 'default';
+      const cardColorMode = base.data.cardColorMode ?? 'default';
+      const textColorMode = base.data.textColorMode ?? 'dark';
       return {
         ...common,
         type: 'cards',
@@ -1315,7 +1333,14 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
           subtitle: base.data.subtitle?.trim() || null,
           items,
           layout: base.data.layout ?? 'auto',
-          variant: base.data.variant ?? 'feature'
+          variant: base.data.variant === 'earthy' ? 'feature' : (base.data.variant ?? 'feature'),
+          borderColorMode,
+          borderColor: borderColorMode === 'custom' ? (base.data.borderColor?.trim() || null) : null,
+          cardColorMode,
+          cardColor: cardColorMode === 'custom' ? (base.data.cardColor?.trim() || null) : null,
+          textColorMode,
+          titleColor: textColorMode === 'custom' ? (base.data.titleColor?.trim() || null) : null,
+          textColor: textColorMode === 'custom' ? (base.data.textColor?.trim() || null) : null
         }
       };
     }

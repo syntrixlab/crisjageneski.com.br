@@ -54,7 +54,18 @@ export type CardBlockData = {
   subtitle?: string | null;
   items: CardItem[];
   layout: 'auto' | '2' | '3' | '4';
-  variant: 'feature' | 'simple' | 'borderless' | 'earthy';
+  /** Variações da borda: com sombra / sem sombra / sem borda */
+  variant: 'feature' | 'simple' | 'borderless';
+  /** Cor da borda: 'default' = cor primária do site; 'custom' = cor escolhida */
+  borderColorMode?: 'default' | 'custom';
+  borderColor?: string | null;
+  /** Cor do card: 'default' = fundo padrão; 'custom' = cor escolhida */
+  cardColorMode?: 'default' | 'custom';
+  cardColor?: string | null;
+  /** Cor do texto: 'light' = fundo/destaque; 'dark' = texto/primária; 'custom' = cores escolhidas */
+  textColorMode?: 'light' | 'dark' | 'custom';
+  titleColor?: string | null;
+  textColor?: string | null;
 };
 
 export type FormField = {

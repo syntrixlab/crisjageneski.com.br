@@ -6,5 +6,12 @@ export const cardsDefault: CardBlockData = {
   subtitle: null,
   items: [],
   layout: 'auto',
-  variant: 'feature'
+  variant: 'feature',
+  borderColorMode: 'default',
+  borderColor: null,
+  cardColorMode: 'default',
+  cardColor: null,
+  textColorMode: 'dark',
+  titleColor: null,
+  textColor: null
 };

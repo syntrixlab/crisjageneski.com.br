@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { BlockRendererProps } from '../_shared/types';
 import type { CardBlockData } from './schema';
 
@@ -20,11 +21,34 @@ export function CardsRenderer({ data }: BlockRendererProps<CardBlockData>) {
   const layoutClass = layout === 'auto' ? 'cards-layout--auto' : `cards-layout--${layout}`;
   const variantClass = `cards-variant--${variant}`;
 
+  // Cor da borda: padrão = primária do tema; personalizado = cor escolhida.
+  // Cor do card: padrão = fundo do CSS; personalizado = cor escolhida.
+  // Cor do texto: claro = fundo/destaque; escuro = texto/primária; personalizado = cores escolhidas.
+  const textMode = data.textColorMode ?? 'dark';
+  const textVars: Record<string, string> = {};
+  if (textMode === 'light') {
+    textVars['--card-title-color'] = 'var(--color-paper)';
+    textVars['--card-text-color'] = 'var(--color-clay)';
+  } else if (textMode === 'dark') {
+    textVars['--card-title-color'] = 'var(--color-deep)';
+    textVars['--card-text-color'] = 'var(--color-terracotta)';
+  } else {
+    if (data.titleColor) textVars['--card-title-color'] = data.titleColor;
+    if (data.textColor) textVars['--card-text-color'] = data.textColor;
+  }
+
+  const gridStyle = {
+    '--card-border-color':
+      data.borderColorMode === 'custom' && data.borderColor ? data.borderColor : 'var(--color-terracotta)',
+    ...(data.cardColorMode === 'custom' && data.cardColor ? { '--card-bg-color': data.cardColor } : {}),
+    ...textVars
+  } as CSSProperties;
+
   return (
     <div className="page-public-cards">
       {data.title && <h2 className="cards-title">{data.title}</h2>}
       {data.subtitle && <p className="cards-subtitle">{data.subtitle}</p>}
-      <div className={`cards-grid ${layoutClass} ${variantClass}`.trim()}>
+      <div className={`cards-grid ${layoutClass} ${variantClass}`.trim()} style={gridStyle}>
         {data.items.map((card) => (
           <div key={card.id} className="card-item">
             {(card.icon || card.iconImageUrl) && (

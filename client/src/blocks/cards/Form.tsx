@@ -6,7 +6,76 @@ import { ImagePickerModal } from '@/components/ImagePickerModal';
 import type { CardBlockData, CardItem } from '@/types';
 import type { BlockFormProps } from '../_shared/types';
 
+// Cor primária do tema (para pré-preencher o color picker no modo "Personalizado").
+function getPrimaryHex(): string {
+  if (typeof window === 'undefined') return '#8a3651';
+  const v = getComputedStyle(document.body).getPropertyValue('--color-terracotta').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(v) ? v : '#8a3651';
+}
+
+type ColorMode = 'default' | 'custom';
+
+function ColorField({
+  label,
+  mode,
+  color,
+  fallbackHex,
+  defaultHint,
+  onChange
+}: {
+  label: string;
+  mode: ColorMode;
+  color?: string | null;
+  fallbackHex: string;
+  defaultHint: string;
+  onChange: (next: { mode: ColorMode; color: string | null }) => void;
+}) {
+  const current = color || fallbackHex;
+  return (
+    <div className="editor-field">
+      <label>{label}</label>
+      <div className="page-columns-toggle compact">
+        <button
+          type="button"
+          className={mode !== 'custom' ? 'active' : ''}
+          onClick={() => onChange({ mode: 'default', color: null })}
+        >
+          Padrão
+        </button>
+        <button
+          type="button"
+          className={mode === 'custom' ? 'active' : ''}
+          onClick={() => onChange({ mode: 'custom', color: current })}
+        >
+          Personalizado
+        </button>
+      </div>
+      {mode === 'custom' ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <input
+            type="color"
+            value={/^#[0-9a-fA-F]{6}$/.test(current) ? current : fallbackHex}
+            onChange={(e) => onChange({ mode: 'custom', color: e.target.value })}
+            style={{ width: '48px', height: '36px', padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+            aria-label={`${label} - seletor`}
+          />
+          <input
+            type="text"
+            value={color ?? ''}
+            onChange={(e) => onChange({ mode: 'custom', color: e.target.value })}
+            placeholder="#000000"
+            style={{ width: '120px' }}
+          />
+        </div>
+      ) : (
+        <small className="muted" style={{ display: 'block', marginTop: '0.35rem' }}>{defaultHint}</small>
+      )}
+    </div>
+  );
+}
+
 export function CardsBlockForm({ value, onChange, onUploadingChange: _onUploadingChange }: BlockFormProps<CardBlockData>) {
+  const primaryHex = getPrimaryHex();
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [iconTargetId, setIconTargetId] = useState<string | null>(null);
 
@@ -83,13 +152,12 @@ export function CardsBlockForm({ value, onChange, onUploadingChange: _onUploadin
         </div>
 
         <div className="editor-field">
-          <label>Variante</label>
+          <label>Variações da borda</label>
           <div className="page-columns-toggle compact">
             {[
-              { value: 'feature', label: 'Feature' },
-              { value: 'simple', label: 'Simples' },
-              { value: 'borderless', label: 'Sem borda' },
-              { value: 'earthy', label: 'Terroso' }
+              { value: 'feature', label: 'Com sombra' },
+              { value: 'simple', label: 'Sem sombra' },
+              { value: 'borderless', label: 'Sem borda' }
             ].map((opt) => (
               <button
                 key={opt.value}
@@ -101,6 +169,88 @@ export function CardsBlockForm({ value, onChange, onUploadingChange: _onUploadin
               </button>
             ))}
           </div>
+        </div>
+
+        <ColorField
+          label="Cor da borda"
+          mode={value.borderColorMode ?? 'default'}
+          color={value.borderColor}
+          fallbackHex={primaryHex}
+          defaultHint="Usa a cor primária do site."
+          onChange={(next) => onChange({ ...value, borderColorMode: next.mode, borderColor: next.color })}
+        />
+
+        <ColorField
+          label="Cor do card"
+          mode={value.cardColorMode ?? 'default'}
+          color={value.cardColor}
+          fallbackHex="#ffffff"
+          defaultHint="Usa a cor de fundo padrão do card."
+          onChange={(next) => onChange({ ...value, cardColorMode: next.mode, cardColor: next.color })}
+        />
+
+        <div className="editor-field">
+          <label>Cor do texto</label>
+          <div className="page-columns-toggle compact">
+            {[
+              { value: 'light', label: 'Claro' },
+              { value: 'dark', label: 'Escuro' },
+              { value: 'custom', label: 'Personalizado' }
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={(value.textColorMode ?? 'dark') === opt.value ? 'active' : ''}
+                onClick={() => onChange({ ...value, textColorMode: opt.value as NonNullable<CardBlockData['textColorMode']> })}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {(value.textColorMode ?? 'dark') === 'custom' ? (
+            <div style={{ display: 'grid', gap: '0.6rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="color"
+                  value={/^#[0-9a-fA-F]{6}$/.test(value.titleColor ?? '') ? (value.titleColor as string) : primaryHex}
+                  onChange={(e) => onChange({ ...value, titleColor: e.target.value })}
+                  style={{ width: '48px', height: '36px', padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+                  aria-label="Cor do título"
+                />
+                <input
+                  type="text"
+                  value={value.titleColor ?? ''}
+                  onChange={(e) => onChange({ ...value, titleColor: e.target.value })}
+                  placeholder="#000000"
+                  style={{ width: '110px' }}
+                />
+                <span className="muted small">Título</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="color"
+                  value={/^#[0-9a-fA-F]{6}$/.test(value.textColor ?? '') ? (value.textColor as string) : '#555555'}
+                  onChange={(e) => onChange({ ...value, textColor: e.target.value })}
+                  style={{ width: '48px', height: '36px', padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+                  aria-label="Cor da descrição"
+                />
+                <input
+                  type="text"
+                  value={value.textColor ?? ''}
+                  onChange={(e) => onChange({ ...value, textColor: e.target.value })}
+                  placeholder="#555555"
+                  style={{ width: '110px' }}
+                />
+                <span className="muted small">Descrição</span>
+              </div>
+            </div>
+          ) : (
+            <small className="muted" style={{ display: 'block', marginTop: '0.35rem' }}>
+              {(value.textColorMode ?? 'dark') === 'light'
+                ? 'Título com a cor de fundo e descrição com a cor de destaque do tema.'
+                : 'Título com a cor de texto e descrição com a cor primária do tema.'}
+            </small>
+          )}
         </div>
 
         <div className="editor-field" style={{ gridColumn: '1 / -1' }}>

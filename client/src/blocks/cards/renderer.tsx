@@ -1,6 +1,19 @@
 import type { BlockRendererProps } from '../_shared/types';
 import type { CardBlockData } from './schema';
 
+// Separa a string de ícone em emojis individuais, respeitando clusters
+// (emojis compostos por ZWJ/modificadores não são quebrados ao meio).
+function splitEmojis(value: string): string[] {
+  const str = (value ?? '').trim();
+  if (!str) return [];
+  const Segmenter = (Intl as unknown as { Segmenter?: typeof Intl.Segmenter }).Segmenter;
+  if (typeof Segmenter === 'function') {
+    const seg = new Segmenter('pt', { granularity: 'grapheme' });
+    return Array.from(seg.segment(str), (s) => s.segment).filter((g) => g.trim());
+  }
+  return Array.from(str).filter((g) => g.trim());
+}
+
 export function CardsRenderer({ data }: BlockRendererProps<CardBlockData>) {
   const layout = data.layout ?? 'auto';
   const variant = data.variant ?? 'feature';
@@ -19,7 +32,11 @@ export function CardsRenderer({ data }: BlockRendererProps<CardBlockData>) {
                 {((card.iconType === 'image' || (!card.iconType && card.iconImageUrl)) && card.iconImageUrl) ? (
                   <img className="card-icon-img" src={card.iconImageUrl} alt={card.iconAlt ?? ''} loading="lazy" />
                 ) : (
-                  <span className="card-icon-emoji" aria-hidden="true">{card.icon}</span>
+                  <span className="card-icon-emoji" aria-hidden="true">
+                    {splitEmojis(card.icon ?? '').map((emoji, index) => (
+                      <span key={index} className="card-icon-emoji-item">{emoji}</span>
+                    ))}
+                  </span>
                 )}
               </div>
             )}

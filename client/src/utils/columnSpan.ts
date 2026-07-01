@@ -13,6 +13,12 @@ export function calculateBlockSpan(block: PageBlock, sectionColumns: number): nu
     return sectionColumns;
   }
 
+  // Formulário nunca "estoura" para colunas vizinhas: fica sempre confinado à sua própria coluna.
+  // (colStart + colSpan > sectionColumns quebraria o grid quando o form não está na 1ª coluna)
+  if (block.type === 'form') {
+    return 1;
+  }
+
   // Pegar colSpan do bloco (default = 1)
   const requestedSpan = block.colSpan ?? 1;
 

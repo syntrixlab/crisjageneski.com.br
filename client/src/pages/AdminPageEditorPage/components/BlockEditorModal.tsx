@@ -218,7 +218,7 @@ export function BlockEditorModal(_props: {
         );
       })()}
 
-      {selectedType && selectedType !== 'hero' && selectedType !== 'recent-posts' && selectedType !== 'services' && selectedType !== 'contact-info' && (
+      {selectedType && selectedType !== 'hero' && selectedType !== 'recent-posts' && selectedType !== 'services' && selectedType !== 'contact-info' && selectedType !== 'form' && (
         <div style={{ marginBottom: '1rem' }}>
           <div className="page-columns-toggle compact">
             {Array.from({ length: columnCount }).map((_, idx) => (

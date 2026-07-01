@@ -8,6 +8,9 @@ import type { BackgroundConfig } from '@/utils/backgroundHelpers';
 // Blocos que sempre ocupam a largura total da seção — sem controle de colunas.
 const FULL_WIDTH_TYPES: ReadonlySet<string> = new Set(['hero', 'recent-posts', 'services', 'contact-info']);
 
+// Blocos que nunca podem "spannar" colunas vizinhas — ficam sempre confinados à própria coluna.
+const NO_COLSPAN_TYPES: ReadonlySet<string> = new Set(['form']);
+
 export function BlockInspector(_props: {
   block: PageBlock;
   columnCount: number;
@@ -33,7 +36,7 @@ export function BlockInspector(_props: {
     onUploadingChange?: (uploading: boolean) => void;
   }>;
 
-  const showColSpan = columnCount > 1 && !FULL_WIDTH_TYPES.has(block.type);
+  const showColSpan = columnCount > 1 && !FULL_WIDTH_TYPES.has(block.type) && !NO_COLSPAN_TYPES.has(block.type);
   const currentSpan = Math.max(1, Math.min(block.colSpan ?? 1, columnCount));
 
   return (

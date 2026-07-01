@@ -255,8 +255,12 @@ export function PageBlockView({ block, enableFormSubmit = true, pageSlug }: { bl
   );
 
   if (hasBg) {
+    // Formulário renderiza um "card" próprio, mais estreito e centralizado do que a célula do
+    // grid (ver .page-public-form). Sem essa classe, o wrapper de fundo pinta a célula inteira,
+    // vazando a cor para fora da borda visível do card.
+    const wrapperClassName = block.type === 'form' ? 'block-bg-wrapper block-bg-wrapper--form' : 'block-bg-wrapper';
     return (
-      <div className="block-bg-wrapper" style={blockBgWrapper}>
+      <div className={wrapperClassName} style={blockBgWrapper}>
         {blockBgOverlay && <div style={blockBgOverlay} aria-hidden />}
         <div style={{ position: 'relative', zIndex: 1 }}>
           {content}

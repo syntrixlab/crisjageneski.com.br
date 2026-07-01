@@ -10535,3 +10535,24 @@ body, p, span, .body-text, .text {
   border-radius: inherit;
   overflow: hidden;
 }
+
+/* O card do formulário tem fundo opaco próprio (var(--section-surface)), que cobria
+   a cor/imagem definida em "Fundo do bloco". Deixa transparente para a cor do wrapper aparecer. */
+.block-bg-wrapper .page-public-form {
+  background: transparent;
+}
+
+/* O card do formulário é mais estreito/centralizado que a célula do grid (max-width: 640px).
+   Sem isso, o wrapper de fundo pinta a célula inteira e a cor vaza para fora da borda do card. */
+.block-bg-wrapper--form {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 24px;
+}
+
+@media (max-width: 640px) {
+  .block-bg-wrapper--form {
+    border-radius: 16px;
+  }
+}

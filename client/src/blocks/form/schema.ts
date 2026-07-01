@@ -6,5 +6,9 @@ export const formDefault: FormBlockData = {
   description: null,
   fields: [],
   submitLabel: 'Enviar',
-  successMessage: 'Mensagem enviada com sucesso!'
+  successMessage: 'Mensagem enviada com sucesso!',
+  textColorMode: 'default',
+  textColor: null,
+  buttonColorMode: 'default',
+  buttonColor: null
 };

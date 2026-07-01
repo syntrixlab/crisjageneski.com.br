@@ -7335,6 +7335,7 @@ figure.page-public-image figcaption {
   padding: var(--section-padding);
   box-shadow: var(--section-shadow);
   overflow: hidden;
+  color: var(--form-text-color, inherit);
 }
 
 /* ===== Form Header ===== */
@@ -7387,7 +7388,7 @@ figure.page-public-image figcaption {
 .page-public-form .form-field label {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--color-deep);
+  color: var(--form-text-color, var(--color-deep));
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
@@ -7564,6 +7565,7 @@ figure.page-public-image figcaption {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  background: var(--form-button-bg, linear-gradient(120deg, var(--color-terracotta), var(--color-terracotta)));
 }
 
 .page-public-form .form-submit::before {
@@ -7581,6 +7583,7 @@ figure.page-public-image figcaption {
 
 .page-public-form .form-submit:hover:not(:disabled) {
   transform: translateY(-2px);
+  background: var(--form-button-bg-hover, linear-gradient(120deg, var(--color-terracotta-strong), var(--color-terracotta-strong)));
   box-shadow: 0 8px 20px rgba(190, 103, 49, 0.3),
               0 4px 8px rgba(0, 0, 0, 0.1);
 }

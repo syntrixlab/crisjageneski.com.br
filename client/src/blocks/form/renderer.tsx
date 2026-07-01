@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type CSSProperties, type FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { submitForm } from '@/api/queries';
@@ -22,6 +22,14 @@ export function FormRenderer({ data: formData, blockId, enableFormSubmit = true,
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [honeypot, setHoneypot] = useState<string>(''); // Anti-spam field
+
+  // Cor do texto (título/descrição/rótulos) e do botão: 'default' = cores do tema; 'custom' = cor escolhida.
+  const formStyle: CSSProperties = {
+    ...(formData.textColorMode === 'custom' && formData.textColor ? { '--form-text-color': formData.textColor } : {}),
+    ...(formData.buttonColorMode === 'custom' && formData.buttonColor
+      ? { '--form-button-bg': formData.buttonColor, '--form-button-bg-hover': formData.buttonColor }
+      : {})
+  } as CSSProperties;
 
   const validateField = (field: FormBlockData['fields'][0], value: string): string | null => {
     if (field.required && !value.trim()) {
@@ -117,7 +125,7 @@ export function FormRenderer({ data: formData, blockId, enableFormSubmit = true,
   // Se já foi enviado com sucesso, mostrar apenas mensagem
   if (state === 'success') {
     return (
-      <div className="page-public-form form-success">
+      <div className="page-public-form form-success" style={formStyle}>
         <div className="form-success-message">
           <span className="form-success-icon"><FontAwesomeIcon icon={faCheck} /></span>
           <p>{formData.successMessage || 'Mensagem enviada com sucesso!'}</p>
@@ -127,7 +135,7 @@ export function FormRenderer({ data: formData, blockId, enableFormSubmit = true,
   }
 
   return (
-    <div className="page-public-form">
+    <div className="page-public-form" style={formStyle}>
       {formData.title && <h2 className="form-title">{formData.title}</h2>}
       {formData.description && <p className="form-description">{formData.description}</p>}
 

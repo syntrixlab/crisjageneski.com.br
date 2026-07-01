@@ -84,6 +84,12 @@ export type FormBlockData = {
   submitLabel?: string;
   successMessage?: string;
   storeSummaryKeys?: string[];
+  /** Cor do texto (título, descrição e rótulos): 'default' = cor padrão do tema; 'custom' = cor escolhida */
+  textColorMode?: 'default' | 'custom';
+  textColor?: string | null;
+  /** Cor do botão de envio: 'default' = cor primária do tema; 'custom' = cor escolhida */
+  buttonColorMode?: 'default' | 'custom';
+  buttonColor?: string | null;
 };
 
 export type HeroMediaMode = 'single_image' | 'cards_only' | 'four_cards';

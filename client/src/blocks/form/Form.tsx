@@ -2,8 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { Switch } from '@/components/AdminUI';
 import type { FormBlockData } from '@/types';
 import type { BlockFormProps } from '../_shared/types';
+import { ColorField, getPrimaryHex } from '../_shared/ColorField';
 
 export function FormBlockForm({ value, onChange }: BlockFormProps<FormBlockData>) {
+  const primaryHex = getPrimaryHex();
   const handleAddField = () => {
     const newField = {
       id: uuidv4(),
@@ -151,6 +153,24 @@ export function FormBlockForm({ value, onChange }: BlockFormProps<FormBlockData>
             onChange={(e) => onChange({ ...value, successMessage: e.target.value })}
           />
         </div>
+
+        <ColorField
+          label="Cor do texto"
+          mode={value.textColorMode ?? 'default'}
+          color={value.textColor}
+          fallbackHex="#1f2d16"
+          defaultHint="Usa a cor de texto padrão do tema (título, descrição e rótulos)."
+          onChange={(next) => onChange({ ...value, textColorMode: next.mode, textColor: next.color })}
+        />
+
+        <ColorField
+          label="Cor do botão"
+          mode={value.buttonColorMode ?? 'default'}
+          color={value.buttonColor}
+          fallbackHex={primaryHex}
+          defaultHint="Usa a cor primária do site."
+          onChange={(next) => onChange({ ...value, buttonColorMode: next.mode, buttonColor: next.color })}
+        />
       </div>
     </div>
   );

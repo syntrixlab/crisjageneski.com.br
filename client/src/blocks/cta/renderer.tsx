@@ -8,10 +8,21 @@ export function CtaRenderer({ data }: BlockRendererProps<CtaBlockData>) {
   const ctaHref = data.ctaHref ?? '/contato';
   const imageUrl = data.imageUrl ?? null;
   const imageAlt = data.imageAlt ?? '';
+  const imageSide = data.imageSide ?? 'right';
+  const dissolve = data.imageDissolve ?? true;
+  const dissolveStrength = data.imageDissolveStrength ?? 'medium';
   const openInNewTab = data.ctaLinkMode === 'manual' && /^https?:\/\//i.test(ctaHref);
 
+  const mediaClasses = imageUrl
+    ? [
+        'cta-block--with-media',
+        `cta-block--img-${imageSide}`,
+        dissolve ? `cta-block--dissolve-${dissolveStrength}` : 'cta-block--no-dissolve'
+      ].join(' ')
+    : 'cta-block--no-media';
+
   return (
-    <div className={`cta-block ${imageUrl ? 'cta-block--with-media' : 'cta-block--no-media'}`.trim()}>
+    <div className={`cta-block ${mediaClasses}`.trim()}>
       <div className="cta-content">
         <div className="section-title" style={{ marginBottom: '1rem' }}>
           <h2>{title}</h2>

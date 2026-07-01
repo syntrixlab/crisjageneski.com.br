@@ -223,6 +223,11 @@ export type CtaBlockData = {
   imageId?: string | null;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  /** Lado da imagem no card */
+  imageSide?: 'left' | 'right';
+  /** Dissolver a imagem no fundo do card (evita corte brusco de tons) */
+  imageDissolve?: boolean;
+  imageDissolveStrength?: 'soft' | 'medium' | 'strong';
 };
 
 export type MediaTextBlockData = {

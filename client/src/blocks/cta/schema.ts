@@ -6,5 +6,8 @@ export const ctaDefault: CtaBlockData = {
   text: 'Agende uma conversa inicial gratuita.',
   ctaLabel: 'Agendar',
   ctaHref: '/contato',
-  ctaLinkMode: 'manual'
+  ctaLinkMode: 'manual',
+  imageSide: 'right',
+  imageDissolve: true,
+  imageDissolveStrength: 'medium'
 };

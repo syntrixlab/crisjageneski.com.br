@@ -301,7 +301,10 @@ const ctaBlockSchema = baseBlockSchema.extend({
     ctaSlug: z.string().optional().nullable(),
     imageId: z.string().optional().nullable(),
     imageUrl: z.string().optional().nullable(),
-    imageAlt: z.string().optional().nullable()
+    imageAlt: z.string().optional().nullable(),
+    imageSide: z.enum(['left', 'right']).optional(),
+    imageDissolve: z.boolean().optional(),
+    imageDissolveStrength: z.enum(['soft', 'medium', 'strong']).optional()
   })
 });
 
@@ -710,6 +713,9 @@ export type CtaBlockData = {
   imageId?: string | null;
   imageUrl?: string | null;
   imageAlt?: string | null;
+  imageSide?: 'left' | 'right';
+  imageDissolve?: boolean;
+  imageDissolveStrength?: 'soft' | 'medium' | 'strong';
 };
 
 export type MediaTextBlockData = {
@@ -1583,7 +1589,10 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
           ctaSlug: base.data.ctaSlug ?? null,
           imageId: base.data.imageId ?? null,
           imageUrl: imageUrl || null,
-          imageAlt: base.data.imageAlt?.toString() || ''
+          imageAlt: base.data.imageAlt?.toString() || '',
+          imageSide: base.data.imageSide ?? 'right',
+          imageDissolve: base.data.imageDissolve ?? true,
+          imageDissolveStrength: base.data.imageDissolveStrength ?? 'medium'
         }
       };
     }

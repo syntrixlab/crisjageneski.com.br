@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { PageSection } from '../types';
+import imagePlaceholder from '../assets/image-placeholder.svg';
 
 export type SectionPreset = {
   id: string;
@@ -188,7 +189,7 @@ export const sectionPresets: SectionPreset[] = [
   {
     id: 'cta-1col',
     name: 'CTA Box',
-    description: 'Chamada para ação centralizada',
+    description: 'Chamada para ação com imagem lateral opcional',
     icon: '📣',
     section: {
       columns: 1,
@@ -198,29 +199,29 @@ export const sectionPresets: SectionPreset[] = [
           blocks: [
             {
               id: uuidv4(),
-              type: 'text',
+              type: 'cta',
               data: {
-                contentHtml: '<h2 style="text-align: center;">Pronto para Começar?</h2><p style="text-align: center;">Entre em contato agora e descubra como podemos ajudar você a alcançar seus objetivos.</p>',
-                width: 'normal',
-                background: 'none'
-              }
-            },
-            {
-              id: uuidv4(),
-              type: 'button',
-              data: {
-                label: 'Falar com Especialista',
-                href: 'https://exemplo.com/contato',
-                newTab: false,
-                variant: 'primary',
-                icon: null
+                title: 'Pronto para Começar?',
+                text: 'Entre em contato agora e descubra como podemos ajudar você a alcançar seus objetivos.',
+                ctaLabel: 'Falar com Especialista',
+                ctaHref: '/contato',
+                ctaLinkMode: 'page',
+                ctaPageKey: 'contato',
+                ctaPageId: null,
+                ctaSlug: null,
+                imageId: null,
+                imageUrl: imagePlaceholder,
+                imageAlt: 'Imagem do CTA',
+                imageSide: 'right',
+                imageDissolve: true,
+                imageDissolveStrength: 'medium'
               }
             }
           ]
         }
       ],
       settings: {
-        background: 'dark',
+        background: 'none',
         padding: 'large',
         maxWidth: 'normal'
       }

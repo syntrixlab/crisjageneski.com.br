@@ -138,7 +138,6 @@ export function BlockEditorModal(_props: {
             category: 'Layout / Destaque',
             blocks: [
               { type: 'hero', description: 'Imagem de fundo com conteúdo sobreposto.' },
-              { type: 'cta', description: 'Título, texto e botão com imagem opcional.' },
               { type: 'media-text', description: 'Imagem lateral com texto na lateral.' }
             ]
           },

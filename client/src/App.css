@@ -869,17 +869,79 @@
 }
 
 .cta-block {
-  --cta-bg: #f3ede4;
-  --cta-fade-strong: rgba(243, 239, 231, 1);
-  --cta-fade-mid: rgba(243, 239, 231, 0.65);
-  --cta-fade-light: rgba(243, 239, 231, 0);
+  /* Caixa escura derivada do tema (como o CTA Box). O dissolve funde a imagem
+     NESTA cor, então não há discrepância brusca entre imagem e fundo. */
+  --cta-surface: var(--color-deep);
+  --cta-fade-dir: 90deg;     /* imagem à direita → funde a borda esquerda */
+  --cta-fade-extent: 52%;    /* até onde a imagem se dissolve */
   position: relative;
   display: flex;
   align-items: stretch;
-  background: linear-gradient(160deg, #f3efe7, var(--cta-bg));
+  /* Mesmo fundo do section-bg-dark, para casar com o CTA Box antigo */
+  background:
+    radial-gradient(1200px 500px at 50% 30%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.00)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.36)),
+    var(--cta-surface);
+  color: #fbf7ef;
   border-radius: calc(var(--radius-l) * 1.2);
-  border: 1px solid rgba(84, 94, 69, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   overflow: hidden;
+}
+
+/* Texto claro e tipografia igual ao bloco de texto (h2 menor, sem barra, p menor) */
+.cta-block .cta-content h2,
+.cta-block .cta-content p {
+  color: #fbf7ef;
+}
+
+.cta-block .cta-content h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.cta-block .cta-content h2::after {
+  display: none;
+}
+
+.cta-block .cta-content p {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+/* Botão primário temático (claro sobre escuro) */
+.cta-block .btn-primary {
+  background: linear-gradient(120deg, var(--color-terracotta), var(--color-terracotta-strong));
+  box-shadow: 0 12px 30px rgba(var(--theme-primary-rgb), 0.35);
+  color: #ffffff;
+}
+
+.cta-block .btn-primary:hover {
+  background: linear-gradient(120deg, var(--color-terracotta-strong), var(--color-terracotta));
+  box-shadow: 0 14px 34px rgba(var(--theme-primary-rgb), 0.42);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Lado da imagem */
+.cta-block--img-left .cta-media {
+  order: -1;
+}
+
+.cta-block--img-left {
+  --cta-fade-dir: 270deg;    /* imagem à esquerda → funde a borda direita */
+}
+
+/* Intensidade do dissolve */
+.cta-block--dissolve-soft {
+  --cta-fade-extent: 34%;
+}
+
+.cta-block--dissolve-medium {
+  --cta-fade-extent: 52%;
+}
+
+.cta-block--dissolve-strong {
+  --cta-fade-extent: 74%;
 }
 
 .cta-content {
@@ -910,20 +972,16 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  /* A borda interna da imagem vira transparente e revela o PRÓPRIO fundo do card,
+     então a dissolução tem exatamente a cor do fundo (sem overlay de cor). */
+  -webkit-mask-image: linear-gradient(var(--cta-fade-dir), transparent 0%, #000 var(--cta-fade-extent));
+  mask-image: linear-gradient(var(--cta-fade-dir), transparent 0%, #000 var(--cta-fade-extent));
 }
 
-.cta-media::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to right,
-    var(--cta-fade-strong) 0%,
-    var(--cta-fade-mid) 18%,
-    var(--cta-fade-light) 45%
-  );
-  pointer-events: none;
-  z-index: 1;
+/* Dissolve desativado: imagem inteira, sem máscara */
+.cta-block--no-dissolve .cta-media img {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 @media (max-width: 768px) {
@@ -939,12 +997,14 @@
     aspect-ratio: 1 / 1;
   }
 
-  .cta-media::before {
-    background: linear-gradient(
-      to bottom,
-      var(--cta-fade-strong) 0%,
-      var(--cta-fade-light) 35%
-    );
+  /* Padrão no mobile: imagem abaixo do texto → funde a borda superior */
+  .cta-block {
+    --cta-fade-dir: 180deg;
+  }
+
+  /* Imagem à esquerda fica acima do texto no mobile → funde a borda inferior */
+  .cta-block--img-left {
+    --cta-fade-dir: 0deg;
   }
 }
 
@@ -5748,8 +5808,10 @@ figure[data-type="image"] {
 }
 
 .page-section-editor[data-bg="dark"] {
+  /* Escuro derivado do tema (--color-deep) — adapta ao tema do usuário. */
   --section-bg: radial-gradient(1200px 500px at 50% 30%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.00)),
-                linear-gradient(180deg, #1f2d16, #152011);
+                linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.36)),
+                var(--color-deep);
   --section-fg: #fbf7ef;
   --section-border: rgba(255, 255, 255, 0.10);
   --section-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
@@ -6008,10 +6070,13 @@ figure[data-type="image"] {
   color: var(--section-fg);
 }
 
-/* Variante: Escuro (fundo gradiente escuro + texto claro) */
+/* Variante: Escuro (fundo escuro derivado do tema + texto claro) */
 .page-public-section.section-bg-dark {
+  /* Base = cor de texto do tema (--color-deep); o degradê preto dá profundidade
+     sem fixar um tom — adapta ao tema escolhido pelo usuário. */
   --section-bg: radial-gradient(1200px 500px at 50% 30%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.00)),
-                linear-gradient(180deg, #1f2d16, #152011);
+                linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.36)),
+                var(--color-deep);
   --section-fg: #fbf7ef;
   --section-border: rgba(255, 255, 255, 0.10);
   --section-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
@@ -6045,8 +6110,9 @@ figure[data-type="image"] {
 }
 
 .page-public-section.section-bg-dark .btn-primary:hover {
-  background: linear-gradient(120deg, #d17438, #c6581f);
-  box-shadow: 0 14px 34px rgba(var(--theme-accent-rgb), 0.4);
+  /* Segue o tema (primária) em vez de um laranja fixo. */
+  background: linear-gradient(120deg, var(--color-terracotta), var(--color-terracotta-strong));
+  box-shadow: 0 14px 34px rgba(var(--theme-primary-rgb), 0.42);
   color: #ffffff;
   transform: translateY(-2px);
 }

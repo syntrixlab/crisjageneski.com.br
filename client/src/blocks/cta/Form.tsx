@@ -110,6 +110,73 @@ export function CtaBlockForm({ value, onChange }: BlockFormProps<CtaBlockData>) 
           <label>Alt da imagem</label>
           <input value={value.imageAlt ?? ''} onChange={(e) => onChange({ ...value, imageAlt: e.target.value })} />
         </div>
+
+        {value.imageUrl && (
+          <>
+            <div className="editor-field">
+              <label>Lado da imagem</label>
+              <div className="page-columns-toggle compact">
+                {[
+                  { value: 'left', label: 'Esquerda' },
+                  { value: 'right', label: 'Direita' }
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={(value.imageSide ?? 'right') === opt.value ? 'active' : ''}
+                    onClick={() => onChange({ ...value, imageSide: opt.value as 'left' | 'right' })}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="editor-field">
+              <label>Dissolver imagem no fundo</label>
+              <div className="page-columns-toggle compact">
+                {[
+                  { value: true, label: 'Ativado' },
+                  { value: false, label: 'Desativado' }
+                ].map((opt) => (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    className={(value.imageDissolve ?? true) === opt.value ? 'active' : ''}
+                    onClick={() => onChange({ ...value, imageDissolve: opt.value })}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <small className="muted" style={{ display: 'block', marginTop: '0.35rem' }}>
+                Funde a borda da imagem na cor do card, evitando corte brusco de tons.
+              </small>
+            </div>
+
+            {(value.imageDissolve ?? true) && (
+              <div className="editor-field">
+                <label>Intensidade da dissolução</label>
+                <div className="page-columns-toggle compact">
+                  {[
+                    { value: 'soft', label: 'Suave' },
+                    { value: 'medium', label: 'Média' },
+                    { value: 'strong', label: 'Forte' }
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={(value.imageDissolveStrength ?? 'medium') === opt.value ? 'active' : ''}
+                      onClick={() => onChange({ ...value, imageDissolveStrength: opt.value as 'soft' | 'medium' | 'strong' })}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <ImagePickerModal

@@ -49,7 +49,8 @@ const MODAL_EDIT_TYPES: ReadonlySet<string> = new Set([
   'hero',
   'recent-posts',
   'services',
-  'contact-info'
+  'contact-info',
+  'text'
 ]);
 
 export function AdminPageEditorPage({ pageKey }: { pageKey?: string }) {

@@ -209,6 +209,10 @@ export type ServicesBlockItem = {
   pageId?: string | null;
   pageKey?: string | null;
   slug?: string | null;
+  /** Ícone próprio do item. Se vazio, usa o ícone padrão do bloco (ou a espiral da marca). */
+  iconImageId?: string | null;
+  iconImageUrl?: string | null;
+  iconAlt?: string | null;
 };
 
 export type ServicesBlockData = {
@@ -221,6 +225,10 @@ export type ServicesBlockData = {
   /** Cor do botão "Saiba mais": 'default' = cor padrão do tema; 'custom' = cor escolhida */
   buttonColorMode?: 'default' | 'custom';
   buttonColor?: string | null;
+  /** Ícone padrão usado nos itens que não têm ícone próprio. Se vazio, usa a espiral padrão da marca. */
+  iconImageId?: string | null;
+  iconImageUrl?: string | null;
+  iconAlt?: string | null;
 };
 
 export type CtaBlockData = {

@@ -8,5 +8,8 @@ export const servicesDefault: ServicesBlockData = {
   textColorMode: 'default',
   textColor: null,
   buttonColorMode: 'default',
-  buttonColor: null
+  buttonColor: null,
+  iconImageId: null,
+  iconImageUrl: null,
+  iconAlt: null
 };

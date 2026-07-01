@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { ServicesBlockData } from '@/types';
 import type { BlockFormProps } from '@/blocks/_shared/types';
 import { LinkPicker, type LinkPickerValue } from '@/components/LinkPicker';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp, faArrowDown, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowDown, faTrash, faCamera } from '@fortawesome/free-solid-svg-icons';
 import { ColorField, getPrimaryHex } from '@/blocks/_shared/ColorField';
+import { ImagePickerModal } from '@/components/ImagePickerModal';
 
 const MAX_ITEMS = 4; // Limite fixo de 4 itens
 const MAX_DESCRIPTION = 160;
@@ -32,6 +34,29 @@ const normalizeLinkValue = (item: { href: string; linkMode?: 'page' | 'manual'; 
 export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockData>) {
   const primaryHex = getPrimaryHex();
   const items = value.items ?? [];
+  // 'default' = ícone do bloco (fallback); string = id do item sendo editado; null = fechado.
+  const [iconPickerTarget, setIconPickerTarget] = useState<'default' | string | null>(null);
+
+  const handleSelectIcon = (image: { mediaId: string; src: string; alt: string }) => {
+    if (iconPickerTarget === 'default') {
+      onChange({ ...value, iconImageId: image.mediaId, iconImageUrl: image.src, iconAlt: image.alt || null });
+    } else if (iconPickerTarget) {
+      handleUpdateItem(iconPickerTarget, {
+        iconImageId: image.mediaId,
+        iconImageUrl: image.src,
+        iconAlt: image.alt || null
+      });
+    }
+    setIconPickerTarget(null);
+  };
+
+  const handleRemoveIcon = () => {
+    onChange({ ...value, iconImageId: null, iconImageUrl: null, iconAlt: null });
+  };
+
+  const handleRemoveItemIcon = (id: string) => {
+    handleUpdateItem(id, { iconImageId: null, iconImageUrl: null, iconAlt: null });
+  };
 
   const handleAddItem = () => {
     if (items.length >= MAX_ITEMS) return;
@@ -103,6 +128,30 @@ export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockDa
         />
 
         <div className="editor-field" style={{ gridColumn: '1 / -1' }}>
+          <label>Ícone padrão (itens sem ícone próprio usam este)</label>
+          {value.iconImageUrl ? (
+            <div className="image-selected-preview">
+              <img src={value.iconImageUrl} alt={value.iconAlt ?? ''} style={{ maxWidth: '80px' }} />
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setIconPickerTarget('default')}>
+                  Trocar imagem
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleRemoveIcon}>
+                  Usar espiral padrão
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setIconPickerTarget('default')}>
+                <FontAwesomeIcon icon={faCamera} /> Selecionar imagem
+              </button>
+              <small className="muted">Usando a espiral padrão da marca.</small>
+            </div>
+          )}
+        </div>
+
+        <div className="editor-field" style={{ gridColumn: '1 / -1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <label style={{ margin: 0 }}>Itens ({items.length})</label>
             {items.length < MAX_ITEMS && (
@@ -168,6 +217,37 @@ export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockDa
                   </div>
 
                   <div>
+                    <label className="small" style={{ display: 'block', marginBottom: '0.25rem' }}>
+                      Ícone deste item (opcional)
+                    </label>
+                    {item.iconImageUrl ? (
+                      <div className="image-selected-preview">
+                        <img src={item.iconImageUrl} alt={item.iconAlt ?? ''} style={{ maxWidth: '56px' }} />
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setIconPickerTarget(item.id)}
+                          >
+                            Trocar imagem
+                          </button>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleRemoveItemIcon(item.id)}>
+                            Usar ícone padrão
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={() => setIconPickerTarget(item.id)}
+                      >
+                        <FontAwesomeIcon icon={faCamera} /> Selecionar imagem
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
                     <LinkPicker
                       label="Link / slug"
                       value={normalizeLinkValue(item)}
@@ -200,10 +280,21 @@ export function ServicesForm({ value, onChange }: BlockFormProps<ServicesBlockDa
           </div>
 
           <small className="muted" style={{ display: 'block', marginTop: '0.5rem' }}>
-            Você pode adicionar de 1 a {MAX_ITEMS} itens. O ícone é sempre a espiral da marca.
+            Você pode adicionar de 1 a {MAX_ITEMS} itens. Cada um pode ter seu próprio ícone, ou usar o padrão do bloco.
           </small>
         </div>
       </div>
+
+      <ImagePickerModal
+        open={iconPickerTarget !== null}
+        onClose={() => setIconPickerTarget(null)}
+        onSelect={handleSelectIcon}
+        currentMediaId={
+          iconPickerTarget === 'default'
+            ? value.iconImageId ?? undefined
+            : items.find((item) => item.id === iconPickerTarget)?.iconImageId ?? undefined
+        }
+      />
     </div>
   );
 }

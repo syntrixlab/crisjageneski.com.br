@@ -276,7 +276,14 @@ const servicesItemSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   description: z.string().max(160).optional(),
-  href: z.string().min(1)
+  href: z.string().min(1),
+  linkMode: z.enum(['page', 'manual']).optional().nullable(),
+  pageId: z.string().optional().nullable(),
+  pageKey: z.string().optional().nullable(),
+  slug: z.string().optional().nullable(),
+  iconImageId: z.string().optional().nullable(),
+  iconImageUrl: z.string().optional().nullable(),
+  iconAlt: z.string().optional().nullable()
 });
 
 const servicesBlockSchema = baseBlockSchema.extend({
@@ -284,7 +291,14 @@ const servicesBlockSchema = baseBlockSchema.extend({
   data: z.object({
     sectionTitle: z.string().min(1),
     items: z.array(servicesItemSchema).min(1).max(8),
-    buttonLabel: z.string().optional()
+    buttonLabel: z.string().optional(),
+    textColorMode: z.enum(['default', 'custom']).optional(),
+    textColor: z.string().optional().nullable(),
+    buttonColorMode: z.enum(['default', 'custom']).optional(),
+    buttonColor: z.string().optional().nullable(),
+    iconImageId: z.string().optional().nullable(),
+    iconImageUrl: z.string().optional().nullable(),
+    iconAlt: z.string().optional().nullable()
   })
 });
 
@@ -693,12 +707,26 @@ export type ServicesBlockItem = {
   title: string;
   description?: string;
   href: string;
+  linkMode?: 'page' | 'manual' | null;
+  pageId?: string | null;
+  pageKey?: string | null;
+  slug?: string | null;
+  iconImageId?: string | null;
+  iconImageUrl?: string | null;
+  iconAlt?: string | null;
 };
 
 export type ServicesBlockData = {
   sectionTitle: string;
   items: ServicesBlockItem[];
   buttonLabel?: string;
+  textColorMode?: 'default' | 'custom';
+  textColor?: string | null;
+  buttonColorMode?: 'default' | 'custom';
+  buttonColor?: string | null;
+  iconImageId?: string | null;
+  iconImageUrl?: string | null;
+  iconAlt?: string | null;
 };
 
 export type CtaBlockData = {
@@ -1560,15 +1588,31 @@ function normalizeBlock(block: unknown, now: string): PageBlock | null {
         id: item.id || randomUUID(),
         title: item.title.trim(),
         description: item.description ? item.description.trim().slice(0, 160) : undefined,
-        href: normalizeInternalHref(item.href) || item.href.trim()
+        href: normalizeInternalHref(item.href) || item.href.trim(),
+        linkMode: item.linkMode ?? null,
+        pageId: item.pageId ?? null,
+        pageKey: item.pageKey ?? null,
+        slug: item.slug ?? null,
+        iconImageId: item.iconImageId ?? null,
+        iconImageUrl: item.iconImageUrl ?? null,
+        iconAlt: item.iconAlt ?? null
       }));
+      const textColorMode = base.data.textColorMode ?? 'default';
+      const buttonColorMode = base.data.buttonColorMode ?? 'default';
       return {
         ...common,
         type: 'services',
         data: {
           sectionTitle: base.data.sectionTitle?.trim() || 'Serviços',
           items,
-          buttonLabel: base.data.buttonLabel?.trim() || 'Saiba mais'
+          buttonLabel: base.data.buttonLabel?.trim() || 'Saiba mais',
+          textColorMode,
+          textColor: textColorMode === 'custom' ? (base.data.textColor?.trim() || null) : null,
+          buttonColorMode,
+          buttonColor: buttonColorMode === 'custom' ? (base.data.buttonColor?.trim() || null) : null,
+          iconImageId: base.data.iconImageId ?? null,
+          iconImageUrl: base.data.iconImageUrl ?? null,
+          iconAlt: base.data.iconAlt ?? null
         }
       };
     }

@@ -2105,8 +2105,7 @@
 }
 
 .page-public-section.section-padding-normal {
-  padding-top: 0;
-  padding-bottom: 0;
+  padding-top: clamp(0.75rem, 1.5vw, 1rem);
 }
 
 .page-public-section.section-padding-large {
@@ -2122,6 +2121,10 @@
 
 .page-public-section.section-padding-normal:last-child {
   padding-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.page-public-section.section-padding-normal:first-child {
+  padding-top: clamp(1.5rem, 3vw, 2.25rem);
 }
 
 .page-public-section.section-padding-large:first-child {

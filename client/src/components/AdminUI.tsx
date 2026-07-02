@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencil, faTrash, faArrowUp, faArrowDown, faEye, faEyeSlash, faGlobe, faCopy, faUpload, faDownload, faImage } from '@fortawesome/free-solid-svg-icons';
 import type { Media, NavbarItem } from '../types';
-import '../App.css';
+import '../public.css';
+import '../admin.css';
 
 type ModalProps = {
   isOpen: boolean;

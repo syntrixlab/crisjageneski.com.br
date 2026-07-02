@@ -29,7 +29,8 @@ import {
   LOGO_OUTPUT_MIME,
   LOGO_WIDTH
 } from '../constants';
-import '../App.css';
+import '../public.css';
+import '../admin.css';
 
 type CropTask = { src: string; file: File };
 type SettingsSetter = Dispatch<SetStateAction<SiteSettings>>;
@@ -812,7 +813,7 @@ function SeoSettingsSection({ settings, setSettings }: { settings: SiteSettings;
               id="gsc-verification"
               value={settings.gscVerification ?? ''}
               onChange={(e) => setSettings((prev) => ({ ...prev, gscVerification: e.target.value.trim() }))}
-              placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             />
             <p className="muted small" style={{ margin: 0 }}>
               Cole apenas o valor do atributo content da meta tag fornecida pelo Search Console.

@@ -5,7 +5,8 @@ import { faGrip, faBars, faHome, faFileLines, faNewspaper, faImage, faClipboard,
 import { logout as logoutRequest } from '../api/queries';
 import { AUTH_FLAG_KEY } from '../api/client';
 import { useAdminTheme } from '../hooks/useAdminTheme';
-import '../App.css';
+import '../public.css';
+import '../admin.css';
 
 const navSections = [
   {

@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchNavbar } from '../api/queries';
 import type { NavbarItem, SiteSettings } from '../types';
-import '../App.css';
+import '../public.css';
 
 type NavNode = NavbarItem & { children: NavbarItem[] };
 
@@ -301,7 +301,7 @@ export function Navbar({ settings }: { settings?: SiteSettings }) {
                     aria-label="Fechar menu"
                   >
                     X
-                  
+
                   </button>
                 </div>
                 <div className="nav-mobile-links">

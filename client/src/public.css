@@ -840,7 +840,7 @@
 
 .cta-content {
   flex: 1 1 auto;
-  padding: clamp(2.5rem, 5vw, 3.5rem);
+  padding: clamp(1.75rem, 3.5vw, 3rem);
   position: relative;
   z-index: 1;
 }

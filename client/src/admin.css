@@ -3189,6 +3189,190 @@ figure[data-type="image"] {
   z-index: 40;
 }
 
+/* ─── Toast notifications (sistema global, components/Toast.tsx) ────────── */
+
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.75rem;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100vw - 3rem);
+}
+
+.toast-card {
+  position: relative;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 80px;
+  background: #fffdf9;
+  border: 1px solid rgba(118, 112, 76, 0.16);
+  border-radius: 14px;
+  padding: 0.85rem 2.5rem 0.85rem 0.85rem;
+  box-shadow: 0 14px 32px rgba(31, 45, 22, 0.16);
+  color: var(--color-deep);
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+  transition: opacity 260ms ease, transform 260ms ease;
+  overflow: hidden;
+}
+
+.toast-card--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.toast-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Onda decorativa de fundo */
+.toast-wave {
+  position: absolute;
+  top: 50%;
+  left: -34px;
+  width: 90px;
+  transform: translateY(-50%) rotate(90deg);
+  pointer-events: none;
+}
+
+.toast-card--success .toast-wave { fill: rgba(76, 175, 80, 0.25); }
+
+.toast-card--error   .toast-wave { fill: rgba(229, 57, 53, 0.22); }
+
+.toast-card--warning .toast-wave { fill: rgba(245, 158, 11, 0.25); }
+
+.toast-card--info    .toast-wave { fill: rgba(59, 130, 246, 0.2); }
+
+/* Ícone circular */
+.toast-icon-container {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-icon { width: 18px; height: 18px; }
+
+.toast-card--success .toast-icon-container { background: rgba(76, 175, 80, 0.22); }
+.toast-card--success .toast-icon { color: #2e7d32; }
+
+.toast-card--error   .toast-icon-container { background: rgba(229, 57, 53, 0.2); }
+.toast-card--error   .toast-icon { color: #d10d0d; }
+
+.toast-card--warning .toast-icon-container { background: rgba(245, 158, 11, 0.24); }
+.toast-card--warning .toast-icon { color: #b45309; }
+
+.toast-card--info    .toast-icon-container { background: rgba(59, 130, 246, 0.2); }
+.toast-card--info    .toast-icon { color: #1d4ed8; }
+
+/* Texto */
+.toast-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.toast-card--success .toast-title { color: #2e7d32; }
+.toast-card--error   .toast-title { color: #d10d0d; }
+.toast-card--warning .toast-title { color: #b45309; }
+.toast-card--info    .toast-title { color: #1d4ed8; }
+
+.toast-message {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-deep);
+  opacity: 0.7;
+  line-height: 1.42;
+}
+
+.toast-code {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(118, 112, 76, 0.08);
+  border: 1px solid rgba(118, 112, 76, 0.16);
+  border-radius: 6px;
+  padding: 0.28rem 0.5rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  margin-top: 0.4rem;
+  transition: background 140ms;
+}
+
+.toast-code:hover { background: rgba(118, 112, 76, 0.14); }
+
+.toast-code-label {
+  font-size: 0.68rem;
+  color: rgba(31, 45, 22, 0.45);
+  flex-shrink: 0;
+}
+
+.toast-code code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  color: var(--color-deep);
+  opacity: 0.85;
+  flex: 1;
+}
+
+.toast-code-copy {
+  font-size: 0.66rem;
+  color: rgba(31, 45, 22, 0.4);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Fechar */
+.toast-close {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(31, 45, 22, 0.4);
+  transition: color 120ms;
+}
+
+.toast-close:hover { color: rgba(31, 45, 22, 0.8); }
+
+.toast-close-icon { width: 13px; height: 13px; }
+
 @media (max-width: 720px) {
 .admin-shell {
     grid-template-columns: 1fr;
